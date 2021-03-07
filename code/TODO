@@ -1,0 +1,40 @@
+based framework part:
+    ✔ display a SDL window with "definitive" framework design                                  @done(21-02-24 19:37)
+    ✔ vulkan renderer                                                                          @done(21-03-06 12:54)
+    ☐ code refacto:
+        ✔ during the refacto, remove all sub namespace to keep only lna namespace              @done(21-03-07 02:13)
+        ✔ during the refacto, remove all underscore prefix in functions parameters name        @done(21-03-07 03:05)
+        ✔ add vec2 struct                                                                      @done(21-03-06 17:04)
+        ✔ add vec4 struct                                                                      @done(21-03-06 17:04)
+        ✔ add mat4 struct and functions:                                                       @done(21-03-06 21:59)
+            ✔ identity                                                                         @done(21-03-06 18:50)
+            ✔ lookat                                                                           @done(21-03-06 21:58)
+            ✔ perspective                                                                      @done(21-03-06 21:59)
+            ✔ rotation x                                                                       @done(21-03-06 18:50)
+            ✔ rotation y                                                                       @done(21-03-06 18:50)
+            ✔ rotation z                                                                       @done(21-03-06 18:50)
+            ✔ scale                                                                            @done(21-03-06 18:52)
+            ✔ translation                                                                      @done(21-03-06 18:52)
+        ✔ move platform specific code in dedicated folders                                     @done(21-03-07 02:04)
+            ✔ renderer_vulkan in platform/windows                                              @done(21-03-06 22:13)
+            ✔ window_sdl in platform/windows                                                   @done(21-03-07 02:04)
+            ✔ input_sdl in platform/windows                                                    @done(21-03-07 02:04)
+            ✔ timer_std in platform/windows                                                    @done(21-03-07 02:04)
+        ✔ add C:\Work\Project\Game\lna\code\platform\windows\*.cpp in build_win64.bat          @done(21-03-07 02:04)
+        ✔ check vulkan error result                                                            @done(21-03-07 10:02)
+        ✔ add log system                                                                       @done(21-03-07 10:27)
+        ✔ remove all std::cout use log system instead                                          @done(21-03-07 10:28)
+        ✔ replace assert by custom assert macro                                                @done(21-03-07 11:03)
+        ✔ add memory pool system                                                               @done(21-03-07 13:06)
+            ✔ add frame time memory pool                                                       @done(21-03-07 13:10)
+            ✔ add persistant memory pool                                                       @done(21-03-07 13:10)
+        ☐ add allocated fixed size array struct based on memory pool system
+        ☐ remove std::vector, std::string => use custom struct
+        ☐ design add sprite helper to easily add sprite (use sprite batch)
+        ☐ design add primitive helper to easily add primitives (use primitive batch)
+    ☐ gamepad management:
+        ☐ gamepad structure
+        ☐ gamepad open
+        ☐ gamepad update
+        ☐ gamepad close
+    ☐ imgui integration
