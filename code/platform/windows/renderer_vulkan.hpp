@@ -17,34 +17,36 @@ namespace lna
         VkSurfaceKHR                    _vulkan_surface                     { nullptr };
         VkQueue                         _vulkan_present_queue               { nullptr };
         VkSwapchainKHR                  _vulkan_swap_chain                  { nullptr };
-        std::vector<VkImage>            _vulkan_swap_chain_images;
+        heap_array<VkImage>             _vulkan_swap_chain_images;
         VkFormat                        _vulkan_swap_chain_image_format;
         VkExtent2D                      _vulkan_swap_chain_extent;
-        std::vector<VkImageView>        _vulkan_swap_chain_image_views;
+        heap_array<VkImageView>         _vulkan_swap_chain_image_views;
         VkRenderPass                    _vulkan_render_pass                 { nullptr };
         VkPipeline                      _vulkan_graphics_pipeline           { nullptr };
         VkDescriptorSetLayout           _vulkan_descriptor_set_layout       { nullptr };
         VkPipelineLayout                _vulkan_pipeline_layout             { nullptr };
-        std::vector<VkFramebuffer>      _vulkan_swap_chain_framebuffers;
+        heap_array<VkFramebuffer>       _vulkan_swap_chain_framebuffers;
         VkCommandPool                   _vulkan_command_pool                { nullptr };
-        std::vector<VkCommandBuffer>    _vulkan_command_buffers;
-        std::vector<VkSemaphore>        _vulkan_image_available_semaphores;
-        std::vector<VkSemaphore>        _vulkan_render_finished_semaphores;
-        std::vector<VkFence>            _vulkan_in_flight_fences;
-        std::vector<VkFence>            _vulkan_images_in_flight_fences;
+        heap_array<VkCommandBuffer>     _vulkan_command_buffers;
+        heap_array<VkSemaphore>         _vulkan_image_available_semaphores;
+        heap_array<VkSemaphore>         _vulkan_render_finished_semaphores;
+        heap_array<VkFence>             _vulkan_in_flight_fences;
+        heap_array<VkFence>             _vulkan_images_in_flight_fences;
         size_t                          _curr_frame                         { 0 };
         VkBuffer                        _vulkan_vertex_buffer               { nullptr };
         VkDeviceMemory                  _vulkan_vertex_buffer_memory        { nullptr };
         VkBuffer                        _vulkan_index_buffer                { nullptr };
         VkDeviceMemory                  _vulkan_index_buffer_memory         { nullptr };
-        std::vector<VkBuffer>           _vulkan_uniform_buffers;
-        std::vector<VkDeviceMemory>     _vulkan_uniform_buffers_memory;
+        heap_array<VkBuffer>            _vulkan_uniform_buffers;
+        heap_array<VkDeviceMemory>      _vulkan_uniform_buffers_memory;
         VkDescriptorPool                _vulkan_descriptor_pool             { nullptr };
-        std::vector<VkDescriptorSet>    _vulkan_descriptor_sets;
+        heap_array<VkDescriptorSet>     _vulkan_descriptor_sets;
         VkImage                         _vulkan_texture_image               { nullptr };
         VkDeviceMemory                  _vulkan_texture_image_memory        { nullptr };
         VkImageView                     _vulkan_texture_image_view          { nullptr };
         VkSampler                       _vulkan_texture_sampler             { nullptr };
+
+        memory_pool_system*             _pool_system_ptr                    { nullptr };
     };
 
     template<>

@@ -1,9 +1,5 @@
 #include <cstring>
-#include <optional>
-#include <set>
 #include <algorithm>
-#include <array>
-#include <string>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlanguage-extension-token"
 #pragma warning(push, 0)
@@ -21,6 +17,7 @@
 #include "core/file.hpp"
 #include "core/log.hpp"
 #include "core/assert.hpp"
+#include "core/memory_pool_system.hpp"
 #include "maths/vec2.hpp"
 #include "maths/vec4.hpp"
 #include "maths/mat4.hpp"
@@ -37,34 +34,39 @@
 
 namespace
 {
-    constexpr int VULKAN_MAX_FRAMES_IN_FLIGHT = 2;
+    constexpr uint32_t VULKAN_MAX_FRAMES_IN_FLIGHT = 2;
 
-    const std::vector<const char*> VULKAN_VALIDATION_LAYERS =
+    const char* VULKAN_VALIDATION_LAYERS[] =
     {
         "VK_LAYER_KHRONOS_validation",
     };
 
-    const std::vector<const char*> VULKAN_DEVICE_EXTENSIONS =
+    const char* VULKAN_DEVICE_EXTENSIONS[] =
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
 
     struct vulkan_queue_family_indices
     {
-        std::optional<uint32_t> graphics_family;
-        std::optional<uint32_t> present_family;
-
-        bool is_complete()
-        {
-            return graphics_family.has_value() && present_family.has_value();
-        }
+        uint32_t    graphics_family { (uint32_t)-1 };
+        uint32_t    present_family  { (uint32_t)-1 };
     };
+
+    bool vulkan_queue_family_indices_is_complete(
+        const vulkan_queue_family_indices& indices
+        )
+    {
+        return
+                indices.graphics_family != (uint32_t)-1
+            &&  indices.present_family != (uint32_t)-1
+            ;
+    }
 
     struct vulkan_swap_chain_support_details
     {
-        VkSurfaceCapabilitiesKHR        capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR>   present_modes;
+        VkSurfaceCapabilitiesKHR            capabilities;
+        lna::heap_array<VkSurfaceFormatKHR> formats;
+        lna::heap_array<VkPresentModeKHR>   present_modes;
     };
 
     struct vertex
@@ -82,21 +84,21 @@ namespace
             return binding_description_result;
         }
 
-        static std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions()
+        static lna::stack_array<VkVertexInputAttributeDescription, 3> attribute_descriptions()
         {
-            std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions_result{};
-            attribute_descriptions_result[0].binding    = 0;
-            attribute_descriptions_result[0].location   = 0;
-            attribute_descriptions_result[0].format     = VK_FORMAT_R32G32_SFLOAT;
-            attribute_descriptions_result[0].offset     = offsetof(vertex, position);
-            attribute_descriptions_result[1].binding    = 0;
-            attribute_descriptions_result[1].location   = 1;
-            attribute_descriptions_result[1].format     = VK_FORMAT_R32G32B32A32_SFLOAT;
-            attribute_descriptions_result[1].offset     = offsetof(vertex, color);
-            attribute_descriptions_result[2].binding    = 0;
-            attribute_descriptions_result[2].location   = 2;
-            attribute_descriptions_result[2].format     = VK_FORMAT_R32G32_SFLOAT;
-            attribute_descriptions_result[2].offset     = offsetof(vertex, uv);
+            lna::stack_array<VkVertexInputAttributeDescription, 3> attribute_descriptions_result;
+            attribute_descriptions_result._elements[0].binding    = 0;
+            attribute_descriptions_result._elements[0].location   = 0;
+            attribute_descriptions_result._elements[0].format     = VK_FORMAT_R32G32_SFLOAT;
+            attribute_descriptions_result._elements[0].offset     = offsetof(vertex, position);
+            attribute_descriptions_result._elements[1].binding    = 0;
+            attribute_descriptions_result._elements[1].location   = 1;
+            attribute_descriptions_result._elements[1].format     = VK_FORMAT_R32G32B32A32_SFLOAT;
+            attribute_descriptions_result._elements[1].offset     = offsetof(vertex, color);
+            attribute_descriptions_result._elements[2].binding    = 0;
+            attribute_descriptions_result._elements[2].location   = 2;
+            attribute_descriptions_result._elements[2].format     = VK_FORMAT_R32G32_SFLOAT;
+            attribute_descriptions_result._elements[2].offset     = offsetof(vertex, uv);
             return attribute_descriptions_result;
         }
     };
@@ -108,7 +110,7 @@ namespace
         alignas(16) lna::mat4   projection;
     };
     
-    const std::vector<vertex> VERTICES =
+    const vertex VERTICES[] =
     {
         {
             {-0.5f, -0.5f },
@@ -132,7 +134,7 @@ namespace
         }
     };
 
-    const std::vector<uint16_t> INDICES =
+    const uint16_t INDICES[] =
     {
         0, 1, 2, 2, 3, 0
     };
@@ -152,6 +154,7 @@ namespace
         if (message_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
         {
             lna::log::error("vulkan validation layer: %s", call_back_data_ptr->pMessage);
+            LNA_ASSERT(message_severity < VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
         }
         return VK_FALSE;
     }
@@ -264,38 +267,42 @@ namespace
         return (uint32_t)-1;
     }
 
-    bool vulkan_check_validation_layer_support()
+    bool vulkan_check_validation_layer_support(
+        lna::memory_pool_system& pool_system
+        )
     {
         uint32_t layer_count;
-
         VULKAN_CHECK_RESULT(
             vkEnumerateInstanceLayerProperties(
                 &layer_count,
                 nullptr
                 )
             )
-
-        std::vector<VkLayerProperties> available_layers(layer_count);
-
+        lna::heap_array<VkLayerProperties> available_layers;
+        lna::heap_array_set_max_element_count(
+            available_layers,
+            pool_system.pools[lna::memory_pool_system_id::FRAME_LIFETIME],
+            layer_count
+            );
         VULKAN_CHECK_RESULT(
             vkEnumerateInstanceLayerProperties(
                 &layer_count,
-                available_layers.data()
+                available_layers._elements
                 )
             )
 
-        for (auto layer_name : VULKAN_VALIDATION_LAYERS)
+        auto validation_layer_count = sizeof(VULKAN_VALIDATION_LAYERS) / sizeof(VULKAN_VALIDATION_LAYERS[0]);
+        for (size_t i = 0; i < validation_layer_count; ++i)
         {
             auto layer_found = false;
-            for (const auto& layer_properties : available_layers)
+            for (uint32_t j = 0; j < available_layers._element_count; ++j)
             {
-                if (strcmp(layer_name, layer_properties.layerName) == 0)
+                if (strcmp(VULKAN_VALIDATION_LAYERS[i], available_layers._elements[j].layerName) == 0)
                 {
                     layer_found = true;
                     break;
                 }
             }
-
             if (!layer_found)
             {
                 return false;
@@ -306,7 +313,8 @@ namespace
 
     vulkan_queue_family_indices vulkan_find_queue_families(
         VkPhysicalDevice device,
-        VkSurfaceKHR surface
+        VkSurfaceKHR surface,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(device);
@@ -319,48 +327,50 @@ namespace
             &queue_family_count,
             nullptr
             );
-
-        std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+        lna::heap_array<VkQueueFamilyProperties> queue_families;
+        lna::heap_array_set_max_element_count(
+            queue_families,
+            pool_system.pools[lna::memory_pool_system_id::FRAME_LIFETIME],
+            queue_family_count
+            );
         vkGetPhysicalDeviceQueueFamilyProperties(
             device,
             &queue_family_count,
-            queue_families.data()
+            queue_families._elements
             );
 
-        uint32_t index = 0;
-        for (const auto& queue_family : queue_families)
+        for (uint32_t i = 0; i < queue_family_count; ++i)
         {
-            if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            if (queue_families._elements[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
-                indices.graphics_family = index;
+                indices.graphics_family = i;
             }
 
             VkBool32 present_support = false;
             VULKAN_CHECK_RESULT(
                 vkGetPhysicalDeviceSurfaceSupportKHR(
                     device,
-                    index,
+                    i,
                     surface,
                     &present_support
                     )
                 )
             if (present_support)
             {
-                indices.present_family = index;
+                indices.present_family = i;
             }
 
-            if (indices.is_complete())
+            if (vulkan_queue_family_indices_is_complete(indices))
             {
                 break;
             }
-
-            ++index;
         }
         return indices;
     }
 
     bool vulkan_check_device_extension_support(
-        VkPhysicalDevice device
+        VkPhysicalDevice device,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(device);
@@ -374,30 +384,46 @@ namespace
                 nullptr
                 )
             )
-        std::vector<VkExtensionProperties> available_extensions(extension_count);
+        lna::heap_array<VkExtensionProperties> available_extensions;
+        lna::heap_array_set_max_element_count(
+            available_extensions,
+            pool_system.pools[lna::memory_pool_system_id::FRAME_LIFETIME],
+            extension_count
+            );
         VULKAN_CHECK_RESULT(
             vkEnumerateDeviceExtensionProperties(
                 device,
                 nullptr,
                 &extension_count,
-                available_extensions.data()
+                available_extensions._elements
                 )
             )
 
-        std::set<std::string> required_extensions(
-            VULKAN_DEVICE_EXTENSIONS.begin(),
-            VULKAN_DEVICE_EXTENSIONS.end()
-            );
-        for (const auto& extension : available_extensions)
+        size_t required_extension_count = sizeof(VULKAN_DEVICE_EXTENSIONS) / sizeof(VULKAN_DEVICE_EXTENSIONS[0]);
+        for (size_t i = 0; i < required_extension_count; ++i)
         {
-            required_extensions.erase(extension.extensionName);
+            bool extension_found = false;
+            for (uint32_t j = 0; j < available_extensions._element_count; ++j)
+            {
+
+                if (strcmp(VULKAN_DEVICE_EXTENSIONS[i], available_extensions._elements[j].extensionName) == 0)
+                {
+                    extension_found = true;
+                    break;
+                }
+            }
+            if (!extension_found)
+            {
+                return false;
+            }
         }
-        return required_extensions.empty();
+        return true;
     }
 
     vulkan_swap_chain_support_details vulkan_query_swap_chain_support(
         VkPhysicalDevice device,
-        VkSurfaceKHR surface
+        VkSurfaceKHR surface,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(device);
@@ -423,13 +449,17 @@ namespace
             )
         if (format_count != 0)
         {
-            details.formats.resize(format_count);
+            lna::heap_array_set_max_element_count(
+                details.formats,
+                pool_system.pools[lna::memory_pool_system_id::FRAME_LIFETIME],
+                format_count
+                );
             VULKAN_CHECK_RESULT(
                 vkGetPhysicalDeviceSurfaceFormatsKHR(
                     device,
                     surface,
                     &format_count,
-                    details.formats.data()
+                    details.formats._elements
                     )
                 )
         }
@@ -445,13 +475,17 @@ namespace
             )
         if (present_mode_count != 0)
         {
-            details.present_modes.resize(present_mode_count);
+            lna::heap_array_set_max_element_count(
+                details.present_modes,
+                pool_system.pools[lna::memory_pool_system_id::FRAME_LIFETIME],
+                present_mode_count
+                );
             VULKAN_CHECK_RESULT(
                 vkGetPhysicalDeviceSurfacePresentModesKHR(
                     device,
                     surface,
                     &present_mode_count,
-                    details.present_modes.data()
+                    details.present_modes._elements
                     )
                 )
         }
@@ -460,31 +494,31 @@ namespace
     }
 
     VkSurfaceFormatKHR vulkan_choose_swap_surface_format(
-        const std::vector<VkSurfaceFormatKHR>& available_formats
+        const lna::heap_array<VkSurfaceFormatKHR>& available_formats
         )
     {
-        for (const auto& available_format : available_formats)
+        for (uint32_t i = 0; i < available_formats._element_count; ++i)
         {
             if (
-                available_format.format == VK_FORMAT_B8G8R8A8_SRGB
-                && available_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+                available_formats._elements[i].format == VK_FORMAT_B8G8R8A8_SRGB
+                && available_formats._elements[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
                 )
             {
-                return available_format;
+                return available_formats._elements[i];
             }
         }
-        return available_formats[0];
+        return available_formats._elements[0];
     }
 
     VkPresentModeKHR vulkan_choose_swap_present_mode(
-        const std::vector<VkPresentModeKHR>& available_present_modes
+        const lna::heap_array<VkPresentModeKHR>& available_present_modes
         )
     {
-        for (const auto& available_present_mode : available_present_modes)
+        for (uint32_t i = 0; i < available_present_modes._element_count; ++i)
         {
-            if (available_present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
+            if (available_present_modes._elements[i] == VK_PRESENT_MODE_MAILBOX_KHR)
             {
-                return available_present_mode;
+                return available_present_modes._elements[i];
             }
         }
         return VK_PRESENT_MODE_FIFO_KHR;
@@ -518,23 +552,31 @@ namespace
 
     bool vulkan_is_physical_device_suitable(
         VkPhysicalDevice device,
-        VkSurfaceKHR surface
+        VkSurfaceKHR surface,
+        lna::memory_pool_system& pool_system
         )
     {
         vulkan_queue_family_indices indices = vulkan_find_queue_families(
             device,
-            surface
+            surface,
+            pool_system
             );
-        bool supported_extensions = vulkan_check_device_extension_support(device);
+        bool supported_extensions = vulkan_check_device_extension_support(
+            device,
+            pool_system
+            );
         bool swap_chain_adequate = false;
 
         if (supported_extensions)
         {
             vulkan_swap_chain_support_details swap_chain_support = vulkan_query_swap_chain_support(
                 device,
-                surface
+                surface,
+                pool_system
                 );
-            swap_chain_adequate = !swap_chain_support.formats.empty() && !swap_chain_support.present_modes.empty();
+            swap_chain_adequate =
+                    swap_chain_support.formats._element_count != 0
+                &&  swap_chain_support.present_modes._element_count != 0;
         }
 
         VkPhysicalDeviceFeatures supported_features{};
@@ -549,7 +591,11 @@ namespace
         //? sampler_create_info.anisotropyEnable    = VK_FALSE;
         //? sampler_create_info.maxAnisotropy       = 1.0f;
         //? see the end of https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler for more information
-        return indices.is_complete() && supported_extensions && swap_chain_adequate && supported_features.samplerAnisotropy;
+        return
+                vulkan_queue_family_indices_is_complete(indices)
+            &&  supported_extensions
+            &&  swap_chain_adequate
+            &&  supported_features.samplerAnisotropy;
     }
 
     VkCommandBuffer vulkan_begin_single_time_commands(
@@ -739,15 +785,15 @@ namespace
 
     VkShaderModule vulkan_create_shader_module(
         lna::renderer_vulkan& renderer,
-        const std::vector<char>& code
+        const lna::heap_array<char>& code
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
 
         VkShaderModuleCreateInfo shader_module_create_info{};
         shader_module_create_info.sType     = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        shader_module_create_info.codeSize  = code.size();
-        shader_module_create_info.pCode     = reinterpret_cast<const uint32_t*>(code.data());
+        shader_module_create_info.codeSize  = code._element_count;
+        shader_module_create_info.pCode     = reinterpret_cast<const uint32_t*>(code._elements);
 
         VkShaderModule shader_module = nullptr;
         VULKAN_CHECK_RESULT(
@@ -972,10 +1018,11 @@ namespace
     {
         LNA_ASSERT(renderer._vulkan_instance == nullptr);
         LNA_ASSERT(config.window_ptr);
+        LNA_ASSERT(config.pool_system_ptr);
 
         if (
             config.enable_validation_layers
-            && !vulkan_check_validation_layer_support()
+            && !vulkan_check_validation_layer_support(*config.pool_system_ptr)
             )
         {
             //TODO: find a better way to return error
@@ -990,13 +1037,13 @@ namespace
         application_info.pEngineName                    = config.engine_name ? config.engine_name : "LNA FRAMEWORK";
         application_info.engineVersion                  = VK_MAKE_VERSION(config.engine_major_ver, config.engine_minor_ver, config.engine_patch_ver);
 
-        const std::vector<const char*>& extensions      = lna::window_extensions(*config.window_ptr);
+        const lna::heap_array<const char*>& extensions  = lna::window_extensions(*config.window_ptr);
 
         VkInstanceCreateInfo instance_create_info {};
         instance_create_info.sType                      = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         instance_create_info.pApplicationInfo           = &application_info;
-        instance_create_info.enabledExtensionCount      = static_cast<uint32_t>(extensions.size());
-        instance_create_info.ppEnabledExtensionNames    = extensions.data();
+        instance_create_info.enabledExtensionCount      = extensions._element_count;
+        instance_create_info.ppEnabledExtensionNames    = extensions._elements;
 
         if (config.enable_validation_layers)
         {
@@ -1006,8 +1053,8 @@ namespace
             debug_messenger_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
             debug_messenger_create_info.pfnUserCallback = vulkan_debug_callback;
             debug_messenger_create_info.pUserData       = nullptr;
-            instance_create_info.enabledLayerCount      = static_cast<uint32_t>(VULKAN_VALIDATION_LAYERS.size());
-            instance_create_info.ppEnabledLayerNames    = VULKAN_VALIDATION_LAYERS.data();
+            instance_create_info.enabledLayerCount      = static_cast<uint32_t>(sizeof(VULKAN_VALIDATION_LAYERS) / sizeof(VULKAN_VALIDATION_LAYERS[0]));
+            instance_create_info.ppEnabledLayerNames    = VULKAN_VALIDATION_LAYERS;
             instance_create_info.pNext                  = &debug_messenger_create_info;
         }
         else
@@ -1068,7 +1115,8 @@ namespace
     }
 
     void vulkan_pick_physical_device(
-        lna::renderer_vulkan& renderer
+        lna::renderer_vulkan& renderer,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_instance);
@@ -1084,24 +1132,30 @@ namespace
             )
         LNA_ASSERT(device_count > 0);
 
-        std::vector<VkPhysicalDevice> devices(device_count);
+        lna::heap_array<VkPhysicalDevice> devices;
+        lna::heap_array_set_max_element_count(
+            devices,
+            pool_system.pools[lna::memory_pool_system_id::FRAME_LIFETIME],
+            device_count
+            );
         VULKAN_CHECK_RESULT(
             vkEnumeratePhysicalDevices(
                 renderer._vulkan_instance,
                 &device_count,
-                devices.data()
+                devices._elements
                 )
             )
-        for (const auto& device : devices)
+        for (uint32_t i = 0; i < devices._element_count; ++i)
         {
             if (
                 vulkan_is_physical_device_suitable(
-                    device,
-                    renderer._vulkan_surface
+                    devices._elements[i],
+                    renderer._vulkan_surface,
+                    pool_system
                     )
                 )
             {
-                renderer._vulkan_physical_device = device;
+                renderer._vulkan_physical_device = devices._elements[i];
                 break;
             }
         }
@@ -1115,26 +1169,32 @@ namespace
         LNA_ASSERT(renderer._vulkan_physical_device);
         LNA_ASSERT(renderer._vulkan_device == nullptr);
         LNA_ASSERT(renderer._vulkan_graphics_queue == nullptr);
+        LNA_ASSERT(config.pool_system_ptr);
 
         vulkan_queue_family_indices             indices = vulkan_find_queue_families(
             renderer._vulkan_physical_device,
-            renderer._vulkan_surface
+            renderer._vulkan_surface,
+            *config.pool_system_ptr
             );
-        std::vector<VkDeviceQueueCreateInfo>    queue_create_infos{};
-        std::set<uint32_t>                      unique_queue_families =
+        lna::heap_array<VkDeviceQueueCreateInfo> queue_create_infos;
+        uint32_t                                    unique_queue_families[] =
         {
-            indices.graphics_family.value(),
-            indices.present_family.value()
+            indices.graphics_family,
+            indices.present_family
         };
+        uint32_t unique_queue_family_count = (indices.graphics_family == indices.present_family) ? 1 : 2;
         float queue_priority = 1.0f;
-        for (uint32_t queue_family : unique_queue_families)
+        lna::heap_array_set_max_element_count(
+            queue_create_infos,
+            config.pool_system_ptr->pools[lna::memory_pool_system_id::FRAME_LIFETIME],
+            unique_queue_family_count
+            );
+        for (size_t i = 0; i < unique_queue_family_count; ++i)
         {
-            VkDeviceQueueCreateInfo queue_create_info{};
-            queue_create_info.sType             = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queue_create_info.queueFamilyIndex  = queue_family;
-            queue_create_info.queueCount        = 1;
-            queue_create_info.pQueuePriorities  = &queue_priority;
-            queue_create_infos.push_back(queue_create_info);
+            queue_create_infos._elements[i].sType               = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queue_create_infos._elements[i].queueFamilyIndex    = unique_queue_families[i];
+            queue_create_infos._elements[i].queueCount          = 1;
+            queue_create_infos._elements[i].pQueuePriorities    = &queue_priority;
         }
 
         VkPhysicalDeviceFeatures device_features{};
@@ -1142,13 +1202,13 @@ namespace
 
         VkDeviceCreateInfo device_create_info{};
         device_create_info.sType                    = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        device_create_info.pQueueCreateInfos        = queue_create_infos.data();
-        device_create_info.queueCreateInfoCount     = static_cast<uint32_t>(queue_create_infos.size());
+        device_create_info.pQueueCreateInfos        = queue_create_infos._elements;
+        device_create_info.queueCreateInfoCount     = static_cast<uint32_t>(queue_create_infos._element_count);
         device_create_info.pEnabledFeatures         = &device_features;
-        device_create_info.enabledExtensionCount    = static_cast<uint32_t>(VULKAN_DEVICE_EXTENSIONS.size());
-        device_create_info.ppEnabledExtensionNames  = VULKAN_DEVICE_EXTENSIONS.data();
-        device_create_info.enabledLayerCount        = config.enable_validation_layers ? static_cast<uint32_t>(VULKAN_VALIDATION_LAYERS.size()) : 0;
-        device_create_info.ppEnabledLayerNames      = config.enable_validation_layers ? VULKAN_VALIDATION_LAYERS.data() : nullptr;
+        device_create_info.enabledExtensionCount    = static_cast<uint32_t>(sizeof(VULKAN_DEVICE_EXTENSIONS) / sizeof(VULKAN_DEVICE_EXTENSIONS[0]));
+        device_create_info.ppEnabledExtensionNames  = VULKAN_DEVICE_EXTENSIONS;
+        device_create_info.enabledLayerCount        = config.enable_validation_layers ? static_cast<uint32_t>(sizeof(VULKAN_VALIDATION_LAYERS) / sizeof(VULKAN_VALIDATION_LAYERS[0])) : 0;
+        device_create_info.ppEnabledLayerNames      = config.enable_validation_layers ? VULKAN_VALIDATION_LAYERS : nullptr;
 
         VULKAN_CHECK_RESULT(
             vkCreateDevice(
@@ -1158,33 +1218,31 @@ namespace
                 &renderer._vulkan_device
                 )
             )
-        if (renderer._vulkan_device)
-        {
-            vkGetDeviceQueue(
-                renderer._vulkan_device,
-                indices.graphics_family.value(),
-                0,
-                &renderer._vulkan_graphics_queue
-                );
-            vkGetDeviceQueue(
-                renderer._vulkan_device,
-                indices.present_family.value(),
-                0,
-                &renderer._vulkan_present_queue
-                );
-        }
+        vkGetDeviceQueue(
+            renderer._vulkan_device,
+            indices.graphics_family,
+            0,
+            &renderer._vulkan_graphics_queue
+            );
+        vkGetDeviceQueue(
+            renderer._vulkan_device,
+            indices.present_family,
+            0,
+            &renderer._vulkan_present_queue
+            );
     }
 
     void vulkan_create_swap_chain(
         lna::renderer_vulkan& renderer,
         uint32_t framebuffer_width,
-        uint32_t framebuffer_height
+        uint32_t framebuffer_height,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
         LNA_ASSERT(renderer._vulkan_swap_chain == nullptr);
 
-        vulkan_swap_chain_support_details   swap_chain_support  = vulkan_query_swap_chain_support(renderer._vulkan_physical_device, renderer._vulkan_surface);
+        vulkan_swap_chain_support_details   swap_chain_support  = vulkan_query_swap_chain_support(renderer._vulkan_physical_device, renderer._vulkan_surface, pool_system);
         VkSurfaceFormatKHR                  surface_format      = vulkan_choose_swap_surface_format(swap_chain_support.formats);
         VkPresentModeKHR                    present_mode        = vulkan_choose_swap_present_mode(swap_chain_support.present_modes);
         VkExtent2D                          extent              = vulkan_choose_swap_extent(swap_chain_support.capabilities, framebuffer_width, framebuffer_height);
@@ -1211,11 +1269,11 @@ namespace
         swap_chain_create_info.imageArrayLayers = 1;
         swap_chain_create_info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        vulkan_queue_family_indices indices = vulkan_find_queue_families(renderer._vulkan_physical_device, renderer._vulkan_surface);
+        vulkan_queue_family_indices indices = vulkan_find_queue_families(renderer._vulkan_physical_device, renderer._vulkan_surface, pool_system);
         uint32_t queue_family_indices[]     =
         {
-            indices.graphics_family.value(),
-            indices.present_family.value()
+            indices.graphics_family,
+            indices.present_family
         };
         if (indices.graphics_family != indices.present_family)
         {
@@ -1250,13 +1308,17 @@ namespace
                 nullptr
                 )
             )
-        renderer._vulkan_swap_chain_images.resize(image_count);
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_swap_chain_images,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            image_count
+            );
         VULKAN_CHECK_RESULT(
             vkGetSwapchainImagesKHR(
                 renderer._vulkan_device,
                 renderer._vulkan_swap_chain,
                 &image_count,
-                renderer._vulkan_swap_chain_images.data()
+                renderer._vulkan_swap_chain_images._elements
                 )
             )
         renderer._vulkan_swap_chain_image_format    = surface_format.format;
@@ -1264,15 +1326,21 @@ namespace
     }
 
     void vulkan_create_image_views(
-        lna::renderer_vulkan& renderer
+        lna::renderer_vulkan& renderer,
+        lna::memory_pool_system& pool_system
         )
     {
-        renderer._vulkan_swap_chain_image_views.resize(renderer._vulkan_swap_chain_images.size());
-        for (size_t i = 0; i < renderer._vulkan_swap_chain_images.size(); ++i)
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_swap_chain_image_views,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            renderer._vulkan_swap_chain_images._element_count
+            );
+
+        for (size_t i = 0; i < renderer._vulkan_swap_chain_images._element_count; ++i)
         {
-            renderer._vulkan_swap_chain_image_views[i] = vulkan_create_image_view(
+            renderer._vulkan_swap_chain_image_views._elements[i] = vulkan_create_image_view(
                 renderer,
-                renderer._vulkan_swap_chain_images[i],
+                renderer._vulkan_swap_chain_images._elements[i],
                 renderer._vulkan_swap_chain_image_format
                 );
         }
@@ -1350,16 +1418,14 @@ namespace
         sampler_layout_binding.stageFlags           = VK_SHADER_STAGE_FRAGMENT_BIT;
         sampler_layout_binding.pImmutableSamplers   = nullptr;
 
-        std::array<VkDescriptorSetLayoutBinding, 2> bindings =
-        {
-            ubo_layout_binding,
-            sampler_layout_binding,
-        };
+        lna::stack_array<VkDescriptorSetLayoutBinding, 2> bindings;
+        bindings._elements[0] = ubo_layout_binding;
+        bindings._elements[1] = sampler_layout_binding;
 
         VkDescriptorSetLayoutCreateInfo layout_create_info{};
         layout_create_info.sType                    = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layout_create_info.bindingCount             = static_cast<uint32_t>(bindings.size());
-        layout_create_info.pBindings                = bindings.data();
+        layout_create_info.bindingCount             = bindings._element_count;
+        layout_create_info.pBindings                = bindings._elements;
 
         VULKAN_CHECK_RESULT(
             vkCreateDescriptorSetLayout(
@@ -1377,14 +1443,15 @@ namespace
     {
         LNA_ASSERT(renderer._vulkan_device);
         LNA_ASSERT(renderer._vulkan_render_pass);
+        LNA_ASSERT(renderer._pool_system_ptr);
 
         VkShaderModule vertex_shader_module = vulkan_create_shader_module(
             renderer,
-            lna::file_debug_load("shaders/default_vert.spv", true) // TODO: remove when we will have the file system and shader "manager"
+            lna::file_debug_load("shaders/default_vert.spv", true, renderer._pool_system_ptr->pools[lna::memory_pool_system_id::FRAME_LIFETIME]) // TODO: remove when we will have the file system and shader "manager"
             );
         VkShaderModule fragment_shader_module = vulkan_create_shader_module(
             renderer,
-            lna::file_debug_load("shaders/default_frag.spv", true) // TODO: remove when we will have the file system and shader "manager"
+            lna::file_debug_load("shaders/default_frag.spv", true, renderer._pool_system_ptr->pools[lna::memory_pool_system_id::FRAME_LIFETIME]) // TODO: remove when we will have the file system and shader "manager"
             );
 
         VkPipelineShaderStageCreateInfo vertex_shader_stage_create_info{};
@@ -1412,8 +1479,8 @@ namespace
         vertex_input_state_create_info.sType                            = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertex_input_state_create_info.vertexBindingDescriptionCount    = 1;
         vertex_input_state_create_info.pVertexBindingDescriptions       = &vertex_binding_description;
-        vertex_input_state_create_info.vertexAttributeDescriptionCount  = static_cast<uint32_t>(vertex_attribute_descriptions.size());
-        vertex_input_state_create_info.pVertexAttributeDescriptions     = vertex_attribute_descriptions.data();
+        vertex_input_state_create_info.vertexAttributeDescriptionCount  = vertex_attribute_descriptions._element_count;
+        vertex_input_state_create_info.pVertexAttributeDescriptions     = vertex_attribute_descriptions._elements;
 
         VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
         input_assembly_state_create_info.sType                          = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -1548,17 +1615,22 @@ namespace
     }
 
     void vulkan_create_framebuffers(
-        lna::renderer_vulkan& renderer
+        lna::renderer_vulkan& renderer,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
 
-        renderer._vulkan_swap_chain_framebuffers.resize(renderer._vulkan_swap_chain_image_views.size());
-        for (size_t i = 0; i < renderer._vulkan_swap_chain_image_views.size(); ++i)
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_swap_chain_framebuffers,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            renderer._vulkan_swap_chain_image_views._element_count
+            );
+        for (size_t i = 0; i < renderer._vulkan_swap_chain_image_views._element_count; ++i)
         {
             VkImageView attachments[] =
             {
-                renderer._vulkan_swap_chain_image_views[i]
+                renderer._vulkan_swap_chain_image_views._elements[i]
             };
 
             VkFramebufferCreateInfo framebuffer_create_info{};
@@ -1575,23 +1647,28 @@ namespace
                     renderer._vulkan_device,
                     &framebuffer_create_info,
                     nullptr,
-                    &renderer._vulkan_swap_chain_framebuffers[i]
+                    &renderer._vulkan_swap_chain_framebuffers._elements[i]
                     )
                 )
         }
     }
 
     void vulkan_create_command_pool(
-        lna::renderer_vulkan& renderer
+        lna::renderer_vulkan& renderer,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
 
-        vulkan_queue_family_indices indices = vulkan_find_queue_families(renderer._vulkan_physical_device, renderer._vulkan_surface);
+        vulkan_queue_family_indices indices = vulkan_find_queue_families(
+            renderer._vulkan_physical_device,
+            renderer._vulkan_surface,
+            pool_system
+            );
 
         VkCommandPoolCreateInfo command_pool_create_info{};
         command_pool_create_info.sType              = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        command_pool_create_info.queueFamilyIndex   = indices.graphics_family.value();
+        command_pool_create_info.queueFamilyIndex   = indices.graphics_family;
         command_pool_create_info.flags              = 0;
 
         VULKAN_CHECK_RESULT(
@@ -1605,28 +1682,33 @@ namespace
     }
 
     void vulkan_create_command_buffers(
-        lna::renderer_vulkan& renderer
+        lna::renderer_vulkan& renderer,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
 
-        renderer._vulkan_command_buffers.resize(renderer._vulkan_swap_chain_framebuffers.size());
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_command_buffers,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            renderer._vulkan_swap_chain_framebuffers._element_count
+            );
 
         VkCommandBufferAllocateInfo command_buffer_allocate_info{}; 
         command_buffer_allocate_info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         command_buffer_allocate_info.commandPool        = renderer._vulkan_command_pool;
         command_buffer_allocate_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        command_buffer_allocate_info.commandBufferCount = static_cast<uint32_t>(renderer._vulkan_command_buffers.size());
+        command_buffer_allocate_info.commandBufferCount = renderer._vulkan_command_buffers._element_count;
 
         VULKAN_CHECK_RESULT(
             vkAllocateCommandBuffers(
                 renderer._vulkan_device,
                 &command_buffer_allocate_info,
-                renderer._vulkan_command_buffers.data()
+                renderer._vulkan_command_buffers._elements
                 )
             )
 
-        for (size_t i = 0; i < renderer._vulkan_command_buffers.size(); ++i)
+        for (size_t i = 0; i < renderer._vulkan_command_buffers._element_count; ++i)
         {
             VkCommandBufferBeginInfo    command_buffer_begin_info{};
             command_buffer_begin_info.sType             = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1635,7 +1717,7 @@ namespace
 
             VULKAN_CHECK_RESULT(
                 vkBeginCommandBuffer(
-                    renderer._vulkan_command_buffers[i],
+                    renderer._vulkan_command_buffers._elements[i],
                     &command_buffer_begin_info
                     )
                 )
@@ -1643,7 +1725,7 @@ namespace
             VkRenderPassBeginInfo render_pass_begin_info{};
             render_pass_begin_info.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
             render_pass_begin_info.renderPass           = renderer._vulkan_render_pass;
-            render_pass_begin_info.framebuffer          = renderer._vulkan_swap_chain_framebuffers[i];
+            render_pass_begin_info.framebuffer          = renderer._vulkan_swap_chain_framebuffers._elements[i];
             render_pass_begin_info.renderArea.offset    = { 0, 0 };
             render_pass_begin_info.renderArea.extent    = renderer._vulkan_swap_chain_extent;
             VkClearValue clear_color = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
@@ -1651,70 +1733,91 @@ namespace
             render_pass_begin_info.pClearValues         = &clear_color;
 
             vkCmdBeginRenderPass(
-                renderer._vulkan_command_buffers[i],
+                renderer._vulkan_command_buffers._elements[i],
                 &render_pass_begin_info,
                 VK_SUBPASS_CONTENTS_INLINE
                 );
             vkCmdBindPipeline(
-                renderer._vulkan_command_buffers[i],
+                renderer._vulkan_command_buffers._elements[i],
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 renderer._vulkan_graphics_pipeline
                 );
             VkBuffer        vertex_buffers[]    = { renderer._vulkan_vertex_buffer };
             VkDeviceSize    offsets[]           = { 0 };
             vkCmdBindVertexBuffers(
-                renderer._vulkan_command_buffers[i],
+                renderer._vulkan_command_buffers._elements[i],
                 0,
                 1,
                 vertex_buffers,
                 offsets
                 );
             vkCmdBindIndexBuffer(
-                renderer._vulkan_command_buffers[i],
+                renderer._vulkan_command_buffers._elements[i],
                 renderer._vulkan_index_buffer,
                 0,
                 VK_INDEX_TYPE_UINT16
                 );
             vkCmdBindDescriptorSets(
-                renderer._vulkan_command_buffers[i],
+                renderer._vulkan_command_buffers._elements[i],
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 renderer._vulkan_pipeline_layout,
                 0,
                 1,
-                &renderer._vulkan_descriptor_sets[i],
+                &renderer._vulkan_descriptor_sets._elements[i],
                 0,
                 nullptr
                 );
             vkCmdDrawIndexed(
-                renderer._vulkan_command_buffers[i],
-                static_cast<uint32_t>(INDICES.size()),
+                renderer._vulkan_command_buffers._elements[i],
+                static_cast<uint32_t>(sizeof(INDICES) / sizeof(INDICES[0])),
                 1,
                 0,
                 0,
                 0
                 );
             vkCmdEndRenderPass(
-                renderer._vulkan_command_buffers[i]
+                renderer._vulkan_command_buffers._elements[i]
                 );
 
             VULKAN_CHECK_RESULT(
                 vkEndCommandBuffer(
-                    renderer._vulkan_command_buffers[i]
+                    renderer._vulkan_command_buffers._elements[i]
                     )
                 )
         }
     }
 
     void vulkan_create_sync_objects(
-        lna::renderer_vulkan& renderer
+        lna::renderer_vulkan& renderer,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
 
-        renderer._vulkan_image_available_semaphores.resize(VULKAN_MAX_FRAMES_IN_FLIGHT);
-        renderer._vulkan_render_finished_semaphores.resize(VULKAN_MAX_FRAMES_IN_FLIGHT);
-        renderer._vulkan_in_flight_fences.resize(VULKAN_MAX_FRAMES_IN_FLIGHT);
-        renderer._vulkan_images_in_flight_fences.resize(renderer._vulkan_swap_chain_images.size(), VK_NULL_HANDLE);
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_image_available_semaphores,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            VULKAN_MAX_FRAMES_IN_FLIGHT
+            );
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_render_finished_semaphores,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            VULKAN_MAX_FRAMES_IN_FLIGHT
+            );
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_in_flight_fences,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            VULKAN_MAX_FRAMES_IN_FLIGHT
+            );
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_images_in_flight_fences,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            renderer._vulkan_swap_chain_images._element_count
+            );
+        lna::heap_array_fill_with_unique_value(
+            renderer._vulkan_images_in_flight_fences,
+            nullptr
+            );
 
         VkSemaphoreCreateInfo semaphore_create_info{};
         semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1730,7 +1833,7 @@ namespace
                     renderer._vulkan_device,
                     &semaphore_create_info,
                     nullptr,
-                    &renderer._vulkan_image_available_semaphores[i]
+                    &renderer._vulkan_image_available_semaphores._elements[i]
                     )
                 )
             VULKAN_CHECK_RESULT(
@@ -1738,7 +1841,7 @@ namespace
                     renderer._vulkan_device,
                     &semaphore_create_info,
                     nullptr,
-                    &renderer._vulkan_render_finished_semaphores[i]
+                    &renderer._vulkan_render_finished_semaphores._elements[i]
                     )
                 )
             VULKAN_CHECK_RESULT(
@@ -1746,7 +1849,7 @@ namespace
                     renderer._vulkan_device,
                     &fence_create_info,
                     nullptr,
-                    &renderer._vulkan_in_flight_fences[i]
+                    &renderer._vulkan_in_flight_fences._elements[i]
                     )
                 )
         }
@@ -1758,7 +1861,7 @@ namespace
     {
         LNA_ASSERT(renderer._vulkan_device);
 
-        VkDeviceSize buffer_size = sizeof(VERTICES[0]) * VERTICES.size();
+        VkDeviceSize buffer_size = sizeof(VERTICES);
 
         VkBuffer staging_buffer;
         VkDeviceMemory staging_buffer_memory;
@@ -1784,7 +1887,7 @@ namespace
             )
         memcpy(
             data,
-            VERTICES.data(),
+            VERTICES,
             static_cast<size_t>(buffer_size)
             );
         vkUnmapMemory(
@@ -1826,7 +1929,7 @@ namespace
     {
         LNA_ASSERT(renderer._vulkan_device);
 
-        VkDeviceSize buffer_size = sizeof(INDICES[0]) * INDICES.size();
+        VkDeviceSize buffer_size = sizeof(INDICES);
 
         VkBuffer staging_buffer;
         VkDeviceMemory staging_buffer_memory;
@@ -1852,7 +1955,7 @@ namespace
             )
         memcpy(
             data,
-            INDICES.data(),
+            INDICES,
             static_cast<size_t>(buffer_size)
             );
         vkUnmapMemory(
@@ -1889,25 +1992,34 @@ namespace
     }
 
     void vulkan_create_uniform_buffers(
-        lna::renderer_vulkan& renderer
+        lna::renderer_vulkan& renderer,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
 
         VkDeviceSize buffer_size = sizeof(uniform_buffer_object);
-        
-        renderer._vulkan_uniform_buffers.resize(renderer._vulkan_swap_chain_images.size());
-        renderer._vulkan_uniform_buffers_memory.resize(renderer._vulkan_swap_chain_images.size());
 
-        for (size_t i = 0; i < renderer._vulkan_swap_chain_images.size(); ++i)
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_uniform_buffers,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            renderer._vulkan_swap_chain_images._element_count
+            );
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_uniform_buffers_memory,
+            pool_system.pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+            renderer._vulkan_swap_chain_images._element_count
+            );
+
+        for (size_t i = 0; i < renderer._vulkan_swap_chain_images._element_count; ++i)
         {
             vulkan_create_buffer(
                 renderer,
                 buffer_size,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                renderer._vulkan_uniform_buffers[i],
-                renderer._vulkan_uniform_buffers_memory[i]
+                renderer._vulkan_uniform_buffers._elements[i],
+                renderer._vulkan_uniform_buffers_memory._elements[i]
                 );
         }
     }
@@ -1948,7 +2060,7 @@ namespace
         VULKAN_CHECK_RESULT(
             vkMapMemory(
                 renderer._vulkan_device,
-                renderer._vulkan_uniform_buffers_memory[image_index],
+                renderer._vulkan_uniform_buffers_memory._elements[image_index],
                 0,
                 sizeof(ubo),
                 0,
@@ -1962,7 +2074,7 @@ namespace
             );
         vkUnmapMemory(
             renderer._vulkan_device,
-            renderer._vulkan_uniform_buffers_memory[image_index]
+            renderer._vulkan_uniform_buffers_memory._elements[image_index]
             );
     }
 
@@ -1973,17 +2085,17 @@ namespace
         LNA_ASSERT(renderer._vulkan_device);
         LNA_ASSERT(renderer._vulkan_descriptor_pool == nullptr);
 
-        std::array<VkDescriptorPoolSize, 2> pool_sizes{};
-        pool_sizes[0].type              = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        pool_sizes[0].descriptorCount   = static_cast<uint32_t>(renderer._vulkan_swap_chain_images.size());
-        pool_sizes[1].type              = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        pool_sizes[1].descriptorCount   = static_cast<uint32_t>(renderer._vulkan_swap_chain_images.size());
+        lna::stack_array<VkDescriptorPoolSize, 2> pool_sizes;
+        pool_sizes._elements[0].type              = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        pool_sizes._elements[0].descriptorCount   = renderer._vulkan_swap_chain_images._element_count;
+        pool_sizes._elements[1].type              = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        pool_sizes._elements[1].descriptorCount   = renderer._vulkan_swap_chain_images._element_count;
 
         VkDescriptorPoolCreateInfo pool_create_info{};
         pool_create_info.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        pool_create_info.poolSizeCount  = static_cast<uint32_t>(pool_sizes.size());
-        pool_create_info.pPoolSizes     = pool_sizes.data();
-        pool_create_info.maxSets        = static_cast<uint32_t>(renderer._vulkan_swap_chain_images.size());
+        pool_create_info.poolSizeCount  = pool_sizes._element_count;
+        pool_create_info.pPoolSizes     = pool_sizes._elements;
+        pool_create_info.maxSets        = renderer._vulkan_swap_chain_images._element_count;
 
         VULKAN_CHECK_RESULT(
             vkCreateDescriptorPool(
@@ -1996,33 +2108,47 @@ namespace
     }
 
     void vulkan_create_descriptor_sets(
-        lna::renderer_vulkan& renderer
+        lna::renderer_vulkan& renderer,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
 
-        std::vector<VkDescriptorSetLayout> layouts(renderer._vulkan_swap_chain_images.size(), renderer._vulkan_descriptor_set_layout);
+        lna::heap_array<VkDescriptorSetLayout> layouts;
+        lna::heap_array_set_max_element_count(
+            layouts,
+            pool_system.pools[lna::memory_pool_system_id::FRAME_LIFETIME],
+            renderer._vulkan_swap_chain_images._element_count
+            );
+        lna::heap_array_fill_with_unique_value(
+            layouts,
+            renderer._vulkan_descriptor_set_layout
+            );
 
         VkDescriptorSetAllocateInfo allocate_info{};
         allocate_info.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocate_info.descriptorPool        = renderer._vulkan_descriptor_pool;
-        allocate_info.descriptorSetCount    = static_cast<uint32_t>(renderer._vulkan_swap_chain_images.size());
-        allocate_info.pSetLayouts           = layouts.data();
+        allocate_info.descriptorSetCount    = renderer._vulkan_swap_chain_images._element_count;
+        allocate_info.pSetLayouts           = layouts._elements;
 
-        renderer._vulkan_descriptor_sets.resize(renderer._vulkan_swap_chain_images.size());
+        lna::heap_array_set_max_element_count(
+            renderer._vulkan_descriptor_sets,
+            pool_system.pools[lna::PERSISTENT_LIFETIME],
+            renderer._vulkan_swap_chain_images._element_count
+            );
         
         VULKAN_CHECK_RESULT(
             vkAllocateDescriptorSets(
                 renderer._vulkan_device,
                 &allocate_info,
-                renderer._vulkan_descriptor_sets.data()
+                renderer._vulkan_descriptor_sets._elements
                 )
             )
 
-        for (size_t i = 0; i < renderer._vulkan_swap_chain_images.size(); ++i)
+        for (size_t i = 0; i < renderer._vulkan_swap_chain_images._element_count; ++i)
         {
             VkDescriptorBufferInfo buffer_info{};
-            buffer_info.buffer  = renderer._vulkan_uniform_buffers[i];
+            buffer_info.buffer  = renderer._vulkan_uniform_buffers._elements[i];
             buffer_info.offset  = 0;
             buffer_info.range   = sizeof(uniform_buffer_object);
 
@@ -2031,30 +2157,30 @@ namespace
             image_info.imageView    = renderer._vulkan_texture_image_view;
             image_info.sampler      = renderer._vulkan_texture_sampler;
 
-            std::array<VkWriteDescriptorSet, 2> write_descriptors{};
-            write_descriptors[0].sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write_descriptors[0].dstSet             = renderer._vulkan_descriptor_sets[i];
-            write_descriptors[0].dstBinding         = 0;
-            write_descriptors[0].dstArrayElement    = 0;
-            write_descriptors[0].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            write_descriptors[0].descriptorCount    = 1;
-            write_descriptors[0].pBufferInfo        = &buffer_info;
-            write_descriptors[0].pImageInfo         = nullptr;
-            write_descriptors[0].pTexelBufferView   = nullptr;
-            write_descriptors[1].sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write_descriptors[1].dstSet             = renderer._vulkan_descriptor_sets[i];
-            write_descriptors[1].dstBinding         = 1;
-            write_descriptors[1].dstArrayElement    = 0;
-            write_descriptors[1].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            write_descriptors[1].descriptorCount    = 1;
-            write_descriptors[1].pBufferInfo        = nullptr;
-            write_descriptors[1].pImageInfo         = &image_info;
-            write_descriptors[1].pTexelBufferView   = nullptr;
+            lna::stack_array<VkWriteDescriptorSet, 2> write_descriptors{};
+            write_descriptors._elements[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_descriptors._elements[0].dstSet           = renderer._vulkan_descriptor_sets._elements[i];
+            write_descriptors._elements[0].dstBinding       = 0;
+            write_descriptors._elements[0].dstArrayElement  = 0;
+            write_descriptors._elements[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            write_descriptors._elements[0].descriptorCount  = 1;
+            write_descriptors._elements[0].pBufferInfo      = &buffer_info;
+            write_descriptors._elements[0].pImageInfo       = nullptr;
+            write_descriptors._elements[0].pTexelBufferView = nullptr;
+            write_descriptors._elements[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_descriptors._elements[1].dstSet           = renderer._vulkan_descriptor_sets._elements[i];
+            write_descriptors._elements[1].dstBinding       = 1;
+            write_descriptors._elements[1].dstArrayElement  = 0;
+            write_descriptors._elements[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            write_descriptors._elements[1].descriptorCount  = 1;
+            write_descriptors._elements[1].pBufferInfo      = nullptr;
+            write_descriptors._elements[1].pImageInfo       = &image_info;
+            write_descriptors._elements[1].pTexelBufferView = nullptr;
 
             vkUpdateDescriptorSets(
                 renderer._vulkan_device,
-                static_cast<uint32_t>(write_descriptors.size()),
-                write_descriptors.data(),
+                write_descriptors._element_count,
+                write_descriptors._elements,
                 0,
                 nullptr
                 );
@@ -2225,19 +2351,19 @@ namespace
     {
         LNA_ASSERT(renderer._vulkan_device);
 
-        for (auto framebuffer : renderer._vulkan_swap_chain_framebuffers)
+        for (uint32_t i = 0; i < renderer._vulkan_swap_chain_framebuffers._element_count; ++i)
         {
             vkDestroyFramebuffer(
                 renderer._vulkan_device,
-                framebuffer,
+                renderer._vulkan_swap_chain_framebuffers._elements[i],
                 nullptr
                 );
         }
         vkFreeCommandBuffers(
             renderer._vulkan_device,
             renderer._vulkan_command_pool,
-            static_cast<uint32_t>(renderer._vulkan_command_buffers.size()),
-            renderer._vulkan_command_buffers.data()
+            renderer._vulkan_command_buffers._element_count,
+            renderer._vulkan_command_buffers._elements
             );
         vkDestroyPipeline(
             renderer._vulkan_device,
@@ -2254,11 +2380,11 @@ namespace
             renderer._vulkan_render_pass,
             nullptr
             );
-        for (auto image_view : renderer._vulkan_swap_chain_image_views)
+        for (uint32_t i = 0; i < renderer._vulkan_swap_chain_image_views._element_count; ++i)
         {
             vkDestroyImageView(
                 renderer._vulkan_device,
-                image_view,
+                renderer._vulkan_swap_chain_image_views._elements[i],
                 nullptr
                 );
         }
@@ -2267,16 +2393,16 @@ namespace
             renderer._vulkan_swap_chain,
             nullptr
             );
-        for (size_t i = 0; i < renderer._vulkan_swap_chain_images.size(); ++i)
+        for (size_t i = 0; i < renderer._vulkan_swap_chain_images._element_count; ++i)
         {
             vkDestroyBuffer(
                 renderer._vulkan_device,
-                renderer._vulkan_uniform_buffers[i],
+                renderer._vulkan_uniform_buffers._elements[i],
                 nullptr
                 );
             vkFreeMemory(
                 renderer._vulkan_device,
-                renderer._vulkan_uniform_buffers_memory[i],
+                renderer._vulkan_uniform_buffers_memory._elements[i],
                 nullptr
                 );
         }
@@ -2290,7 +2416,8 @@ namespace
     void vulkan_recreate_swap_chain(
         lna::renderer_vulkan& renderer,
         uint32_t framebuffer_width,
-        uint32_t framebuffer_height
+        uint32_t framebuffer_height,
+        lna::memory_pool_system& pool_system
         )
     {
         LNA_ASSERT(renderer._vulkan_device);
@@ -2302,15 +2429,15 @@ namespace
             )
 
         vulkan_cleanup_swap_chain(renderer);
-        vulkan_create_swap_chain(renderer, framebuffer_width, framebuffer_height);
-        vulkan_create_image_views(renderer);
+        vulkan_create_swap_chain(renderer, framebuffer_width, framebuffer_height, pool_system);
+        vulkan_create_image_views(renderer, pool_system);
         vulkan_create_render_pass(renderer);
         vulkan_create_graphics_pipeline(renderer);
-        vulkan_create_framebuffers(renderer);
-        vulkan_create_uniform_buffers(renderer);
+        vulkan_create_framebuffers(renderer, pool_system);
+        vulkan_create_uniform_buffers(renderer, pool_system);
         vulkan_create_descriptor_pool(renderer);
-        vulkan_create_descriptor_sets(renderer);
-        vulkan_create_command_buffers(renderer);
+        vulkan_create_descriptor_sets(renderer, pool_system);
+        vulkan_create_command_buffers(renderer, pool_system);
     }
 }
 
@@ -2323,31 +2450,35 @@ namespace lna
         )
     {
         LNA_ASSERT(config.window_ptr);
+        LNA_ASSERT(config.pool_system_ptr);
+
+        renderer._pool_system_ptr = config.pool_system_ptr;
+
         vulkan_create_instance(renderer, config);
         if (config.enable_validation_layers)
         {
             vulkan_setup_debug_messenger(renderer);
         }
         vulkan_create_surface(renderer, config);
-        vulkan_pick_physical_device(renderer);
+        vulkan_pick_physical_device(renderer, *config.pool_system_ptr);
         vulkan_create_logical_device(renderer, config);
-        vulkan_create_swap_chain(renderer, lna::window_width(*config.window_ptr), lna::window_height(*config.window_ptr));
-        vulkan_create_image_views(renderer);
+        vulkan_create_swap_chain(renderer, lna::window_width(*config.window_ptr), lna::window_height(*config.window_ptr), *config.pool_system_ptr);
+        vulkan_create_image_views(renderer, *config.pool_system_ptr);
         vulkan_create_render_pass(renderer);
         vulkan_create_descriptor_set_layout(renderer);
         vulkan_create_graphics_pipeline(renderer);
-        vulkan_create_framebuffers(renderer);
-        vulkan_create_command_pool(renderer);
+        vulkan_create_framebuffers(renderer, *config.pool_system_ptr);
+        vulkan_create_command_pool(renderer, *config.pool_system_ptr);
         vulkan_create_texture_image(renderer);
         vulkan_create_texture_image_view(renderer);
         vulkan_create_texture_sampler(renderer);
         vulkan_create_vertex_buffer(renderer);
         vulkan_create_index_buffer(renderer);
-        vulkan_create_uniform_buffers(renderer);
+        vulkan_create_uniform_buffers(renderer, *config.pool_system_ptr);
         vulkan_create_descriptor_pool(renderer);
-        vulkan_create_descriptor_sets(renderer);
-        vulkan_create_command_buffers(renderer);
-        vulkan_create_sync_objects(renderer);
+        vulkan_create_descriptor_sets(renderer, *config.pool_system_ptr);
+        vulkan_create_command_buffers(renderer, *config.pool_system_ptr);
+        vulkan_create_sync_objects(renderer, *config.pool_system_ptr);
     }
 
     template<>
@@ -2358,11 +2489,13 @@ namespace lna
         uint32_t framebuffer_height
         )
     {
+        assert(renderer._pool_system_ptr);
+
         VULKAN_CHECK_RESULT(
             vkWaitForFences(
                 renderer._vulkan_device,
                 1,
-                &renderer._vulkan_in_flight_fences[renderer._curr_frame],
+                &renderer._vulkan_in_flight_fences._elements[renderer._curr_frame],
                 VK_TRUE,
                 UINT64_MAX
                 )
@@ -2373,7 +2506,7 @@ namespace lna
             renderer._vulkan_device,
             renderer._vulkan_swap_chain,
             UINT64_MAX,
-            renderer._vulkan_image_available_semaphores[renderer._curr_frame],
+            renderer._vulkan_image_available_semaphores._elements[renderer._curr_frame],
             VK_NULL_HANDLE,
             &image_index
             );
@@ -2382,7 +2515,8 @@ namespace lna
             vulkan_recreate_swap_chain(
                 renderer,
                 framebuffer_width,
-                framebuffer_height
+                framebuffer_height,
+                *renderer._pool_system_ptr
                 );
             return;
         }
@@ -2395,23 +2529,23 @@ namespace lna
             return;
         }
 
-        if (renderer._vulkan_images_in_flight_fences[image_index] != VK_NULL_HANDLE)
+        if (renderer._vulkan_images_in_flight_fences._elements[image_index] != VK_NULL_HANDLE)
         {
             VULKAN_CHECK_RESULT(
                 vkWaitForFences(
                     renderer._vulkan_device,
                     1,
-                    &renderer._vulkan_images_in_flight_fences[image_index],
+                    &renderer._vulkan_images_in_flight_fences._elements[image_index],
                     VK_TRUE,
                     UINT64_MAX
                     )
                 )
         }
-        renderer._vulkan_images_in_flight_fences[image_index] = renderer._vulkan_in_flight_fences[renderer._curr_frame];
+        renderer._vulkan_images_in_flight_fences._elements[image_index] = renderer._vulkan_in_flight_fences._elements[renderer._curr_frame];
 
         VkSemaphore wait_semaphores[] =
         {
-            renderer._vulkan_image_available_semaphores[renderer._curr_frame],
+            renderer._vulkan_image_available_semaphores._elements[renderer._curr_frame],
         };
 
         VkPipelineStageFlags wait_stages[] =
@@ -2421,7 +2555,7 @@ namespace lna
 
         VkSemaphore signal_semaphores[] =
         {
-            renderer._vulkan_render_finished_semaphores[renderer._curr_frame],
+            renderer._vulkan_render_finished_semaphores._elements[renderer._curr_frame],
         };
 
         vulkan_update_uniform_buffer(
@@ -2435,7 +2569,7 @@ namespace lna
         submit_info.pWaitSemaphores         = wait_semaphores;
         submit_info.pWaitDstStageMask       = wait_stages;
         submit_info.commandBufferCount      = 1;
-        submit_info.pCommandBuffers         = &renderer._vulkan_command_buffers[image_index];
+        submit_info.pCommandBuffers         = &renderer._vulkan_command_buffers._elements[image_index];
         submit_info.signalSemaphoreCount    = 1;
         submit_info.pSignalSemaphores       = signal_semaphores;
 
@@ -2443,7 +2577,7 @@ namespace lna
             vkResetFences(
                 renderer._vulkan_device,
                 1,
-                &renderer._vulkan_in_flight_fences[renderer._curr_frame]
+                &renderer._vulkan_in_flight_fences._elements[renderer._curr_frame]
                 )
             )
 
@@ -2452,7 +2586,7 @@ namespace lna
                 renderer._vulkan_graphics_queue,
                 1,
                 &submit_info,
-                renderer._vulkan_in_flight_fences[renderer._curr_frame]
+                renderer._vulkan_in_flight_fences._elements[renderer._curr_frame]
                 )
             )
 
@@ -2483,7 +2617,8 @@ namespace lna
             vulkan_recreate_swap_chain(
                 renderer,
                 framebuffer_width,
-                framebuffer_height
+                framebuffer_height,
+                *renderer._pool_system_ptr
                 );
             return;
         }
@@ -2557,17 +2692,17 @@ namespace lna
         {
             vkDestroySemaphore(
                 renderer._vulkan_device,
-                renderer._vulkan_render_finished_semaphores[i],
+                renderer._vulkan_render_finished_semaphores._elements[i],
                 nullptr
                 );
             vkDestroySemaphore(
                 renderer._vulkan_device,
-                renderer._vulkan_image_available_semaphores[i],
+                renderer._vulkan_image_available_semaphores._elements[i],
                 nullptr
                 );
             vkDestroyFence(
                 renderer._vulkan_device,
-                renderer._vulkan_in_flight_fences[i],
+                renderer._vulkan_in_flight_fences._elements[i],
                 nullptr
                 );
         }

@@ -2,17 +2,20 @@
 #define _NLA_PLATFORM_WINDOW_HPP_
 
 #include <cstdint>
-#include <vector>
+#include "core/container.hpp"
 
 namespace lna
 {
+    struct memory_pool_system;
+
     struct window_config
     {
-        const char* title                       { nullptr   };
-        uint32_t    width                       { 1920      };
-        uint32_t    height                      { 1080      };
-        bool        fullscreen                  { false     };
-        bool        enable_validation_layers    { true      };
+        const char*         title                       { nullptr   };
+        uint32_t            width                       { 1920      };
+        uint32_t            height                      { 1080      };
+        bool                fullscreen                  { false     };
+        bool                enable_validation_layers    { true      };
+        memory_pool_system* pool_system_ptr             { nullptr   };
     };
 
     template<typename window_api>
@@ -37,7 +40,7 @@ namespace lna
         );
 
     template<typename window_api>
-    const std::vector<const char*>& window_extensions(
+    const heap_array<const char*>& window_extensions(
         const window_api& window
         );
 

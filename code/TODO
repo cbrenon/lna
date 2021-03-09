@@ -28,8 +28,22 @@ based framework part:
         ✔ add memory pool system                                                               @done(21-03-07 13:06)
             ✔ add frame time memory pool                                                       @done(21-03-07 13:10)
             ✔ add persistant memory pool                                                       @done(21-03-07 13:10)
-        ☐ add allocated fixed size array struct based on memory pool system
-        ☐ remove std::vector, std::string => use custom struct
+        ✔ add allocated fixed size array struct based on memory pool system                    @done(21-03-07 17:50)
+        ✔ remove std::optinal                                                                  @done(21-03-07 17:50)
+        ✔ remove all std::vector                                                               @done(21-03-08 22:08)
+        ✔ remove all std::string                                                               @done(21-03-08 22:08)
+        ✔ remove all std::set                                                                  @done(21-03-08 22:08)
+        ☐ add persistent memory pool for vulkan in renderer struct
+            will be use for allocated array with lifetime begins at renderer_init and ends
+            at renderer_release
+        ☐ add swap chain dedicated memory pool for vulkan in render struct
+            will be use for all allocated array that can destroy and re create during
+            swap chain clean / recreate processes.
+        ☐ add temp memory pool for vulkan in render struct
+            will be use for shader file loading for example and all function local variables
+        ☐ remove pool system from renderer_config
+        ☐ remove pool system from renderer vulkan functions parameters
+        ☐ use renderer._memory_pools instead of memory_pool_system
         ☐ design add sprite helper to easily add sprite (use sprite batch)
         ☐ design add primitive helper to easily add primitives (use primitive batch)
     ☐ gamepad management:

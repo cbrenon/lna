@@ -1,6 +1,7 @@
 #include <vulkan.h>
 #include "platform/windows/window_sdl.hpp"
 #include "core/assert.hpp"
+#include "core/memory_pool_system.hpp"
 
 namespace lna
 {
@@ -11,7 +12,7 @@ namespace lna
         )
     {
         LNA_ASSERT(window._sdl_window == nullptr);
-        LNA_ASSERT(window._extensions.size() == 0);
+        LNA_ASSERT(config.pool_system_ptr);
 
         {
             auto result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_TIMER);
@@ -39,16 +40,24 @@ namespace lna
             );
         LNA_ASSERT(window._sdl_window);
 
-        uint32_t extension_count = 0;
         {
-            auto result = SDL_Vulkan_GetInstanceExtensions(window._sdl_window, &extension_count, nullptr);
+            uint32_t extension_count = 0;
+            auto result = SDL_Vulkan_GetInstanceExtensions(
+                window._sdl_window,
+                &extension_count,
+                nullptr
+                );
             LNA_ASSERT(result == SDL_TRUE);
-            window._extensions.resize(extension_count);
-            result = SDL_Vulkan_GetInstanceExtensions(window._sdl_window, &extension_count, window._extensions.data());
+            heap_array_set_max_element_count(
+                window._extensions,
+                config.pool_system_ptr->pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+                extension_count + 1
+                );
+            result = SDL_Vulkan_GetInstanceExtensions(window._sdl_window, &extension_count, window._extensions._elements);
             LNA_ASSERT(result == SDL_TRUE);
             if (config.enable_validation_layers)
             {
-                window._extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+                window._extensions._elements[extension_count] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
             }
         }
     }
@@ -81,7 +90,7 @@ namespace lna
     }
 
     template<>
-    const std::vector<const char*>& window_extensions<window_sdl>(
+    const heap_array<const char*>& window_extensions<window_sdl>(
         const window_sdl& window
         )
     {
@@ -105,7 +114,6 @@ namespace lna
         {
             SDL_DestroyWindow(window._sdl_window);
             window._sdl_window = nullptr;
-            window._extensions.clear();
             window._width = 0;
             window._height = 0;
         }

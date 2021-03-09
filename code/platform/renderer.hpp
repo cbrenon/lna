@@ -1,10 +1,10 @@
 #ifndef _LNA_PLATFORM_RENDERER_HPP_
 #define _LNA_PLATFORM_RENDERER_HPP_
 
-#include <vector>
-
 namespace lna
 {
+    struct memory_pool_system;
+
     template<typename window_api>
     struct renderer_config
     {
@@ -18,6 +18,7 @@ namespace lna
         uint8_t                         engine_patch_ver            { 0         };
         bool                            enable_validation_layers    { true      };
         window_api*                     window_ptr                  { nullptr   };
+        memory_pool_system*             pool_system_ptr             { nullptr   };
     };
 
     template<typename renderer_api, typename window_api>

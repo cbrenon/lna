@@ -10,19 +10,18 @@
 #pragma warning(pop)
 #pragma clang diagnostic pop
 
-#include <vector>
 #include "platform/window.hpp"
 
 namespace lna
 {
     struct window_sdl
     {
-        SDL_Window*                 _sdl_window     { nullptr };
-        uint32_t                    _width          { 0 };
-        uint32_t                    _height         { 0 };
-        bool                        _fullscreen     { false };
-        int                         _display_index  { 0 };
-        std::vector<const char*>    _extensions;
+        SDL_Window*             _sdl_window     { nullptr };
+        uint32_t                _width          { 0 };
+        uint32_t                _height         { 0 };
+        bool                    _fullscreen     { false };
+        int                     _display_index  { 0 };
+        heap_array<const char*> _extensions;
     };
 
     template<>
@@ -47,7 +46,7 @@ namespace lna
         );
 
     template<>
-    const std::vector<const char*>& window_extensions<window_sdl>(
+    const heap_array<const char*>& window_extensions<window_sdl>(
         const window_sdl& window
         );
 

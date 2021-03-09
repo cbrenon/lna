@@ -55,8 +55,6 @@ void* lna::memory_pool_reserve(
 {
     LNA_ASSERT(pool._content);
     LNA_ASSERT((pool._content_cur_size + size) < pool._content_max_size);
-    LNA_ASSERT(pool._content_cur_size != 0);
-    LNA_ASSERT(pool._content_max_size != 0);
 
     size_t offset = pool._content_cur_size;
     pool._content_cur_size += size;
