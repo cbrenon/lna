@@ -15,7 +15,7 @@ namespace lna
         uint32_t            height                      { 1080      };
         bool                fullscreen                  { false     };
         bool                enable_validation_layers    { true      };
-        memory_pool_system* pool_system_ptr             { nullptr   };
+        memory_pool*        persistent_pool_ptr         { nullptr   };
     };
 
     template<typename window_api>

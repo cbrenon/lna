@@ -1,7 +1,7 @@
 #include <vulkan.h>
 #include "platform/windows/window_sdl.hpp"
 #include "core/assert.hpp"
-#include "core/memory_pool_system.hpp"
+#include "core/memory_pool.hpp"
 
 namespace lna
 {
@@ -12,7 +12,7 @@ namespace lna
         )
     {
         LNA_ASSERT(window._sdl_window == nullptr);
-        LNA_ASSERT(config.pool_system_ptr);
+        LNA_ASSERT(config.persistent_pool_ptr);
 
         {
             auto result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_TIMER);
@@ -50,7 +50,7 @@ namespace lna
             LNA_ASSERT(result == SDL_TRUE);
             heap_array_set_max_element_count(
                 window._extensions,
-                config.pool_system_ptr->pools[lna::memory_pool_system_id::PERSISTENT_LIFETIME],
+                *config.persistent_pool_ptr,
                 extension_count + 1
                 );
             result = SDL_Vulkan_GetInstanceExtensions(window._sdl_window, &extension_count, window._extensions._elements);

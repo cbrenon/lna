@@ -4,6 +4,7 @@
 #include <vulkan.h>
 #include "platform/renderer.hpp"
 #include "platform/windows/window_sdl.hpp"
+#include "core/memory_pool.hpp"
 
 namespace lna
 {
@@ -17,36 +18,55 @@ namespace lna
         VkSurfaceKHR                    _vulkan_surface                     { nullptr };
         VkQueue                         _vulkan_present_queue               { nullptr };
         VkSwapchainKHR                  _vulkan_swap_chain                  { nullptr };
-        heap_array<VkImage>             _vulkan_swap_chain_images;
         VkFormat                        _vulkan_swap_chain_image_format;
         VkExtent2D                      _vulkan_swap_chain_extent;
-        heap_array<VkImageView>         _vulkan_swap_chain_image_views;
         VkRenderPass                    _vulkan_render_pass                 { nullptr };
         VkPipeline                      _vulkan_graphics_pipeline           { nullptr };
         VkDescriptorSetLayout           _vulkan_descriptor_set_layout       { nullptr };
         VkPipelineLayout                _vulkan_pipeline_layout             { nullptr };
-        heap_array<VkFramebuffer>       _vulkan_swap_chain_framebuffers;
         VkCommandPool                   _vulkan_command_pool                { nullptr };
-        heap_array<VkCommandBuffer>     _vulkan_command_buffers;
-        heap_array<VkSemaphore>         _vulkan_image_available_semaphores;
-        heap_array<VkSemaphore>         _vulkan_render_finished_semaphores;
-        heap_array<VkFence>             _vulkan_in_flight_fences;
-        heap_array<VkFence>             _vulkan_images_in_flight_fences;
         size_t                          _curr_frame                         { 0 };
         VkBuffer                        _vulkan_vertex_buffer               { nullptr };
         VkDeviceMemory                  _vulkan_vertex_buffer_memory        { nullptr };
         VkBuffer                        _vulkan_index_buffer                { nullptr };
         VkDeviceMemory                  _vulkan_index_buffer_memory         { nullptr };
-        heap_array<VkBuffer>            _vulkan_uniform_buffers;
-        heap_array<VkDeviceMemory>      _vulkan_uniform_buffers_memory;
         VkDescriptorPool                _vulkan_descriptor_pool             { nullptr };
-        heap_array<VkDescriptorSet>     _vulkan_descriptor_sets;
         VkImage                         _vulkan_texture_image               { nullptr };
         VkDeviceMemory                  _vulkan_texture_image_memory        { nullptr };
         VkImageView                     _vulkan_texture_image_view          { nullptr };
         VkSampler                       _vulkan_texture_sampler             { nullptr };
 
-        memory_pool_system*             _pool_system_ptr                    { nullptr };
+        //! PERSISTENT MEMORY POOL
+        heap_array<VkSemaphore>         _vulkan_image_available_semaphores;
+        heap_array<VkSemaphore>         _vulkan_render_finished_semaphores;
+        heap_array<VkFence>             _vulkan_in_flight_fences;
+        heap_array<VkFence>             _vulkan_images_in_flight_fences;
+
+        //! SWAP CHAIN MEMORY POOL
+        heap_array<VkImage>             _vulkan_swap_chain_images;
+        heap_array<VkImageView>         _vulkan_swap_chain_image_views;
+        heap_array<VkFramebuffer>       _vulkan_swap_chain_framebuffers;
+        heap_array<VkCommandBuffer>     _vulkan_command_buffers;
+        heap_array<VkBuffer>            _vulkan_uniform_buffers;
+        heap_array<VkDeviceMemory>      _vulkan_uniform_buffers_memory;
+        heap_array<VkDescriptorSet>     _vulkan_descriptor_sets;
+
+        enum memory_pool_id
+        {
+            FRAME_LIFETIME_MEMORY_POOL,
+            PERSISTENT_LIFETIME_MEMORY_POOL,
+            SWAP_CHAIN_LIFETIME_MEMORY_POOL,
+            MEMORY_POOL_COUNT,
+        };
+
+        stack_array<memory_pool, MEMORY_POOL_COUNT> _memory_pools;
+    };
+
+    constexpr size_t MEMORY_POOL_SIZES[renderer_vulkan::MEMORY_POOL_COUNT] =
+    {
+        256, // SIZE IN MEGABYTES
+        256, // SIZE IN MEGABYTES
+        256, // SIZE IN MEGABYTES
     };
 
     template<>

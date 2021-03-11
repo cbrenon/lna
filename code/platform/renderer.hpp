@@ -18,7 +18,6 @@ namespace lna
         uint8_t                         engine_patch_ver            { 0         };
         bool                            enable_validation_layers    { true      };
         window_api*                     window_ptr                  { nullptr   };
-        memory_pool_system*             pool_system_ptr             { nullptr   };
     };
 
     template<typename renderer_api, typename window_api>

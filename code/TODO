@@ -1,51 +1,71 @@
 based framework part:
-    ✔ display a SDL window with "definitive" framework design                                  @done(21-02-24 19:37)
-    ✔ vulkan renderer                                                                          @done(21-03-06 12:54)
+    ✔ display a SDL window with "definitive" framework design                                      @done(21-02-24 19:37)
+    ✔ vulkan renderer                                                                              @done(21-03-06 12:54)
     ☐ code refacto:
-        ✔ during the refacto, remove all sub namespace to keep only lna namespace              @done(21-03-07 02:13)
-        ✔ during the refacto, remove all underscore prefix in functions parameters name        @done(21-03-07 03:05)
-        ✔ add vec2 struct                                                                      @done(21-03-06 17:04)
-        ✔ add vec4 struct                                                                      @done(21-03-06 17:04)
-        ✔ add mat4 struct and functions:                                                       @done(21-03-06 21:59)
-            ✔ identity                                                                         @done(21-03-06 18:50)
-            ✔ lookat                                                                           @done(21-03-06 21:58)
-            ✔ perspective                                                                      @done(21-03-06 21:59)
-            ✔ rotation x                                                                       @done(21-03-06 18:50)
-            ✔ rotation y                                                                       @done(21-03-06 18:50)
-            ✔ rotation z                                                                       @done(21-03-06 18:50)
-            ✔ scale                                                                            @done(21-03-06 18:52)
-            ✔ translation                                                                      @done(21-03-06 18:52)
-        ✔ move platform specific code in dedicated folders                                     @done(21-03-07 02:04)
-            ✔ renderer_vulkan in platform/windows                                              @done(21-03-06 22:13)
-            ✔ window_sdl in platform/windows                                                   @done(21-03-07 02:04)
-            ✔ input_sdl in platform/windows                                                    @done(21-03-07 02:04)
-            ✔ timer_std in platform/windows                                                    @done(21-03-07 02:04)
-        ✔ add C:\Work\Project\Game\lna\code\platform\windows\*.cpp in build_win64.bat          @done(21-03-07 02:04)
-        ✔ check vulkan error result                                                            @done(21-03-07 10:02)
-        ✔ add log system                                                                       @done(21-03-07 10:27)
-        ✔ remove all std::cout use log system instead                                          @done(21-03-07 10:28)
-        ✔ replace assert by custom assert macro                                                @done(21-03-07 11:03)
-        ✔ add memory pool system                                                               @done(21-03-07 13:06)
-            ✔ add frame time memory pool                                                       @done(21-03-07 13:10)
-            ✔ add persistant memory pool                                                       @done(21-03-07 13:10)
-        ✔ add allocated fixed size array struct based on memory pool system                    @done(21-03-07 17:50)
-        ✔ remove std::optinal                                                                  @done(21-03-07 17:50)
-        ✔ remove all std::vector                                                               @done(21-03-08 22:08)
-        ✔ remove all std::string                                                               @done(21-03-08 22:08)
-        ✔ remove all std::set                                                                  @done(21-03-08 22:08)
-        ☐ add persistent memory pool for vulkan in renderer struct
-            will be use for allocated array with lifetime begins at renderer_init and ends
-            at renderer_release
-        ☐ add swap chain dedicated memory pool for vulkan in render struct
-            will be use for all allocated array that can destroy and re create during
-            swap chain clean / recreate processes.
-        ☐ add temp memory pool for vulkan in render struct
-            will be use for shader file loading for example and all function local variables
-        ☐ remove pool system from renderer_config
-        ☐ remove pool system from renderer vulkan functions parameters
-        ☐ use renderer._memory_pools instead of memory_pool_system
-        ☐ design add sprite helper to easily add sprite (use sprite batch)
-        ☐ design add primitive helper to easily add primitives (use primitive batch)
+        ✔ during the refacto, remove all sub namespace to keep only lna namespace                  @done(21-03-07 02:13)
+        ✔ during the refacto, remove all underscore prefix in functions parameters name            @done(21-03-07 03:05)
+        ✔ add vec2 struct                                                                          @done(21-03-06 17:04)
+        ✔ add vec4 struct                                                                          @done(21-03-06 17:04)
+        ✔ add mat4 struct and functions:                                                           @done(21-03-06 21:59)
+            ✔ identity                                                                             @done(21-03-06 18:50)
+            ✔ lookat                                                                               @done(21-03-06 21:58)
+            ✔ perspective                                                                          @done(21-03-06 21:59)
+            ✔ rotation x                                                                           @done(21-03-06 18:50)
+            ✔ rotation y                                                                           @done(21-03-06 18:50)
+            ✔ rotation z                                                                           @done(21-03-06 18:50)
+            ✔ scale                                                                                @done(21-03-06 18:52)
+            ✔ translation                                                                          @done(21-03-06 18:52)
+        ✔ move platform specific code in dedicated folders                                         @done(21-03-07 02:04)
+            ✔ renderer_vulkan in platform/windows                                                  @done(21-03-06 22:13)
+            ✔ window_sdl in platform/windows                                                       @done(21-03-07 02:04)
+            ✔ input_sdl in platform/windows                                                        @done(21-03-07 02:04)
+            ✔ timer_std in platform/windows                                                        @done(21-03-07 02:04)
+        ✔ add C:\Work\Project\Game\lna\code\platform\windows\*.cpp in build_win64.bat              @done(21-03-07 02:04)
+        ✔ check vulkan error result                                                                @done(21-03-07 10:02)
+        ✔ add log system                                                                           @done(21-03-07 10:27)
+        ✔ remove all std::cout use log system instead                                              @done(21-03-07 10:28)
+        ✔ replace assert by custom assert macro                                                    @done(21-03-07 11:03)
+        ✔ add memory pool system                                                                   @done(21-03-07 13:06)
+            ✔ add frame time memory pool                                                           @done(21-03-07 13:10)
+            ✔ add persistant memory pool                                                           @done(21-03-07 13:10)
+        ✔ add allocated fixed size array struct based on memory pool system                        @done(21-03-07 17:50)
+        ✔ remove std::optinal                                                                      @done(21-03-07 17:50)
+        ✔ remove all std::vector                                                                   @done(21-03-08 22:08)
+        ✔ remove all std::string                                                                   @done(21-03-08 22:08)
+        ✔ remove all std::set                                                                      @done(21-03-08 22:08)
+        ✔ fix swap chain clean and recreate problem with heap_array:                               @done(21-03-10 19:58)
+            The problem is that we will recall heap_array_set_max_element_count each time we
+            recreate the swap chain. So we must dedicated a specific memory pool for all
+            array modified during the clean / recreate swap chain.
+            In a general way, it could be a good idea to have memory pool dedicated to all
+            vulkan stuff. Like this I will not have to pass the memory pool system. I will
+            remove the memory_pool_system files
+            ✔ add persistent memory pool for vulkan in renderer struct                             @done(21-03-10 19:49)
+                will be use for allocated array with lifetime begins at renderer_init and ends
+                at renderer_release
+            ✔ add swap chain dedicated memory pool for vulkan in render struct                     @done(21-03-10 19:49)
+                will be use for all allocated array that can destroy and re create during
+                swap chain clean / recreate processes.
+            ✔ add temp memory pool for vulkan in render struct                                     @done(21-03-10 19:49)
+                will be use for shader file loading for example and all function local variables
+            ✔ remove pool system from renderer_config                                              @done(21-03-10 19:49)
+            ✔ allocate vulkan dedicated memory pool in init function                               @done(21-03-10 19:58)
+            ✔ free vulkan dedicated memory pool in release function                                @done(21-03-10 19:58)
+            ✔ use renderer._memory_pools instead of memory_pool_system                             @done(21-03-10 19:58)
+            ✔ delete memory_pool_system.hpp/.cpp                                                   @done(21-03-10 19:49)
+        ✔ fix memory pool system delete compile failed by using persistent memory pool in config   @done(21-03-10 19:39)
+            ✔ remove pool system from window_config                                                @done(21-03-10 19:49)
+            ✔ add persistent memory pool pointer member in window_config                           @done(21-03-10 19:58)
+            ✔ create persistent memory pool in main.cpp                                            @done(21-03-10 19:58)
+                ✔ create                                                                           @done(21-03-10 19:58)
+                ✔ allocate                                                                         @done(21-03-10 19:58)
+                ✔ set window_config parameter                                                      @done(21-03-10 19:58)
+                ✔ free                                                                             @done(21-03-10 19:58)
+            ✔ use memory pool instead of memory pool system in window_sdl.cpp                      @done(21-03-10 19:49)
+                use by vulkan extensions array
+        ☐ design push sprite
+        ☐ design push primitive
+        ☐ design push debug text
     ☐ gamepad management:
         ☐ gamepad structure
         ☐ gamepad open
