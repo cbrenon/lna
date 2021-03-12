@@ -5,10 +5,14 @@ namespace lna
 {
     struct memory_pool
     {
-        size_t  _content_max_size   { 0 };
-        size_t  _content_cur_size   { 0 };
-        char*   _content            { nullptr };
+        size_t  content_max_size;
+        size_t  content_cur_size;
+        char*   content;
     };
+
+    void memory_pool_init(
+        memory_pool& pool
+        );
 
     void memory_pool_allocate_megabytes(
         memory_pool& pool,

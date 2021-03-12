@@ -64,6 +64,19 @@ based framework part:
             ✔ use memory pool instead of memory pool system in window_sdl.cpp                      @done(21-03-10 19:49)
                 use by vulkan extensions array
         ☐ design push sprite
+            ✔ move vkCmdBindDescriptorSets before vertex buffer and index buffer binding           @done(21-03-12 18:07)
+            ✔ move command buffer set code in draw function (will be updated each frame)           @done(21-03-12 18:08)
+            ☐ first step => be able to draw the texture with the vulkan_mesh code
+
+            we can begin with the following architecture =>
+            a sprite =>
+                a vertex buffer + device memory
+                an index buffer + device memory
+                a texture image + device memory
+                a texture image view
+                a texture sampler
+            This will be for dynamic sprite. For static sprite I can use push constant
+
         ☐ design push primitive
         ☐ design push debug text
     ☐ gamepad management:

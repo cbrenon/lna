@@ -10,25 +10,34 @@ namespace lna
     template<typename T>
     struct heap_array
     {
-        uint32_t    _element_count  { 0 };
-        T*          _elements       { nullptr };
-    }; 
+        uint32_t    element_count;
+        T*          elements;
+    };
+
+    template<typename T>
+    void heap_array_init(
+        heap_array<T>& array
+        )
+    {
+        array.element_count = 0;
+        array.elements      = nullptr;
+    }
 
     template<typename T>
     void heap_array_set_max_element_count(
         heap_array<T>& array,
         memory_pool& pool,
-        uint32_t element_count
+        uint32_t max_element_count
         )
     {
-        LNA_ASSERT(array._element_count == 0);
-        LNA_ASSERT(array._elements == nullptr);
+        LNA_ASSERT(array.element_count == 0);
+        LNA_ASSERT(array.elements == nullptr);
 
-        array._elements = (T*)memory_pool_reserve(
+        array.elements = (T*)memory_pool_reserve(
             pool,
-            element_count * sizeof(T)
+            max_element_count * sizeof(T)
             );
-        array._element_count = element_count;
+        array.element_count = max_element_count;
     }
 
     template<typename T>
@@ -37,12 +46,12 @@ namespace lna
         T& value
         )
     {
-        LNA_ASSERT(array._elements);
+        LNA_ASSERT(array.elements);
 
         // TODO: we will see later for optimization
-        for (uint32_t i = 0; i < array._element_count; ++i)
+        for (uint32_t i = 0; i < array.element_count; ++i)
         {
-            array._elements[i] = value;
+            array.elements[i] = value;
         }
     }
 
@@ -52,12 +61,12 @@ namespace lna
         nullptr_t value
         )
     {
-        LNA_ASSERT(array._elements);
+        LNA_ASSERT(array.elements);
 
         // TODO: we will see later for optimization
-        for (uint32_t i = 0; i < array._element_count; ++i)
+        for (uint32_t i = 0; i < array.element_count; ++i)
         {
-            array._elements[i] = value;
+            array.elements[i] = value;
         }
     }
 
@@ -66,16 +75,16 @@ namespace lna
         heap_array<T>& array
         )
     {
-        array._element_count    = 0;
-        array._elements         = nullptr;
+        array.element_count    = 0;
+        array.elements         = nullptr;
     }
 
-    template<typename T, uint32_t size>
-    struct stack_array
-    {
-        uint32_t    _element_count  { size };
-        T           _elements[size];
-    };
+    // template<typename T, uint32_t size>
+    // struct stack_array
+    // {
+    //     const uint32_t  element_count = size;
+    //     T               elements[size];
+    // };
 }
 
 #endif //_LNA_CORE_CONTAINER_HPP_

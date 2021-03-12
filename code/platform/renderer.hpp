@@ -8,20 +8,25 @@ namespace lna
     template<typename window_api>
     struct renderer_config
     {
-        const char*                     application_name            { nullptr   };
-        uint8_t                         application_major_ver       { 0         };
-        uint8_t                         application_minor_ver       { 0         };
-        uint8_t                         application_patch_ver       { 0         };
-        const char*                     engine_name                 { nullptr   };
-        uint8_t                         engine_major_ver            { 0         };
-        uint8_t                         engine_minor_ver            { 0         };
-        uint8_t                         engine_patch_ver            { 0         };
-        bool                            enable_validation_layers    { true      };
-        window_api*                     window_ptr                  { nullptr   };
+        const char* application_name;
+        uint8_t     application_major_ver;
+        uint8_t     application_minor_ver;
+        uint8_t     application_patch_ver;
+        const char* engine_name;
+        uint8_t     engine_major_ver;
+        uint8_t     engine_minor_ver;
+        uint8_t     engine_patch_ver;
+        bool        enable_validation_layers;
+        window_api* window_ptr;
     };
 
-    template<typename renderer_api, typename window_api>
+    template<typename renderer_api>
     void renderer_init(
+        renderer_api& renderer
+        );
+
+    template<typename renderer_api, typename window_api>
+    void renderer_configure(
         renderer_api& renderer,
         const renderer_config<window_api>& config
         );

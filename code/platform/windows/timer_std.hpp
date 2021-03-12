@@ -8,7 +8,7 @@ namespace lna
 {
     struct timer_std
     {
-        std::chrono::time_point<std::chrono::system_clock> _last_frame_time;
+        std::chrono::time_point<std::chrono::system_clock> last_frame_time;
     };
 
     template<>

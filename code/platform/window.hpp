@@ -20,6 +20,11 @@ namespace lna
 
     template<typename window_api>
     void window_init(
+        window_api& window
+        );
+
+    template<typename window_api>
+    void window_configure(
         window_api& window,
         const window_config& config
         );

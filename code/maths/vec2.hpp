@@ -5,8 +5,8 @@ namespace lna
 {
     struct vec2
     {
-        float x { 0.0f };
-        float y { 0.0f };
+        float x;
+        float y;
     };
 }
 

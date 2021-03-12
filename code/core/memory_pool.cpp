@@ -14,16 +14,25 @@ namespace
         size_t size
         )
     {
-        LNA_ASSERT(pool._content == nullptr);
-        LNA_ASSERT(pool._content_cur_size == 0);
-        LNA_ASSERT(pool._content_max_size == 0);
+        LNA_ASSERT(pool.content == nullptr);
+        LNA_ASSERT(pool.content_cur_size == 0);
+        LNA_ASSERT(pool.content_max_size == 0);
         LNA_ASSERT(size > 0);
 
-        pool._content_max_size = size;
+        pool.content_max_size = size;
         //TODO: is it more accurate to use VirtualAlloc instead of malloc. doc=> https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc
-        pool._content = (char*)malloc(size);
-        LNA_ASSERT(pool._content);
+        pool.content = (char*)malloc(size);
+        LNA_ASSERT(pool.content);
     }
+}
+
+void lna::memory_pool_init(
+    lna::memory_pool& pool
+    )
+{
+    pool.content            = nullptr;
+    pool.content_cur_size   = 0;
+    pool.content_max_size   = 0;
 }
 
 void lna::memory_pool_allocate_megabytes(
@@ -53,30 +62,28 @@ void* lna::memory_pool_reserve(
     size_t size
     )
 {
-    LNA_ASSERT(pool._content);
-    LNA_ASSERT((pool._content_cur_size + size) < pool._content_max_size);
+    LNA_ASSERT(pool.content);
+    LNA_ASSERT((pool.content_cur_size + size) < pool.content_max_size);
 
-    size_t offset = pool._content_cur_size;
-    pool._content_cur_size += size;
-    return (void*)(pool._content + offset);
+    size_t offset = pool.content_cur_size;
+    pool.content_cur_size += size;
+    return (void*)(pool.content + offset);
 }
 
 void lna::memory_pool_empty(
     lna::memory_pool& pool
     )
 {
-    pool._content_cur_size = 0;
+    pool.content_cur_size = 0;
 }
     
 void lna::memory_pool_free(
     lna::memory_pool& pool
     )
 {
-    if (pool._content)
+    if (pool.content)
     {
-        free(pool._content);
-        pool._content = nullptr;
-        pool._content_cur_size = 0;
-        pool._content_max_size = 0;
+        free(pool.content);
     }
+    lna::memory_pool_init(pool);
 }

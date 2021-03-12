@@ -1,5 +1,5 @@
 #include <cstdint>
-#include "platform/windows/input_sdl.hpp"
+#include "platform/sdl/sdl_input.hpp"
 
 namespace
 {
@@ -12,8 +12,8 @@ namespace
 namespace lna
 {
     template<>
-    input_event input_poll_events<input_sdl>(
-        input_sdl& input
+    input_event input_poll_events<sdl_input>(
+        sdl_input& input
         )
     {
         input_event result = input_event::NONE;
@@ -22,7 +22,7 @@ namespace lna
         const Uint8* keystate = SDL_GetKeyboardState(NULL);
         for (uint32_t i = 0; i < SDL_NUM_SCANCODES; ++i)
         {
-            input._curr_frame_keyboard_state[i] = keystate[i];
+            input.curr_frame_keyboard_state[i] = keystate[i];
         }
         SDL_JoystickEventState(SDL_DISABLE);
         while (SDL_PollEvent(&sdl_event))
@@ -56,12 +56,11 @@ namespace lna
     }
 
     template<>
-    bool input_is_key_pressed<input_sdl>(
-        input_sdl& input,
+    bool input_is_key_pressed<sdl_input>(
+        sdl_input& input,
         key k
         )
     {
-        uint16_t key_index = SDL_KEYBOARD_MAPPING[static_cast<size_t>(k)];
-        return input._curr_frame_keyboard_state[key_index] == 1;
+        return input.curr_frame_keyboard_state[SDL_KEYBOARD_MAPPING[static_cast<size_t>(k)]] == 1;
     }
 }
