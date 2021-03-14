@@ -63,22 +63,45 @@ based framework part:
                 ✔ free                                                                             @done(21-03-10 19:58)
             ✔ use memory pool instead of memory pool system in window_sdl.cpp                      @done(21-03-10 19:49)
                 use by vulkan extensions array
-        ☐ design push sprite
-            ✔ move vkCmdBindDescriptorSets before vertex buffer and index buffer binding           @done(21-03-12 18:07)
-            ✔ move command buffer set code in draw function (will be updated each frame)           @done(21-03-12 18:08)
-            ☐ first step => be able to draw the texture with the vulkan_mesh code
-
+        ☐ @critical design push sprite
             we can begin with the following architecture =>
             a sprite =>
                 a vertex buffer + device memory
                 an index buffer + device memory
+                a texture
+            a texture
                 a texture image + device memory
                 a texture image view
                 a texture sampler
-            This will be for dynamic sprite. For static sprite I can use push constant
-
-        ☐ design push primitive
-        ☐ design push debug text
+            For the moment I will use push constant and rebuild the command buffer each frame.
+            We will see later if we need optimizations.
+            ✔ step 0 => move vkCmdBindDescriptorSets before vertex buffer and index buffer binding @done(21-03-12 18:07)
+            ✔ step 0 => move command buffer set code in draw function (will be updated each frame) @done(21-03-12 18:08)
+            ☐ step 1 => be able to draw the texture with the vulkan_mesh and vulkan_texture code
+                ✔ create vertex struct                                                             @done(21-03-14 12:42)
+                ✔ create vulkan_mesh struct                                                        @done(21-03-14 12:43)
+                ✔ add mesh create buffer function                                                  @done(21-03-14 12:41)
+                ✔ texture struct                                                                   @done(21-03-14 12:49)
+                    ✔ load texture from file function                                              @done(21-03-14 12:49)
+                ☐ mesh struct in graphics folder
+                ☐ mesh instance struct in game folder
+                    with mesh and vec2 for position members
+                ☐ vulkan_texture struct
+                    ☐ create texture function
+                ☐ use vulkan mesh / vulkan_texture / mesh instance to display the existed sprite
+            ☐ step 2 => add push constant management
+            ☐ step 3 => check for multiple meshes
+            ☐ step 4 => manage vec3 as position
+                ☐ update vertex struct
+                ☐ update vertex shader
+                ☐ update vertex attribute description
+                ☐ update VERTICES temp static variable
+            ☐ step 5 => create wrapper function to create sprite quickly
+            ☐ step 6 => clean
+                ☐ remove VERTICES and INDICES static variable in vulkan_renderer.cpp
+                ☐ quick check for code consistency
+        ☐ @high  design push primitive
+        ☐ @low design push debug text
     ☐ gamepad management:
         ☐ gamepad structure
         ☐ gamepad open

@@ -16,6 +16,13 @@ namespace lna
     void vulkan_texture_init(
         vulkan_texture& texture
         );
+
+    void vulkan_texture_create(
+        vulkan_texture& texture,
+        const char* filename,
+        VkDevice device,
+        VkPhysicalDevice physical_device
+        );
 }
 
 #endif // _LNA_PLATFORM_VULKAN_VULKAN_TEXTURE_HPP_
