@@ -7,21 +7,33 @@ namespace lna
 {
     struct vulkan_texture
     {
-        VkImage         image;
-        VkDeviceMemory  image_memory;
-        VkImageView     image_view;
-        VkSampler       sampler;
+        VkImage             image;
+        VkDeviceMemory      image_memory;
+        VkImageView         image_view;
+        VkSampler           sampler;
+    };
+
+    struct vulkan_texture_config_info
+    {
+        const char*         filename;
+        VkDevice            device;
+        VkPhysicalDevice    physical_device;
+        VkCommandPool       command_pool;
+        VkQueue             graphics_queue;
     };
 
     void vulkan_texture_init(
-        vulkan_texture& texture
+        vulkan_texture& vk_texture
         );
 
-    void vulkan_texture_create(
-        vulkan_texture& texture,
-        const char* filename,
-        VkDevice device,
-        VkPhysicalDevice physical_device
+    void vulkan_texture_configure(
+        vulkan_texture& vk_texture,
+        vulkan_texture_config_info& config
+        );
+    
+    void vulkan_texture_release(
+        vulkan_texture& vk_texture,
+        VkDevice device
         );
 }
 

@@ -36,6 +36,9 @@ void lna::texture_load_from_file(
         STBI_rgb_alpha
         );
     LNA_ASSERT(tex.pixels);
+    tex.width       = static_cast<uint32_t>(texture_width);
+    tex.height      = static_cast<uint32_t>(texture_height);
+    tex.channels    = static_cast<uint32_t>(texture_channels);
 }
 
 void lna::texture_free_pixels(

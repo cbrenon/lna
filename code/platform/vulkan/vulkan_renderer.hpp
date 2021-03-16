@@ -5,7 +5,8 @@
 #include "platform/renderer.hpp"
 #include "platform/sdl/sdl_window.hpp"
 #include "core/memory_pool.hpp"
-
+#include "platform/vulkan/vulkan_mesh.hpp"
+#include "platform/vulkan/vulkan_texture.hpp"
 namespace lna
 {
     struct vulkan_renderer
@@ -22,19 +23,26 @@ namespace lna
         VkExtent2D                      swap_chain_extent;
         VkRenderPass                    render_pass;
         VkPipeline                      graphics_pipeline;
-        VkDescriptorSetLayout           descriptor_set_layout;
         VkPipelineLayout                pipeline_layout;
         VkCommandPool                   command_pool;
         size_t                          curr_frame;
-        VkBuffer                        vertex_buffer;
-        VkDeviceMemory                  vertex_buffer_memory;
-        VkBuffer                        index_buffer;
-        VkDeviceMemory                  index_buffer_memory;
+        // VkBuffer                        vertex_buffer;
+        // VkDeviceMemory                  vertex_buffer_memory;
+        // VkBuffer                        index_buffer;
+        // VkDeviceMemory                  index_buffer_memory;
+
+        // TODO: to remove after test validation
+        vulkan_texture                  vk_texture;
+        vulkan_mesh                     vk_mesh;
+
+        // TODO: for the moment we only manage textured mesh but in the futur we will have to manage just colored primitive. So we will have to create specific descriptor_set_layout and descriptor pool for them.
+        VkDescriptorSetLayout           descriptor_set_layout;
         VkDescriptorPool                descriptor_pool;
-        VkImage                         texture_image;
-        VkDeviceMemory                  texture_image_memory;
-        VkImageView                     texture_image_view;
-        VkSampler                       texture_sampler;
+
+        // VkImage                         texture_image;
+        // VkDeviceMemory                  texture_image_memory;
+        // VkImageView                     texture_image_view;
+        // VkSampler                       texture_sampler;
 
         //! PERSISTENT MEMORY POOL
         heap_array<VkSemaphore>         image_available_semaphores;
@@ -47,9 +55,9 @@ namespace lna
         heap_array<VkImageView>         swap_chain_image_views;
         heap_array<VkFramebuffer>       swap_chain_framebuffers;
         heap_array<VkCommandBuffer>     command_buffers;
-        heap_array<VkBuffer>            uniform_buffers;
-        heap_array<VkDeviceMemory>      uniform_buffers_memory;
-        heap_array<VkDescriptorSet>     descriptor_sets;
+        // heap_array<VkBuffer>            uniform_buffers;
+        // heap_array<VkDeviceMemory>      uniform_buffers_memory;
+        // heap_array<VkDescriptorSet>     descriptor_sets;
 
         enum memory_pool_id
         {

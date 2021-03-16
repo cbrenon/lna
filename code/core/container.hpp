@@ -79,6 +79,14 @@ namespace lna
         array.elements         = nullptr;
     }
 
+    template<typename T>
+    bool heap_array_has_been_reset(
+        heap_array<T>& array
+        )
+    {
+        return array.element_count == 0 && array.elements == nullptr;
+    }
+
     // template<typename T, uint32_t size>
     // struct stack_array
     // {

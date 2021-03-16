@@ -2,6 +2,8 @@
 #define _LNA_PLATFORM_VULKAN_VULKAN_HELPERS_HPP_
 
 #include <vulkan.h>
+#include "core/log.hpp"
+#include "core/assert.hpp"
 
 #define VULKAN_CHECK_RESULT(func)                                                       \
     {                                                                                   \
@@ -35,6 +37,66 @@ namespace lna
             VkMemoryPropertyFlags properties,
             VkBuffer& buffer,
             VkDeviceMemory& buffer_memory
+            );
+
+        void create_image(
+            VkDevice device,
+            VkPhysicalDevice physical_device,
+            uint32_t width,
+            uint32_t height,
+            VkFormat format,
+            VkImageTiling tiling,
+            VkImageUsageFlags usage,
+            VkMemoryPropertyFlags properties,
+            VkImage& image,
+            VkDeviceMemory& image_memory
+            );
+
+        VkImageView create_image_view(
+            VkDevice device,
+            VkImage image,
+            VkFormat format
+            );
+
+        VkCommandBuffer begin_single_time_commands(
+            VkDevice device,
+            VkCommandPool command_pool
+            );
+
+        void end_single_time_commands(
+            VkDevice device,
+            VkCommandPool command_pool,
+            VkCommandBuffer command_buffer,
+            VkQueue graphics_queue
+            );
+
+        void transition_image_layout(
+            VkDevice device,
+            VkCommandPool command_pool,
+            VkQueue graphics_queue,
+            VkImage image,
+            VkFormat format,
+            VkImageLayout old_layout,
+            VkImageLayout new_layout
+            );
+
+        void copy_buffer_to_image(
+            VkDevice device,
+            VkCommandPool command_pool,
+            VkBuffer buffer,
+            VkQueue graphics_queue,
+            VkImage image,
+            uint32_t width,
+            uint32_t height
+            );
+
+        void copy_buffer(
+            VkDevice device,
+            VkCommandPool command_pool,
+            VkQueue graphics_queue,
+            VkBuffer src,
+            VkBuffer dst,
+            VkDeviceSize size
             );
     }
 }

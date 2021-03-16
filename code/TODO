@@ -63,7 +63,7 @@ based framework part:
                 ✔ free                                                                             @done(21-03-10 19:58)
             ✔ use memory pool instead of memory pool system in window_sdl.cpp                      @done(21-03-10 19:49)
                 use by vulkan extensions array
-        ☐ @critical design push sprite
+        ☐ design push sprite
             we can begin with the following architecture =>
             a sprite =>
                 a vertex buffer + device memory
@@ -77,31 +77,53 @@ based framework part:
             We will see later if we need optimizations.
             ✔ step 0 => move vkCmdBindDescriptorSets before vertex buffer and index buffer binding @done(21-03-12 18:07)
             ✔ step 0 => move command buffer set code in draw function (will be updated each frame) @done(21-03-12 18:08)
-            ☐ step 1 => be able to draw the texture with the vulkan_mesh and vulkan_texture code
+            ✔ step 1 => be able to draw the texture with the vulkan_mesh and vulkan_texture code:  @done(21-03-16 18:03)
                 ✔ create vertex struct                                                             @done(21-03-14 12:42)
                 ✔ create vulkan_mesh struct                                                        @done(21-03-14 12:43)
                 ✔ add mesh create buffer function                                                  @done(21-03-14 12:41)
                 ✔ texture struct                                                                   @done(21-03-14 12:49)
                     ✔ load texture from file function                                              @done(21-03-14 12:49)
-                ☐ mesh struct in graphics folder
-                ☐ mesh instance struct in game folder
-                    with mesh and vec2 for position members
-                ☐ vulkan_texture struct
-                    ☐ create texture function
-                ☐ use vulkan mesh / vulkan_texture / mesh instance to display the existed sprite
-            ☐ step 2 => add push constant management
-            ☐ step 3 => check for multiple meshes
-            ☐ step 4 => manage vec3 as position
+                ✔ vulkan_texture struct                                                            @done(21-03-15 19:58)
+                    ✔ struct                                                                       @done(21-03-15 16:44)
+                    ✔ create texture function                                                      @done(21-03-15 19:58)
+                    ✔ release texture function                                                     @done(21-03-15 19:58)
+                    ✔ create vulkan_texture_config struct                                          @done(21-03-16 10:36)
+                    ✔ rename vulkan_texture_create to vulkan_texture_configure                     @done(21-03-16 10:36)
+                ✔ add uniform to vulkan_mesh:                                                      @done(21-03-16 14:23)
+                    ✔ add uniform and uniform memory member                                        @done(21-03-16 10:45)
+                    ✔ create uniform when create mesh                                              @done(21-03-16 10:45)
+                    ✔ split code to be able to recreate uniform buffer after swap chain clean      @done(21-03-16 14:23)
+                    ✔ add update uniform buffer function                                           @done(21-03-16 14:23)
+                ✔ add descriptor sets to vulkan_mesh:                                              @done(21-03-16 14:23)
+                    example here =>
+                    https://github.com/SaschaWillems/Vulkan/blob/master/examples/descriptorsets/descriptorsets.cpp
+                    ✔ add descriptor set member                                                    @done(21-03-16 10:45)
+                    ✔ create descriptor set when create mesh                                       @done(21-03-16 13:04)
+                    ✔ split code to be able to recreate descriptor set after swap chain clean      @done(21-03-16 14:23)
+                ✔ validate changes                                                                 @done(21-03-16 18:03)
+                    ✔ add temp vulkan_texture member to vulkan renderer                            @done(21-03-16 15:03)
+                    ✔ add temp vulkan_mesh member to vulkan renderer                               @done(21-03-16 15:03)
+                    ✔ call to vulkan_texture_configure                                             @done(21-03-16 18:02)
+                    ✔ call to vulkan_mesh_configure                                                @done(21-03-16 18:02)
+                    ✔ call to vulkan_texture_release                                               @done(21-03-16 18:02)
+                    ✔ call to vulkan_mesh_release                                                  @done(21-03-16 18:02)
+                    ✔ use vulkan_texture and vulkan_mesh when needed in vulkan renderer            @done(21-03-16 18:02)
+                        for this just to check for compile error as we removed direct texture and vertex buffer in vulkan_renderer
+            ☐ step 2 => check for multiple meshes
+            ☐ step 3 => manage vec3 as position:
                 ☐ update vertex struct
                 ☐ update vertex shader
                 ☐ update vertex attribute description
                 ☐ update VERTICES temp static variable
-            ☐ step 5 => create wrapper function to create sprite quickly
-            ☐ step 6 => clean
+            ☐ step 4 => create wrapper function to create sprite quickly
+            ☐ step 5 => clean:
                 ☐ remove VERTICES and INDICES static variable in vulkan_renderer.cpp
                 ☐ quick check for code consistency
-        ☐ @high  design push primitive
-        ☐ @low design push debug text
+                ☐ remove commented code in vulkan_renderer.hpp/.cpp
+                ☐ remove container.hpp/.cpp => remove heap_array from my code
+                ☐ passing code in full C ? (to discuss) => continue to use heap_array ?
+        ☐ design push primitive
+        ☐ design push debug text
     ☐ gamepad management:
         ☐ gamepad structure
         ☐ gamepad open
