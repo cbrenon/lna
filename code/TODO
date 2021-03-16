@@ -109,14 +109,28 @@ based framework part:
                     ✔ call to vulkan_mesh_release                                                  @done(21-03-16 18:02)
                     ✔ use vulkan_texture and vulkan_mesh when needed in vulkan renderer            @done(21-03-16 18:02)
                         for this just to check for compile error as we removed direct texture and vertex buffer in vulkan_renderer
-            ☐ step 2 => check for multiple meshes
-            ☐ step 3 => manage vec3 as position:
+            ☐ step 2 => be able to specify mesh position
+                ☐ add MVP matrices to vulkan_mesh_update_uniform_buffer_info struct
+                ☐ modify vulkan_mesh_upate_uniform_buffer to use the MVP matrices
+                ☐ add vec3 position for vk_mesh in vulkan_renderer (TEMP)
+                ☐ build MVP matrices
+                    before vulkan_mesh_upate_uniform_buffer call in renderer_draw_frame (TEMP)
+                ☐ pass MVP built matrices to vulkan_mesh_update_uniform_buffer_info struct
+                    in renderer_draw_frame
+            ☐ step 3 => check for multiple meshes
+                ☐ replace vulkan_renderer vk_mesh by array of vulkan_mesh
+                ☐ replace vulkan_renderer mesh_position by array of vec3
+                ☐ use loop to create vertex/index/uniform/descriptor
+                ☐ use loop to clean uniform/descriptor
+                ☐ use loop to release vertex/index/uniform/descriptor
+                ☐ use loop to update render pass
+            ☐ step 4 => manage vec3 as position:
                 ☐ update vertex struct
                 ☐ update vertex shader
                 ☐ update vertex attribute description
                 ☐ update VERTICES temp static variable
-            ☐ step 4 => create wrapper function to create sprite quickly
-            ☐ step 5 => clean:
+            ☐ step 5 => create wrapper function to create sprite quickly
+            ☐ step 6 => clean:
                 ☐ remove VERTICES and INDICES static variable in vulkan_renderer.cpp
                 ☐ quick check for code consistency
                 ☐ remove commented code in vulkan_renderer.hpp/.cpp
