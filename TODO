@@ -117,7 +117,7 @@ based framework:
                     before vulkan_mesh_upate_uniform_buffer call in renderer_draw_frame (TEMP)
                 ✔ pass MVP built matrices to vulkan_mesh_update_uniform_buffer_info struct         @done(21-03-16 18:58)
                     in renderer_draw_frame
-            ☐ step 3 => check for multiple meshes
+            ✔ step 3 => check for multiple meshes                                                  @done(21-03-16 23:13)
                 ✔ create vulkan_graphics_object struct                                             @done(21-03-16 22:19)
                     ✔ vulkan_mesh                                                                  @done(21-03-16 22:19)
                     ✔ vec3 position                                                                @done(21-03-16 22:19)
@@ -132,7 +132,12 @@ based framework:
                 ✔ update vertex attribute description                                              @done(21-03-16 22:51)
                 ✔ update VERTICES temp static variable                                             @done(21-03-16 22:52)
                 ✔ check if I broke something...                                                    @done(21-03-16 22:53)
-            ☐ step 5 => create wrapper function to create sprite quickly
+            ☐ step 5 => create wrapper function to create mesh quickly
+
+                @critical SEE IF I WANT TO HAVE MESH OR SPRITE IN RENDERER
+                DOES THE RENDERER MUST KNOW SPRITE SPECIFICITY OR MANAGE ALL MESH THE SAME WAY?
+                I MUST THINK ABOUT IT AND UPDATE THE TODO FOLLOWING MY INVESTIGATION!
+
                 for the moment the coordinate system is not intuive as we must deal with vulkan right hand NDC space.
                 Vertex in static const VERTICES begin in 0.5 so we use the center of the rect as origin, we will
                 certainly prefer having the left side as x origin. For y I can use the top side of the rect for 2D rendering.
@@ -146,13 +151,13 @@ based framework:
                 ☐ function renderer_push_texture
                     parameters => renderer, renderer_texture_config
                     return => renderer_texture_handle
-                ☐ function renderer_set_max_sprite_count
+                ☐ function renderer_set_max_mesh_count
                     parameters => renderer, max_sprite_count
-                ☐ renderer_sprite_config struct
+                ☐ renderer_mesh_config struct
                     parameters =>
-                ☐ uint32_t typedef renderer_sprite_handle
+                ☐ uint32_t typedef renderer_mesh_handle
                 ☐ rename VERTICES and INDICES to DEFAULT_RECT_VERTICES and DEFAULT_RECT_INDICES
-                ☐ function renderer_push_sprite
+                ☐ function renderer_push_mesh
                     parameters => renderer, renderer_sprite_config
                     return => renderer_sprite_handle
                     this function will use our current vulkan_graphics_object array for the moment
@@ -165,8 +170,8 @@ based framework:
                 ☐ remove commented code in vulkan_renderer.hpp/.cpp
                 ☐ check for include problem => use forward declaration if possible, remove unncessary include
                 ☐ remove container.hpp/.cpp => remove heap_array from my code
-        ☐ design push primitive
-        ☐ design push debug text
+                ☐ move default shaders from lna_framework_text to lna
+                ☐ check for regression!
     ☐ gamepad management:
         ☐ gamepad structure
         ☐ gamepad open
