@@ -34,6 +34,7 @@ namespace lna
         // TODO: to remove after test validation
         vulkan_texture                  vk_texture;
         vulkan_mesh                     vk_mesh;
+        vec3                            vk_mesh_position;
 
         // TODO: for the moment we only manage textured mesh but in the futur we will have to manage just colored primitive. So we will have to create specific descriptor_set_layout and descriptor pool for them.
         VkDescriptorSetLayout           descriptor_set_layout;

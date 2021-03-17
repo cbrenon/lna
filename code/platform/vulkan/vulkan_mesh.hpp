@@ -66,11 +66,9 @@ namespace lna
     {
         VkDevice                    device;
         uint32_t                    image_index;
-        VkExtent2D                  swap_chain_extent; // TODO: to remove 
-
-        // TODO: add model matrix pointer
-        // TODO: add view matrix pointer
-        // TODO: add projection matrix pointer
+        lna::mat4*                  model_matrix_ptr;
+        lna::mat4*                  view_matrix_ptr;
+        lna::mat4*                  projection_matrix_ptr;
     };
 
     void vulkan_mesh_init(

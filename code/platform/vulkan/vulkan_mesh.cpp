@@ -220,43 +220,15 @@ void lna::vulkan_mesh_upate_uniform_buffer(
     LNA_ASSERT(mesh.uniform_buffers_memory.elements);
     LNA_ASSERT(config.device);
     LNA_ASSERT(config.image_index < mesh.uniform_buffers_memory.element_count);
-    // TODO: to uncomment when config will contain mvp matrices pointers
-    //LNA_ASSERT(config.model_ptr);
-    //LNA_ASSERT(config.view_ptr);
-    //LNA_ASSERT(config.projection_ptr);
+    LNA_ASSERT(config.model_matrix_ptr);
+    LNA_ASSERT(config.view_matrix_ptr);
+    LNA_ASSERT(config.projection_matrix_ptr);
 
     vulkan_uniform_buffer_object ubo{};
 
-
-    // TODO: to remove when config will contain mvp matrices pointers
-    const lna::vec3 eye     = { 0.0f, 0.0f, 2.0f };
-    const lna::vec3 target  = { 0.0f, 0.0f, 0.0f };
-    const lna::vec3 up      = { 0.0f, -1.0f, 0.0f };
-    const float     fov     = 45.0f;
-    const float     aspect  = static_cast<float>(config.swap_chain_extent.width) / static_cast<float>(config.swap_chain_extent.height);
-    const float     near    = 1.0f;
-    const float     far     = 10.0f;
-    lna::mat4_identity(
-        ubo.model
-        );
-    lna::mat4_loot_at(
-        ubo.view,
-        eye,
-        target,
-        up
-        );
-    lna::mat4_perspective(
-        ubo.projection,
-        fov,
-        aspect,
-        near,
-        far
-        );
-
-    // TODO: to uncomment when config will contain mvp matrices pointers
-    // ubo.model        = *config->model_ptr;
-    // ubo.view         = *config->view_ptr;
-    // ubo.projection   = *config->projection_ptr;
+    ubo.model       = *config.model_matrix_ptr;
+    ubo.view        = *config.view_matrix_ptr;
+    ubo.projection  = *config.projection_matrix_ptr;
 
     void* data;
     VULKAN_CHECK_RESULT(

@@ -2166,6 +2166,7 @@ namespace lna
         // vulkan_create_index_buffer(renderer);
         // vulkan_create_uniform_buffers(renderer);
         // vulkan_create_descriptor_sets(renderer);
+        renderer.vk_mesh_position               = { -0.5f, -0.5f, 0.0f };
         vulkan_mesh_create_vertex_and_index_info vertex_and_index_info{};
         vertex_and_index_info.device = renderer.device;
         vertex_and_index_info.physical_device   = renderer.physical_device;
@@ -2284,10 +2285,47 @@ namespace lna
         //     renderer,
         //     image_index
         //     );
+
+        // TODO: (TEMP CODE) to remove when we will have a "camera system" and a "graphics object system"
+        const vec3  eye     = { 0.0f, 0.0f, 2.0f };
+        const vec3  target  = { 0.0f, 0.0f, 0.0f };
+        const vec3  up      = { 0.0f, -1.0f, 0.0f };
+        const float fov     = 45.0f;
+        const float aspect  = static_cast<float>(renderer.swap_chain_extent.width) / static_cast<float>(renderer.swap_chain_extent.height);
+        const float near    = 1.0f;
+        const float far     = 10.0f;
+        mat4        model;
+        mat4        view;
+        mat4        projection;
+        lna::mat4_translation(
+            model,
+            renderer.vk_mesh_position.x,
+            renderer.vk_mesh_position.y,
+            renderer.vk_mesh_position.z
+            );
+        lna::mat4_loot_at(
+            view,
+            eye,
+            target,
+            up
+            );
+        lna::mat4_perspective(
+            projection,
+            fov,
+            aspect,
+            near,
+            far
+            );
+        // END TEMP CODE
+
         vulkan_mesh_update_uniform_buffer_info update_uniform_buffer_info{};
-        update_uniform_buffer_info.device               = renderer.device;
-        update_uniform_buffer_info.image_index          = image_index;
-        update_uniform_buffer_info.swap_chain_extent    = renderer.swap_chain_extent;
+        update_uniform_buffer_info.device                   = renderer.device;
+        update_uniform_buffer_info.image_index              = image_index;
+        update_uniform_buffer_info.model_matrix_ptr         = &model;
+        update_uniform_buffer_info.view_matrix_ptr          = &view;
+        update_uniform_buffer_info.projection_matrix_ptr    = &projection;
+
+
         vulkan_mesh_upate_uniform_buffer(
             renderer.vk_mesh,
             update_uniform_buffer_info

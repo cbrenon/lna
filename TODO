@@ -109,13 +109,13 @@ based framework part:
                     ✔ call to vulkan_mesh_release                                                  @done(21-03-16 18:02)
                     ✔ use vulkan_texture and vulkan_mesh when needed in vulkan renderer            @done(21-03-16 18:02)
                         for this just to check for compile error as we removed direct texture and vertex buffer in vulkan_renderer
-            ☐ step 2 => be able to specify mesh position
-                ☐ add MVP matrices to vulkan_mesh_update_uniform_buffer_info struct
-                ☐ modify vulkan_mesh_upate_uniform_buffer to use the MVP matrices
-                ☐ add vec3 position for vk_mesh in vulkan_renderer (TEMP)
-                ☐ build MVP matrices
+            ✔ step 2 => be able to specify mesh position                                           @done(21-03-16 18:58)
+                ✔ add MVP matrices to vulkan_mesh_update_uniform_buffer_info struct                @done(21-03-16 18:58)
+                ✔ modify vulkan_mesh_upate_uniform_buffer to use the MVP matrices                  @done(21-03-16 18:58)
+                ✔ add vec3 position for vk_mesh in vulkan_renderer (TEMP)                          @done(21-03-16 18:58)
+                ✔ build MVP matrices                                                               @done(21-03-16 18:58)
                     before vulkan_mesh_upate_uniform_buffer call in renderer_draw_frame (TEMP)
-                ☐ pass MVP built matrices to vulkan_mesh_update_uniform_buffer_info struct
+                ✔ pass MVP built matrices to vulkan_mesh_update_uniform_buffer_info struct         @done(21-03-16 18:58)
                     in renderer_draw_frame
             ☐ step 3 => check for multiple meshes
                 ☐ replace vulkan_renderer vk_mesh by array of vulkan_mesh
