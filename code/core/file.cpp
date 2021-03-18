@@ -5,14 +5,6 @@
 
 namespace lna
 {
-    void file_init(
-        file& f
-        )
-    {
-        f.content       = nullptr;
-        f.content_size  = 0;
-    }
-
     void file_debug_load(
         file& f,
         const char* filename,

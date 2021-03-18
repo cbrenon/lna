@@ -1,7 +1,5 @@
-#ifndef _NLA_PLATFORM_WINDOW_HPP_
-#define _NLA_PLATFORM_WINDOW_HPP_
-
-#include <cstdint>
+#ifndef _LNA_PLATFORM_WINDOW_HPP_
+#define _LNA_PLATFORM_WINDOW_HPP_
 
 namespace lna
 {
@@ -24,6 +22,10 @@ namespace lna
     };
 
     struct window_api;
+
+    void window_init(
+        window_api& window
+        );
 
     void window_configure(
         window_api& window,
@@ -51,4 +53,4 @@ namespace lna
         );
 }
 
-#endif // _NLA_PLATFORM_WINDOW_HPP_
+#endif // _LNA_PLATFORM_WINDOW_HPP_

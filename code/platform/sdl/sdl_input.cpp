@@ -1,4 +1,3 @@
-#include <cstdint>
 #include "platform/sdl/sdl_input.hpp"
 
 namespace

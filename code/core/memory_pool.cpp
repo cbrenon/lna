@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include "core/memory_pool.hpp"
 #include "core/assert.hpp"
-#include "core/log.hpp"
 
 #define LNA_KILOBYTES(value)    ((value) * 1024LL)
 #define LNA_MEGABYTES(value)    (LNA_KILOBYTES(value) * 1024LL)
@@ -24,15 +23,6 @@ namespace
         pool.content = (char*)malloc(size);
         LNA_ASSERT(pool.content);
     }
-}
-
-void lna::memory_pool_init(
-    lna::memory_pool& pool
-    )
-{
-    pool.content            = nullptr;
-    pool.content_cur_size   = 0;
-    pool.content_max_size   = 0;
 }
 
 void lna::memory_pool_allocate_megabytes(
@@ -85,5 +75,7 @@ void lna::memory_pool_free(
     {
         free(pool.content);
     }
-    lna::memory_pool_init(pool);
+    pool.content = nullptr;
+    pool.content_cur_size = 0;
+    pool.content_max_size = 0;
 }

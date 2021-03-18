@@ -22,17 +22,13 @@ namespace lna
         VkQueue             graphics_queue;
     };
 
-    void vulkan_texture_init(
-        vulkan_texture& vk_texture
-        );
-
     void vulkan_texture_configure(
-        vulkan_texture& vk_texture,
+        vulkan_texture& texture,
         vulkan_texture_config_info& config
         );
     
     void vulkan_texture_release(
-        vulkan_texture& vk_texture,
+        vulkan_texture& texture,
         VkDevice device
         );
 }

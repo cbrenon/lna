@@ -1,10 +1,10 @@
 #ifndef _LNA_MATHS_MAT4_HPP_
 #define _LNA_MATHS_MAT4_HPP_
 
-#include "maths/vec3.hpp"
-
 namespace lna
 {
+    struct vec3;
+
     struct mat4
     {
         float values[4][4];

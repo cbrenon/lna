@@ -5,6 +5,19 @@
 
 namespace lna
 {
+    void window_init(
+        window_api& window
+        )
+    {
+        window.handle                   = nullptr;
+        window.width                    = 0;
+        window.height                   = 0;
+        window.fullscreen               = false;
+        window.display_index            = 0;
+        window.extension_infos.names    = nullptr;
+        window.extension_infos.count    = 0;
+    }
+
     void window_configure(
         window_api& window,
         const window_config& config

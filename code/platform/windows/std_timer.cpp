@@ -1,4 +1,4 @@
-#include "platform/windows/timer_std.hpp"
+#include "platform/windows/std_timer.hpp"
 
 namespace lna
 {

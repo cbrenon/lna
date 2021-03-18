@@ -1,20 +1,16 @@
 #include <cstring>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-compare"
+#pragma warning(push, 0)
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#pragma warning(pop)
+#pragma clang diagnostic pop
 #include "platform/vulkan/vulkan_texture.hpp"
 #include "platform/vulkan/vulkan_helpers.hpp"
-#include "graphics/texture.hpp"
-
-void lna::vulkan_texture_init(
-    lna::vulkan_texture& vk_texture
-    )
-{
-    vk_texture.image        = nullptr;
-    vk_texture.image_memory = nullptr;
-    vk_texture.image_view   = nullptr;
-    vk_texture.sampler      = nullptr;
-}
 
 void lna::vulkan_texture_configure(
-    lna::vulkan_texture& vk_texture,
+    lna::vulkan_texture& texture,
     vulkan_texture_config_info& config
     )
 {
@@ -25,25 +21,30 @@ void lna::vulkan_texture_configure(
 
     //! IMAGE PART
 
-    lna::texture tex;
-    lna::texture_init(tex);
+    int             texture_width       = 0;
+    int             texture_height      = 0;
+    int             texture_channels    = 0;
+    unsigned char*  texture_pixels      =  nullptr;
 
     if (config.filename)
     {
-        lna::texture_load_from_file(
-            tex,
-            config.filename
+        texture_pixels = stbi_load(
+            config.filename,
+            &texture_width,
+            &texture_height,
+            &texture_channels,
+            STBI_rgb_alpha
             );
     }
-    else
-    {
-        // for the moment we only create texture with a filename
-        LNA_ASSERT(0);
-    }
+    
+    LNA_ASSERT(texture_width != 0);
+    LNA_ASSERT(texture_height != 0);
+    LNA_ASSERT(texture_channels != 0);
+    LNA_ASSERT(texture_pixels);
 
     VkBuffer        staging_buffer;
     VkDeviceMemory  staging_buffer_memory;
-    VkDeviceSize    image_size = tex.width * tex.height * 4;
+    VkDeviceSize    image_size = texture_width * texture_height * 4;
 
     lna::vulkan_helpers::create_buffer(
         config.device,
@@ -68,7 +69,7 @@ void lna::vulkan_texture_configure(
         )
     std::memcpy(
         data,
-        tex.pixels,
+        texture_pixels,
         static_cast<size_t>(image_size)
         );
     vkUnmapMemory(
@@ -76,27 +77,28 @@ void lna::vulkan_texture_configure(
         staging_buffer_memory
         );
 
-    lna::texture_free_pixels(
-        tex
-        );
+    if (config.filename)
+    {
+        stbi_image_free(texture_pixels);
+    }
 
     lna::vulkan_helpers::create_image(
         config.device,
         config.physical_device,
-        static_cast<uint32_t>(tex.width),
-        static_cast<uint32_t>(tex.height),
+        static_cast<uint32_t>(texture_width),
+        static_cast<uint32_t>(texture_height),
         VK_FORMAT_R8G8B8A8_SRGB,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        vk_texture.image,
-        vk_texture.image_memory
+        texture.image,
+        texture.image_memory
         );
     lna::vulkan_helpers::transition_image_layout(
         config.device,
         config.command_pool,
         config.graphics_queue,
-        vk_texture.image,
+        texture.image,
         VK_FORMAT_R8G8B8A8_SRGB,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
@@ -106,15 +108,15 @@ void lna::vulkan_texture_configure(
         config.command_pool,
         staging_buffer,
         config.graphics_queue,
-        vk_texture.image,
-        static_cast<uint32_t>(tex.width),
-        static_cast<uint32_t>(tex.height)
+        texture.image,
+        static_cast<uint32_t>(texture_width),
+        static_cast<uint32_t>(texture_height)
         );
     lna::vulkan_helpers::transition_image_layout(
         config.device,
         config.command_pool,
         config.graphics_queue,
-        vk_texture.image,
+        texture.image,
         VK_FORMAT_R8G8B8A8_SRGB,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
@@ -132,9 +134,9 @@ void lna::vulkan_texture_configure(
 
     //! IMAGE VIEW PART
 
-    vk_texture.image_view = lna::vulkan_helpers::create_image_view(
+    texture.image_view = lna::vulkan_helpers::create_image_view(
         config.device,
-        vk_texture.image,
+        texture.image,
         VK_FORMAT_R8G8B8A8_SRGB
         );
 
@@ -169,34 +171,38 @@ void lna::vulkan_texture_configure(
             config.device,
             &sampler_create_info,
             nullptr,
-            &vk_texture.sampler
+            &texture.sampler
             )
         )
 }
 
 void lna::vulkan_texture_release(
-    lna::vulkan_texture& vk_texture,
+    lna::vulkan_texture& texture,
     VkDevice device
     )
 {
     vkDestroySampler(
         device,
-        vk_texture.sampler,
+        texture.sampler,
         nullptr
         );
     vkDestroyImageView(
         device,
-        vk_texture.image_view,
+        texture.image_view,
         nullptr
         );
     vkDestroyImage(
         device,
-        vk_texture.image,
+        texture.image,
         nullptr
         );
     vkFreeMemory(
         device,
-        vk_texture.image_memory,
+        texture.image_memory,
         nullptr
         );
+    texture.image           = nullptr;
+    texture.image_memory    = nullptr;
+    texture.image_view      = nullptr;
+    texture.sampler         = nullptr;
 }

@@ -15,22 +15,6 @@ namespace lna
     };
 }
 
-void lna::vulkan_mesh_init(
-    lna::vulkan_mesh& mesh
-    )
-{
-    mesh.vertex_buffer          = nullptr;
-    mesh.vertex_buffer_memory   = nullptr;
-    mesh.index_buffer           = nullptr;
-    mesh.index_buffer_memory    = nullptr;
-    mesh.vertex_count           = 0;
-    mesh.index_count            = 0;
-    mesh.uniform_buffers        = nullptr;
-    mesh.uniform_buffers_memory = nullptr;
-    mesh.descriptor_sets        = nullptr;
-    mesh.swap_chain_image_count = 0;
-}
-
 void lna::vulkan_mesh_create_vertex_and_index_buffer(
     lna::vulkan_mesh& mesh,
     lna::vulkan_mesh_create_vertex_and_index_info& config
@@ -427,7 +411,14 @@ void lna::vulkan_mesh_release(
         nullptr
         );
     
-    lna::vulkan_mesh_init(
-        mesh
-        );
+    mesh.vertex_buffer          = nullptr;
+    mesh.vertex_buffer_memory   = nullptr;
+    mesh.index_buffer           = nullptr;
+    mesh.index_buffer_memory    = nullptr;
+    mesh.vertex_count           = 0;
+    mesh.index_count            = 0;
+    mesh.uniform_buffers        = nullptr;
+    mesh.uniform_buffers_memory = nullptr;
+    mesh.descriptor_sets        = nullptr;
+    mesh.swap_chain_image_count = 0;
 }

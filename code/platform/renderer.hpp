@@ -1,11 +1,19 @@
 #ifndef _LNA_PLATFORM_RENDERER_HPP_
 #define _LNA_PLATFORM_RENDERER_HPP_
 
-#include "platform/window.hpp"
+#include "graphics/vertex.hpp"
 
 namespace lna
 {
     struct memory_pool_system;
+    struct window_api;
+    struct renderer_api;
+
+    typedef uint32_t texture_handle;
+    typedef uint32_t mesh_handle;
+
+    constexpr uint32_t INVALID_TEXTURE_HANDLE   = (uint32_t)-1;
+    constexpr uint32_t INVALID_MESH_HANDLE      = (uint32_t)-1;
 
     struct renderer_config
     {
@@ -23,7 +31,20 @@ namespace lna
         window_api* window_ptr;
     };
 
-    struct renderer_api;
+    struct texture_config
+    {
+        const char* filename;
+    };
+
+    struct mesh_config
+    {
+        const vertex*   vertices;
+        const uint16_t* indices;
+        uint32_t        vertex_count;
+        uint32_t        index_count;
+        vec3            position;
+        texture_handle  texture;
+    };
 
     void renderer_init(
         renderer_api& renderer
@@ -32,6 +53,16 @@ namespace lna
     void renderer_configure(
         renderer_api& renderer,
         const renderer_config& config
+        );
+
+    texture_handle renderer_new_texture(
+        renderer_api& renderer,
+        const texture_config& config
+        );
+
+    mesh_handle renderer_new_mesh(
+        renderer_api& renderer,
+        const mesh_config& config
         );
 
     void renderer_draw_frame(

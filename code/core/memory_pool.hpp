@@ -10,10 +10,6 @@ namespace lna
         char*   content;
     };
 
-    void memory_pool_init(
-        memory_pool& pool
-        );
-
     void memory_pool_allocate_megabytes(
         memory_pool& pool,
         size_t size

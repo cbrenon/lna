@@ -2,8 +2,6 @@
 #define _LAN_PLATFORM_VULKAN_VULKAN_RENDERER_HPP_
 
 #include <vulkan.h>
-#include "platform/renderer.hpp"
-#include "platform/sdl/sdl_window.hpp"
 #include "platform/vulkan/vulkan_texture.hpp"
 #include "platform/vulkan/vulkan_mesh.hpp"
 #include "core/memory_pool.hpp"

@@ -1,8 +1,6 @@
 #ifndef _LNA_CORE_FILE_HPP_
 #define _LNA_CORE_FILE_HPP_
 
-#include <cstdint>
-
 namespace lna
 {
     struct file
@@ -10,10 +8,6 @@ namespace lna
         uint32_t    content_size;
         char*       content;
     };
-
-    void file_init(
-        file& f
-        );
 
     struct memory_pool;
 

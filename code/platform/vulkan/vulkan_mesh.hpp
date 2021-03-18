@@ -65,10 +65,6 @@ namespace lna
         lna::mat4*                  projection_matrix_ptr;
     };
 
-    void vulkan_mesh_init(
-        vulkan_mesh& mesh
-        );
-
     void vulkan_mesh_create_vertex_and_index_buffer(
         vulkan_mesh& mesh,
         vulkan_mesh_create_vertex_and_index_info& config

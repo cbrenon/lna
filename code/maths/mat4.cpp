@@ -1,6 +1,7 @@
 #include <cmath>
 #include "maths/mat4.hpp"
 #include "maths/maths.hpp"
+#include "maths/vec3.hpp"
 
 void lna::mat4_identity(
     lna::mat4& m

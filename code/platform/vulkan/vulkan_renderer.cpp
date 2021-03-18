@@ -11,11 +11,11 @@
 #include "platform/vulkan/vulkan_helpers.hpp"
 #include "platform/vulkan/vulkan_mesh.hpp"
 #include "platform/vulkan/vulkan_vertex.hpp"
+#include "platform/sdl/sdl_window.hpp"
+#include "platform/renderer.hpp"
 #include "core/file.hpp"
-#include "core/log.hpp"
 #include "core/assert.hpp"
 #include "maths/mat4.hpp"
-#include "graphics/vertex.hpp"
 
 namespace
 {
@@ -53,35 +53,6 @@ namespace
         VkPresentModeKHR*           present_modes;
         uint32_t                    present_mode_count;
     };
-    
-    // const lna::vertex VERTICES[] =
-    // {
-    //     {
-    //         {-0.5f, -0.5f, 0.0f },
-    //         { 1.0f, 1.0f, 1.0f, 1.0f },
-    //         { 1.0f, 0.0f },
-    //     },
-    //     {
-    //         { 0.5f, -0.5f, 0.0f },
-    //         { 1.0f, 1.0f, 1.0f, 1.0f },
-    //         { 0.0f, 0.0f },
-    //     },
-    //     {
-    //         { 0.5f, 0.5f, 0.0f },
-    //         { 1.0f, 1.0f, 1.0f, 1.0f },
-    //         { 0.0f, 1.0f },
-    //     },
-    //     {
-    //         { -0.5f, 0.5f, 0.0f },
-    //         { 1.0f, 1.0f, 1.0f, 1.0f },
-    //         { 1.0f, 1.0f },
-    //     }
-    // };
-
-    // const uint16_t INDICES[] =
-    // {
-    //     0, 1, 2, 2, 3, 0
-    // };
 
     //! VULKAN DEBUG FUNCTIONS -------------------------------------------------
 
@@ -471,12 +442,12 @@ namespace
             &supported_features
             );
 
-        //? NOTE: we can pick a physical device without supported_features.samplerAnisotropy
-        //? in this case we must indicate somewhere that the choosen physical device does not managed sampler anisotropy and when
-        //? we will create a sampler create info we must check it and set to:
-        //? sampler_create_info.anisotropyEnable    = VK_FALSE;
-        //? sampler_create_info.maxAnisotropy       = 1.0f;
-        //? see the end of https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler for more information
+        //! NOTE: we can pick a physical device without supported_features.samplerAnisotropy
+        //! in this case we must indicate somewhere that the choosen physical device does not managed sampler anisotropy and when
+        //! we will create a sampler create info we must check it and set to:
+        //! sampler_create_info.anisotropyEnable    = VK_FALSE;
+        //! sampler_create_info.maxAnisotropy       = 1.0f;
+        //! see the end of https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler for more information
         return
                 vulkan_queue_family_indices_is_complete(indices)
             &&  supported_extensions
@@ -744,15 +715,15 @@ namespace
         VkPresentModeKHR                    present_mode        = vulkan_choose_swap_present_mode(swap_chain_support.present_modes, swap_chain_support.present_mode_count);
         VkExtent2D                          extent              = vulkan_choose_swap_extent(swap_chain_support.capabilities, framebuffer_width, framebuffer_height);
 
-        // simply sticking to this minimum means that we may sometimes have to wait on the driver to complete internal operations before we can acquire another image to render to.
-        // Therefore it is recommended to request at least one more image than the minimum:
+        //! simply sticking to this minimum means that we may sometimes have to wait on the driver to complete internal operations before we can acquire another image to render to.
+        //! Therefore it is recommended to request at least one more image than the minimum:
         uint32_t image_count = swap_chain_support.capabilities.minImageCount + 1;
         if (
             swap_chain_support.capabilities.maxImageCount > 0
             && image_count > swap_chain_support.capabilities.maxImageCount
             )
         {
-            // do not exceed the maximum number of image:
+            //! do not exceed the maximum number of image:
             image_count = swap_chain_support.capabilities.maxImageCount;
         }
 
@@ -945,7 +916,8 @@ namespace
         LNA_ASSERT(renderer.render_pass);
 
         lna::file vertex_shader_file;
-        lna::file_init(vertex_shader_file);
+        vertex_shader_file.content = nullptr;
+        vertex_shader_file.content_size = 0;
         lna::file_debug_load(
             vertex_shader_file,
             "shaders/default_vert.spv",
@@ -958,7 +930,8 @@ namespace
             vertex_shader_file.content_size
             );
         lna::file fragment_shader_file;
-        lna::file_init(fragment_shader_file);
+        fragment_shader_file.content = nullptr;
+        fragment_shader_file.content_size = 0;
         lna::file_debug_load(
             fragment_shader_file,
             "shaders/default_frag.spv",
@@ -1278,7 +1251,7 @@ namespace
     {
         LNA_ASSERT(renderer.device);
         LNA_ASSERT(renderer.mesh_system.descriptor_pool == nullptr);
-        LNA_ASSERT(renderer.mesh_system.max_mesh_count > 0); // mesh_system must have been previously configured
+        LNA_ASSERT(renderer.mesh_system.max_mesh_count > 0); //! mesh_system must have been previously configured
 
         VkDescriptorPoolSize pool_sizes[2] {};
         pool_sizes[0].type              = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1473,9 +1446,9 @@ namespace lna
 
         for (uint32_t i = 0; i < renderer_api::MEMORY_POOL_COUNT; ++i)
         {
-            memory_pool_init(
-                renderer.memory_pools[i]
-                );
+            renderer.memory_pools[i].content = nullptr;
+            renderer.memory_pools[i].content_cur_size = 0;
+            renderer.memory_pools[i].content_max_size = 0;
             memory_pool_allocate_megabytes(
                 renderer.memory_pools[i],
                 MEMORY_POOL_SIZES[i]
@@ -1501,77 +1474,120 @@ namespace lna
         renderer.texture_system.max_texture_count = config.max_texture_count;
         renderer.texture_system.textures = renderer.texture_system.max_texture_count > 0 ?
             (vulkan_texture*)memory_pool_reserve(renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL], renderer.texture_system.max_texture_count * sizeof(vulkan_texture)) : nullptr;
+        for (uint32_t i = 0; i < renderer.texture_system.max_texture_count; ++i)
+        {
+            renderer.texture_system.textures[i].image           = nullptr;
+            renderer.texture_system.textures[i].image_memory    = nullptr;
+            renderer.texture_system.textures[i].image_view      = nullptr;
+            renderer.texture_system.textures[i].sampler         = nullptr;
+        }
 
         renderer.mesh_system.max_mesh_count = config.max_mesh_count;
         renderer.mesh_system.meshes = renderer.mesh_system.max_mesh_count > 0 ?
             (vulkan_mesh*)memory_pool_reserve(renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL], renderer.mesh_system.max_mesh_count * sizeof(vulkan_mesh)) : nullptr;
+        renderer.mesh_system.mesh_positions = renderer.mesh_system.max_mesh_count > 0 ?
+            (vec3*)memory_pool_reserve(renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL], renderer.mesh_system.max_mesh_count * sizeof(vec3)) : nullptr;
+        for (uint32_t i = 0; i < renderer.mesh_system.max_mesh_count; ++i)
+        {
+            renderer.mesh_system.meshes[i].vertex_buffer            = nullptr;
+            renderer.mesh_system.meshes[i].vertex_buffer_memory     = nullptr;
+            renderer.mesh_system.meshes[i].index_buffer             = nullptr;
+            renderer.mesh_system.meshes[i].index_buffer_memory      = nullptr;
+            renderer.mesh_system.meshes[i].vertex_count             = 0;
+            renderer.mesh_system.meshes[i].index_count              = 0;
+            renderer.mesh_system.meshes[i].uniform_buffers          = nullptr;
+            renderer.mesh_system.meshes[i].uniform_buffers_memory   = nullptr;
+            renderer.mesh_system.meshes[i].descriptor_sets          = nullptr;
+            renderer.mesh_system.meshes[i].swap_chain_image_count   = 0;
+            renderer.mesh_system.mesh_positions[i]                  = { 0.0f, 0.0f, 0.0f };
+        }
 
         vulkan_create_descriptor_pool(renderer);
 
-        // vulkan_texture_config_info texture_info{};
-        // texture_info.command_pool       = renderer.command_pool;
-        // texture_info.device             = renderer.device;
-        // texture_info.physical_device    = renderer.physical_device;
-        // texture_info.graphics_queue     = renderer.graphics_queue;
-        // texture_info.filename           = "textures/texture.jpg";
-        // vulkan_texture_configure(
-        //     renderer.vk_texture,
-        //     texture_info
-        //     );
-
-        // heap_array_set_max_element_count(
-        //     renderer.vk_graphics_objects,
-        //     renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL],
-        //     renderer.max_graphics_object_count
-        //     );
-        // for (uint32_t i = 0; i < renderer.vk_graphics_objects.element_count; ++i)
-        // {
-        //     vulkan_graphics_object& graphics_object = renderer.vk_graphics_objects.elements[i];
-        //     vulkan_mesh&            vk_mesh         = graphics_object.vk_mesh;
-        //     float offset = -static_cast<float>(i);
-        //     graphics_object.position = { 0.5f + offset, 0.5f + offset, 0.0f };
-        //     vulkan_mesh_init(
-        //         vk_mesh
-        //         );
-        //     vulkan_mesh_create_vertex_and_index_info vertex_and_index_info{};
-        //     vertex_and_index_info.device = renderer.device;
-        //     vertex_and_index_info.physical_device   = renderer.physical_device;
-        //     vertex_and_index_info.command_pool      = renderer.command_pool;
-        //     vertex_and_index_info.graphics_queue    = renderer.graphics_queue;
-        //     vertex_and_index_info.vertices          = VERTICES;
-        //     vertex_and_index_info.vertex_count      = static_cast<uint32_t>(sizeof(VERTICES) / sizeof(VERTICES[0]));
-        //     vertex_and_index_info.indices           = INDICES;
-        //     vertex_and_index_info.index_count       = static_cast<uint32_t>(sizeof(INDICES) / sizeof(INDICES[0]));
-        //     vulkan_mesh_create_vertex_and_index_buffer(
-        //         vk_mesh,
-        //         vertex_and_index_info
-        //         );
-        //     vulkan_mesh_create_uniform_buffer_info uniform_buffer_info{};
-        //     uniform_buffer_info.device                      = renderer.device;
-        //     uniform_buffer_info.physical_device             = renderer.physical_device;
-        //     uniform_buffer_info.swap_chain_image_count      = renderer.swap_chain_images.element_count;
-        //     uniform_buffer_info.swap_chain_memory_pool_ptr  = &renderer.memory_pools[renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
-        //     vulkan_mesh_create_uniform_buffer(
-        //         vk_mesh,
-        //         uniform_buffer_info
-        //         );
-        //     vulkan_mesh_create_descriptor_sets_info descriptor_sets_info{};
-        //     descriptor_sets_info.device                     = renderer.device;
-        //     descriptor_sets_info.physical_device            = renderer.physical_device;
-        //     descriptor_sets_info.descriptor_pool            = renderer.descriptor_pool;
-        //     descriptor_sets_info.descriptor_set_layout      = renderer.descriptor_set_layout;
-        //     descriptor_sets_info.swap_chain_image_count     = renderer.swap_chain_images.element_count;
-        //     descriptor_sets_info.swap_chain_memory_pool_ptr = &renderer.memory_pools[renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
-        //     descriptor_sets_info.temp_memory_pool_ptr       = &renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL];
-        //     descriptor_sets_info.texture_ptr                = &renderer.vk_texture;
-        //     vulkan_mesh_create_descriptor_sets(
-        //         vk_mesh,
-        //         descriptor_sets_info
-        //         );
-        // }
-
         vulkan_create_command_buffers(renderer);
         vulkan_create_sync_objects(renderer);
+    }
+
+    texture_handle renderer_new_texture(
+        renderer_api& renderer,
+        const texture_config& config
+        )
+    {
+        LNA_ASSERT(renderer.texture_system.textures);
+        LNA_ASSERT(renderer.texture_system.cur_texture_count < renderer.texture_system.max_texture_count);
+
+        texture_handle new_texture_handle = renderer.texture_system.cur_texture_count;
+        ++renderer.texture_system.cur_texture_count;
+
+        vulkan_texture_config_info texture_info{};
+        texture_info.command_pool       = renderer.command_pool;
+        texture_info.device             = renderer.device;
+        texture_info.physical_device    = renderer.physical_device;
+        texture_info.graphics_queue     = renderer.graphics_queue;
+        texture_info.filename           = config.filename;
+        vulkan_texture_configure(
+            renderer.texture_system.textures[new_texture_handle],
+            texture_info
+            );
+
+        return new_texture_handle;
+    }
+
+    mesh_handle renderer_new_mesh(
+        renderer_api& renderer,
+        const mesh_config& config
+        )
+    {
+        LNA_ASSERT(renderer.mesh_system.meshes);
+        LNA_ASSERT(renderer.mesh_system.cur_mesh_count < renderer.mesh_system.max_mesh_count);
+        LNA_ASSERT(renderer.texture_system.textures);
+        LNA_ASSERT(config.texture != INVALID_TEXTURE_HANDLE);
+        LNA_ASSERT(config.texture < renderer.texture_system.cur_texture_count);
+
+
+        mesh_handle new_mesh_handle = renderer.mesh_system.cur_mesh_count;
+        ++renderer.mesh_system.cur_mesh_count;
+
+        renderer.mesh_system.mesh_positions[new_mesh_handle] = config.position;
+
+        vulkan_mesh& mesh = renderer.mesh_system.meshes[new_mesh_handle];
+        mesh.texture_ptr = &renderer.texture_system.textures[config.texture];
+
+        vulkan_mesh_create_vertex_and_index_info vertex_and_index_info{};
+        vertex_and_index_info.device = renderer.device;
+        vertex_and_index_info.physical_device   = renderer.physical_device;
+        vertex_and_index_info.command_pool      = renderer.command_pool;
+        vertex_and_index_info.graphics_queue    = renderer.graphics_queue;
+        vertex_and_index_info.vertices          = config.vertices;
+        vertex_and_index_info.vertex_count      = config.vertex_count;
+        vertex_and_index_info.indices           = config.indices;
+        vertex_and_index_info.index_count       = config.index_count;
+        vulkan_mesh_create_vertex_and_index_buffer(
+            mesh,
+            vertex_and_index_info
+            );
+        vulkan_mesh_create_uniform_buffer_info uniform_buffer_info{};
+        uniform_buffer_info.device                      = renderer.device;
+        uniform_buffer_info.physical_device             = renderer.physical_device;
+        uniform_buffer_info.swap_chain_image_count      = renderer.swap_chain_image_count;
+        uniform_buffer_info.swap_chain_memory_pool_ptr  = &renderer.memory_pools[renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
+        vulkan_mesh_create_uniform_buffer(
+            mesh,
+            uniform_buffer_info
+            );
+        vulkan_mesh_create_descriptor_sets_info descriptor_sets_info{};
+        descriptor_sets_info.device                     = renderer.device;
+        descriptor_sets_info.physical_device            = renderer.physical_device;
+        descriptor_sets_info.descriptor_pool            = renderer.mesh_system.descriptor_pool;
+        descriptor_sets_info.descriptor_set_layout      = renderer.mesh_system.descriptor_set_layout;
+        descriptor_sets_info.swap_chain_memory_pool_ptr = &renderer.memory_pools[renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
+        descriptor_sets_info.temp_memory_pool_ptr       = &renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL];
+        vulkan_mesh_create_descriptor_sets(
+            mesh,
+            descriptor_sets_info
+            );
+
+        return new_mesh_handle;
     }
 
     void renderer_draw_frame(
@@ -1671,8 +1687,6 @@ namespace lna
             near,
             far
             );
-        // END TEMP CODE
-
 
         VkCommandBufferBeginInfo    command_buffer_begin_info{};
         command_buffer_begin_info.sType             = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
