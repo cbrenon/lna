@@ -3,12 +3,12 @@
 
 namespace lna
 {
-    template<typename timer_api>
+    struct timer_api;
+
     void timer_start(
         timer_api& timer
         );
 
-    template<typename timer_api>
     double timer_dtime_in_ms(
         timer_api& timer
         );

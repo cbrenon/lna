@@ -5,24 +5,8 @@
 
 namespace lna
 {
-    template<>
-    void window_init(
-        sdl_window& window
-        )
-    {
-        window.handle           = nullptr;
-        window.width            = 0;
-        window.height           = 0;
-        window.fullscreen       = false;
-        window.display_index    = 0;
-        lna::heap_array_init(
-            window.extensions
-            );
-    }
-
-    template<>
-    void window_configure<sdl_window>(
-        sdl_window& window,
+    void window_configure(
+        window_api& window,
         const window_config& config
         )
     {
@@ -63,59 +47,50 @@ namespace lna
                 nullptr
                 );
             LNA_ASSERT(result == SDL_TRUE);
-            heap_array_set_max_element_count(
-                window.extensions,
+
+            window.extension_infos.count    = config.enable_validation_layers ? extension_count + 1 : extension_count;
+            window.extension_infos.names    = (const char **)memory_pool_reserve(
                 *config.persistent_pool_ptr,
-                extension_count + 1
+                window.extension_infos.count * sizeof(const char*)
                 );
+            LNA_ASSERT(window.extension_infos.names);
+
             result = SDL_Vulkan_GetInstanceExtensions(
                 window.handle,
                 &extension_count,
-                window.extensions.elements
+                window.extension_infos.names
                 );
             LNA_ASSERT(result == SDL_TRUE);
             if (config.enable_validation_layers)
             {
-                window.extensions.elements[extension_count] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+                window.extension_infos.names[extension_count] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
             }
         }
     }
 
-    template<>
-    uint32_t window_width<sdl_window>(
-        const sdl_window& window
+    uint32_t window_width(
+        const window_api& window
         )
     {
         return window.width;
     }
 
-    template<>
-    uint32_t window_height<sdl_window>(
-        const sdl_window& window
+    uint32_t window_height(
+        const window_api& window
         )
     {
         return window.height;
     }
 
-    template<>
-    const heap_array<const char*>& window_extensions<sdl_window>(
-        const sdl_window& window
+    const window_extension_infos& window_extensions(
+        const window_api& window
         )
     {
-        return window.extensions;
+        return window.extension_infos;
     }
 
-    template<>
-    SDL_Window* window_handle<sdl_window, SDL_Window*>(
-        sdl_window& window
-        )
-    {
-        return window.handle;
-    }
-
-    template<>
-    void window_resolution_info_update<sdl_window>(
-        sdl_window& window
+    void window_resolution_info_update(
+        window_api& window
         )
     {
         SDL_DisplayMode display_mode;
@@ -124,9 +99,8 @@ namespace lna
         window.height = static_cast<uint32_t>(display_mode.h);
     }
 
-    template<>
-    void window_release<sdl_window>(
-        sdl_window& window
+    void window_release(
+        window_api& window
         )
     {
         if (window.handle)

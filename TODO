@@ -132,16 +132,14 @@ based framework:
                 ✔ update vertex attribute description                                              @done(21-03-16 22:51)
                 ✔ update VERTICES temp static variable                                             @done(21-03-16 22:52)
                 ✔ check if I broke something...                                                    @done(21-03-16 22:53)
-            ☐ step 5 => create wrapper function to create mesh quickly
-
+            ✔ step 5 => clean code                                                                 @done(21-03-17 21:37)
+                ✔ remove container.hpp/.cpp => remove heap_array from my code                      @done(21-03-17 20:41)
+                ✔ remove template in platform code => use forward declaration to replace template  @done(21-03-17 21:37)
+            ☐ step 6 => create wrapper function to create mesh quickly
                 @critical SEE IF I WANT TO HAVE MESH OR SPRITE IN RENDERER
                 DOES THE RENDERER MUST KNOW SPRITE SPECIFICITY OR MANAGE ALL MESH THE SAME WAY?
                 I MUST THINK ABOUT IT AND UPDATE THE TODO FOLLOWING MY INVESTIGATION!
-
-                for the moment the coordinate system is not intuive as we must deal with vulkan right hand NDC space.
-                Vertex in static const VERTICES begin in 0.5 so we use the center of the rect as origin, we will
-                certainly prefer having the left side as x origin. For y I can use the top side of the rect for 2D rendering.
-                We will see later how we manage 3D mesh later if we decide to go with 3D or to add 3D elements.
+                => It will be mesh. The renderer will be agnostic of graphics object type to avoid to much overload
                 ☐ function renderer_set_max_texture_count
                     parameters => renderer, max_texture_count
                 ☐ renderer_texture_config struct
@@ -152,24 +150,27 @@ based framework:
                     parameters => renderer, renderer_texture_config
                     return => renderer_texture_handle
                 ☐ function renderer_set_max_mesh_count
-                    parameters => renderer, max_sprite_count
+                    parameters => renderer, max_mesh_count
                 ☐ renderer_mesh_config struct
-                    parameters =>
                 ☐ uint32_t typedef renderer_mesh_handle
-                ☐ rename VERTICES and INDICES to DEFAULT_RECT_VERTICES and DEFAULT_RECT_INDICES
                 ☐ function renderer_push_mesh
-                    parameters => renderer, renderer_sprite_config
-                    return => renderer_sprite_handle
+                    parameters => renderer, renderer_mesh_config
+                    return => renderer_mesh_handle
                     this function will use our current vulkan_graphics_object array for the moment
                     and DEFAULT_RECT_VERTICES / DEFAULT_RECT_INDICES to create vulkan mesh
                 ☐ remove vk_texture member from vulkan_renderer
                 ☐ remove static vulkan_graphics_object creation in vulkan_renderer
+                ☐ rename VERTICES and INDICES to DEFAULT_RECT_VERTICES and DEFAULT_RECT_INDICES
                 ☐ check!
-            ☐ step 6 => clean:
+                ☐ add sprite struct in graphics
+                    for the moment the coordinate system is not intuive as we must deal with vulkan right hand NDC space.
+                    Vertex in static const VERTICES begin in 0.5 so we use the center of the rect as origin, we will
+                    certainly prefer having the left side as x origin. For y I can use the top side of the rect for 2D rendering.
+                    We will see later how we manage 3D mesh later if we decide to go with 3D or to add 3D elements.
+            ☐ step 7 => clean:
                 ☐ quick check for code consistency
                 ☐ remove commented code in vulkan_renderer.hpp/.cpp
                 ☐ check for include problem => use forward declaration if possible, remove unncessary include
-                ☐ remove container.hpp/.cpp => remove heap_array from my code
                 ☐ move default shaders from lna_framework_text to lna
                 ☐ check for regression!
     ☐ gamepad management:

@@ -1,12 +1,25 @@
 #ifndef _LNA_CORE_FILE_HPP_
 #define _LNA_CORE_FILE_HPP_
 
-#include "core/container.hpp"
+#include <cstdint>
 
 namespace lna
 {
+    struct file
+    {
+        uint32_t    content_size;
+        char*       content;
+    };
+
+    void file_init(
+        file& f
+        );
+
+    struct memory_pool;
+
     //! used during development. Dot not use for retail (prefer future file system)
-    heap_array<char> file_debug_load(
+    void file_debug_load(
+        file& f,
         const char* filename,
         bool binary,
         memory_pool& pool

@@ -4,13 +4,32 @@
 #include <vulkan.h>
 #include "platform/renderer.hpp"
 #include "platform/sdl/sdl_window.hpp"
-#include "core/memory_pool.hpp"
 #include "platform/vulkan/vulkan_texture.hpp"
-#include "platform/vulkan/vulkan_graphics_object.hpp"
+#include "platform/vulkan/vulkan_mesh.hpp"
+#include "core/memory_pool.hpp"
 
 namespace lna
 {
-    struct vulkan_renderer
+    constexpr uint32_t VULKAN_MAX_FRAMES_IN_FLIGHT = 2;
+
+    struct vulkan_texture_system
+    {
+        vulkan_texture*                 textures;
+        uint32_t                        cur_texture_count;
+        uint32_t                        max_texture_count;
+    };
+
+    struct vulkan_mesh_system
+    {
+        vulkan_mesh*                    meshes;
+        vec3*                           mesh_positions;
+        uint32_t                        cur_mesh_count;
+        uint32_t                        max_mesh_count;
+        VkDescriptorSetLayout           descriptor_set_layout;
+        VkDescriptorPool                descriptor_pool;
+    };
+
+    struct renderer_api
     {
         VkInstance                      instance;
         VkDebugUtilsMessengerEXT        debug_messenger;
@@ -28,26 +47,22 @@ namespace lna
         VkCommandPool                   command_pool;
         size_t                          curr_frame;
 
-        // TODO: to remove after test validation
-        vulkan_texture                      vk_texture;
-        heap_array<vulkan_graphics_object>  vk_graphics_objects;
-        uint32_t                            max_graphics_object_count;
+        vulkan_texture_system           texture_system;
+        vulkan_mesh_system              mesh_system;
 
-        // TODO: for the moment we only manage textured mesh but in the futur we will have to manage just colored primitive. So we will have to create specific descriptor_set_layout and descriptor pool for them.
-        VkDescriptorSetLayout           descriptor_set_layout;
-        VkDescriptorPool                descriptor_pool;
+        VkSemaphore                     image_available_semaphores[VULKAN_MAX_FRAMES_IN_FLIGHT];
+        VkSemaphore                     render_finished_semaphores[VULKAN_MAX_FRAMES_IN_FLIGHT];
+        VkFence                         in_flight_fences[VULKAN_MAX_FRAMES_IN_FLIGHT];
 
         //! PERSISTENT MEMORY POOL
-        heap_array<VkSemaphore>         image_available_semaphores;
-        heap_array<VkSemaphore>         render_finished_semaphores;
-        heap_array<VkFence>             in_flight_fences;
-        heap_array<VkFence>             images_in_flight_fences;
+        VkFence*                        images_in_flight_fences;
 
         //! SWAP CHAIN MEMORY POOL
-        heap_array<VkImage>             swap_chain_images;
-        heap_array<VkImageView>         swap_chain_image_views;
-        heap_array<VkFramebuffer>       swap_chain_framebuffers;
-        heap_array<VkCommandBuffer>     command_buffers;
+        VkImage*                        swap_chain_images;
+        VkImageView*                    swap_chain_image_views;
+        VkFramebuffer*                  swap_chain_framebuffers;
+        VkCommandBuffer*                command_buffers;
+        uint32_t                        swap_chain_image_count;
 
         enum memory_pool_id
         {
@@ -60,36 +75,12 @@ namespace lna
         memory_pool                     memory_pools[MEMORY_POOL_COUNT];
     };
 
-    constexpr size_t MEMORY_POOL_SIZES[vulkan_renderer::MEMORY_POOL_COUNT] =
+    constexpr size_t MEMORY_POOL_SIZES[renderer_api::MEMORY_POOL_COUNT] =
     {
         256, // SIZE IN MEGABYTES
         256, // SIZE IN MEGABYTES
         256, // SIZE IN MEGABYTES
     };
-
-    template<>
-    void renderer_init<vulkan_renderer>(
-        vulkan_renderer& renderer
-        );
-
-    template<>
-    void renderer_configure<vulkan_renderer, sdl_window>(
-        vulkan_renderer& renderer,
-        const renderer_config<sdl_window>& config
-        );
-
-    template<>
-    void renderer_draw_frame<vulkan_renderer>(
-        vulkan_renderer& renderer,
-        bool framebuffer_resized,
-        uint32_t framebuffer_width,
-        uint32_t framebuffer_height
-        );
-
-    template<>
-    void renderer_release<vulkan_renderer>(
-        vulkan_renderer& renderer
-        );
 }
 
 #endif // _LAN_PLATFORM_VULKAN_VULKAN_RENDERER_HPP_

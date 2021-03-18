@@ -2,7 +2,6 @@
 #define _LNA_PLATFORM_VULKAN_VULKAN_VERTEX_HPP_
 
 #include <vulkan.h>
-#include "core/container.hpp"
 
 namespace lna
 {

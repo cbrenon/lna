@@ -14,56 +14,15 @@
 
 namespace lna
 {
-    struct sdl_window
+    struct window_api
     {
         SDL_Window*             handle;
         uint32_t                width;
         uint32_t                height;
         bool                    fullscreen;
         int                     display_index;
-        heap_array<const char*> extensions;
+        window_extension_infos  extension_infos;
     };
-
-    template<>
-    void window_init<sdl_window>(
-        sdl_window& window
-        );
-
-    template<>
-    void window_configure(
-        sdl_window& window,
-        const window_config& config
-        );
-
-    template<>
-    void window_resolution_info_update<sdl_window>(
-        sdl_window& window
-        );
-
-    template<>
-    uint32_t window_width<sdl_window>(
-        const sdl_window& window
-        );
-
-    template<>
-    uint32_t window_height<sdl_window>(
-        const sdl_window& window
-        );
-
-    template<>
-    const heap_array<const char*>& window_extensions<sdl_window>(
-        const sdl_window& window
-        );
-
-    template<>
-    SDL_Window* window_handle<sdl_window, SDL_Window*>(
-        sdl_window& window
-        );
-
-    template<>
-    void window_release<sdl_window>(
-        sdl_window& window
-        );
 }
 
 #endif // _NLA_PLATFORM_WINDOWS_WINDOW_SDL_HPP_

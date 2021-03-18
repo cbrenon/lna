@@ -1,11 +1,12 @@
 #ifndef _LNA_PLATFORM_RENDERER_HPP_
 #define _LNA_PLATFORM_RENDERER_HPP_
 
+#include "platform/window.hpp"
+
 namespace lna
 {
     struct memory_pool_system;
 
-    template<typename window_api>
     struct renderer_config
     {
         const char* application_name;
@@ -17,21 +18,22 @@ namespace lna
         uint8_t     engine_minor_ver;
         uint8_t     engine_patch_ver;
         bool        enable_validation_layers;
+        uint32_t    max_texture_count;
+        uint32_t    max_mesh_count;
         window_api* window_ptr;
     };
 
-    template<typename renderer_api>
+    struct renderer_api;
+
     void renderer_init(
         renderer_api& renderer
         );
 
-    template<typename renderer_api, typename window_api>
     void renderer_configure(
         renderer_api& renderer,
-        const renderer_config<window_api>& config
+        const renderer_config& config
         );
 
-    template<typename renderer_api>
     void renderer_draw_frame(
         renderer_api& renderer,
         bool framebuffer_resized,
@@ -39,7 +41,6 @@ namespace lna
         uint32_t framebuffer_height
         );
 
-    template<typename renderer_api>
     void renderer_release(
         renderer_api& renderer
         );

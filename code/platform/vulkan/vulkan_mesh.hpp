@@ -3,11 +3,12 @@
 
 #include <vulkan.h>
 #include "graphics/vertex.hpp"
-#include "core/container.hpp"
 #include "maths/mat4.hpp"
 
 namespace lna
 {
+    struct vulkan_texture;
+
     struct vulkan_mesh
     {
         VkBuffer                    vertex_buffer;
@@ -16,19 +17,12 @@ namespace lna
         VkDeviceMemory              index_buffer_memory;
         uint32_t                    vertex_count;
         uint32_t                    index_count;
-        heap_array<VkBuffer>        uniform_buffers;
-        heap_array<VkDeviceMemory>  uniform_buffers_memory;
-        heap_array<VkDescriptorSet> descriptor_sets;
+        VkBuffer*                   uniform_buffers;
+        VkDeviceMemory*             uniform_buffers_memory;
+        VkDescriptorSet*            descriptor_sets;
+        uint32_t                    swap_chain_image_count;
+        vulkan_texture*             texture_ptr;
     };
-
-    struct vulkan_uniform_buffer_object
-    {
-        alignas(16) lna::mat4       model;
-        alignas(16) lna::mat4       view;
-        alignas(16) lna::mat4       projection;
-    };
-
-    struct vulkan_texture;
 
     struct vulkan_mesh_create_vertex_and_index_info
     {
@@ -41,6 +35,8 @@ namespace lna
         uint32_t                    vertex_count;
         uint32_t                    index_count;
     };
+
+    struct memory_pool;
 
     struct vulkan_mesh_create_uniform_buffer_info
     {
@@ -56,10 +52,8 @@ namespace lna
         VkPhysicalDevice            physical_device;
         VkDescriptorPool            descriptor_pool;
         VkDescriptorSetLayout       descriptor_set_layout;
-        uint32_t                    swap_chain_image_count;
         memory_pool*                swap_chain_memory_pool_ptr;
         memory_pool*                temp_memory_pool_ptr;
-        vulkan_texture*             texture_ptr;
     };
 
     struct vulkan_mesh_update_uniform_buffer_info

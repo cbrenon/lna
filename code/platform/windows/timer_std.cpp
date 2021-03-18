@@ -2,17 +2,15 @@
 
 namespace lna
 {
-    template<>
-    void timer_start<timer_std>(
-        timer_std& timer
+    void timer_start(
+        timer_api& timer
         )
     {
         timer.last_frame_time = std::chrono::system_clock::now();
     }
 
-    template<>
-    double timer_dtime_in_ms<timer_std>(
-        timer_std& timer
+    double timer_dtime_in_ms(
+        timer_api& timer
         )
     {
         auto delta_time     = std::chrono::system_clock::now() - timer.last_frame_time;

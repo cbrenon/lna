@@ -1,11 +1,18 @@
 #include <cstring>
 #include "core/assert.hpp"
+#include "core/memory_pool.hpp"
 #include "platform/vulkan/vulkan_mesh.hpp"
 #include "platform/vulkan/vulkan_helpers.hpp"
 #include "platform/vulkan/vulkan_texture.hpp"
 
-namespace
+namespace lna
 {
+    struct vulkan_uniform_buffer_object
+    {
+        alignas(16) lna::mat4       model;
+        alignas(16) lna::mat4       view;
+        alignas(16) lna::mat4       projection;
+    };
 }
 
 void lna::vulkan_mesh_init(
@@ -18,10 +25,10 @@ void lna::vulkan_mesh_init(
     mesh.index_buffer_memory    = nullptr;
     mesh.vertex_count           = 0;
     mesh.index_count            = 0;
-
-    lna::heap_array_init(mesh.uniform_buffers);
-    lna::heap_array_init(mesh.uniform_buffers_memory);
-    lna::heap_array_init(mesh.descriptor_sets);
+    mesh.uniform_buffers        = nullptr;
+    mesh.uniform_buffers_memory = nullptr;
+    mesh.descriptor_sets        = nullptr;
+    mesh.swap_chain_image_count = 0;
 }
 
 void lna::vulkan_mesh_create_vertex_and_index_buffer(
@@ -44,7 +51,6 @@ void lna::vulkan_mesh_create_vertex_and_index_buffer(
     LNA_ASSERT(config.vertex_count > 0);
     LNA_ASSERT(config.index_count > 0);
 
-    
     //! VERTEX BUFFER PART
     {
         mesh.vertex_count  = config.vertex_count;
@@ -179,25 +185,28 @@ void lna::vulkan_mesh_create_uniform_buffer(
     lna::vulkan_mesh_create_uniform_buffer_info& config
     )
 {
-    LNA_ASSERT(lna::heap_array_has_been_reset(mesh.uniform_buffers));
-    LNA_ASSERT(lna::heap_array_has_been_reset(mesh.uniform_buffers_memory));
+    LNA_ASSERT(mesh.uniform_buffers == nullptr);
+    LNA_ASSERT(mesh.uniform_buffers_memory == nullptr);
+    LNA_ASSERT(mesh.swap_chain_image_count == 0);
     LNA_ASSERT(config.device);
     LNA_ASSERT(config.physical_device);
     LNA_ASSERT(config.swap_chain_image_count > 0);
     LNA_ASSERT(config.swap_chain_memory_pool_ptr);
 
-    VkDeviceSize uniform_buffer_size = sizeof(vulkan_uniform_buffer_object);
+    VkDeviceSize uniform_buffer_size = sizeof(lna::vulkan_uniform_buffer_object);
 
-    lna::heap_array_set_max_element_count(
-        mesh.uniform_buffers,
+    mesh.swap_chain_image_count = config.swap_chain_image_count;
+    mesh.uniform_buffers        = (VkBuffer*)lna::memory_pool_reserve(
         *config.swap_chain_memory_pool_ptr,
-        config.swap_chain_image_count
+        mesh.swap_chain_image_count * sizeof(VkBuffer)
         );
-    lna::heap_array_set_max_element_count(
-        mesh.uniform_buffers_memory,
+    mesh.uniform_buffers_memory = (VkDeviceMemory*)lna::memory_pool_reserve(
         *config.swap_chain_memory_pool_ptr,
-        config.swap_chain_image_count
+        mesh.swap_chain_image_count * sizeof(VkDeviceMemory)
         );
+    LNA_ASSERT(mesh.uniform_buffers);
+    LNA_ASSERT(mesh.uniform_buffers_memory);
+
     for (size_t i = 0; i < config.swap_chain_image_count; ++i)
     {
         lna::vulkan_helpers::create_buffer(
@@ -206,8 +215,8 @@ void lna::vulkan_mesh_create_uniform_buffer(
             uniform_buffer_size,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            mesh.uniform_buffers.elements[i],
-            mesh.uniform_buffers_memory.elements[i]
+            mesh.uniform_buffers[i],
+            mesh.uniform_buffers_memory[i]
             );
     }
 }
@@ -217,14 +226,14 @@ void lna::vulkan_mesh_upate_uniform_buffer(
     lna::vulkan_mesh_update_uniform_buffer_info& config
     )
 {
-    LNA_ASSERT(mesh.uniform_buffers_memory.elements);
+    LNA_ASSERT(mesh.uniform_buffers_memory);
     LNA_ASSERT(config.device);
-    LNA_ASSERT(config.image_index < mesh.uniform_buffers_memory.element_count);
+    LNA_ASSERT(config.image_index < mesh.swap_chain_image_count);
     LNA_ASSERT(config.model_matrix_ptr);
     LNA_ASSERT(config.view_matrix_ptr);
     LNA_ASSERT(config.projection_matrix_ptr);
 
-    vulkan_uniform_buffer_object ubo{};
+    lna::vulkan_uniform_buffer_object ubo{};
 
     ubo.model       = *config.model_matrix_ptr;
     ubo.view        = *config.view_matrix_ptr;
@@ -234,7 +243,7 @@ void lna::vulkan_mesh_upate_uniform_buffer(
     VULKAN_CHECK_RESULT(
         vkMapMemory(
             config.device,
-            mesh.uniform_buffers_memory.elements[config.image_index],
+            mesh.uniform_buffers_memory[config.image_index],
             0,
             sizeof(ubo),
             0,
@@ -248,7 +257,7 @@ void lna::vulkan_mesh_upate_uniform_buffer(
         );
     vkUnmapMemory(
         config.device,
-        mesh.uniform_buffers_memory.elements[config.image_index]
+        mesh.uniform_buffers_memory[config.image_index]
         );
 }
 
@@ -257,68 +266,64 @@ void lna::vulkan_mesh_create_descriptor_sets(
     lna::vulkan_mesh_create_descriptor_sets_info& config
     )
 {
-    LNA_ASSERT(lna::heap_array_has_been_reset(mesh.descriptor_sets));
-
+    LNA_ASSERT(mesh.descriptor_sets == nullptr);
+    LNA_ASSERT(mesh.swap_chain_image_count != 0 );  // vulkan_mesh_upate_uniform_buffer must have been called before
+    LNA_ASSERT(mesh.uniform_buffers_memory);        // vulkan_mesh_upate_uniform_buffer must have been called before
     LNA_ASSERT(config.device);
     LNA_ASSERT(config.physical_device);
     LNA_ASSERT(config.descriptor_pool);
     LNA_ASSERT(config.descriptor_set_layout);
-    LNA_ASSERT(config.swap_chain_image_count > 0);
     LNA_ASSERT(config.temp_memory_pool_ptr);
     LNA_ASSERT(config.swap_chain_memory_pool_ptr);
-    LNA_ASSERT(config.texture_ptr);
-    LNA_ASSERT(config.texture_ptr->image_view);
-    LNA_ASSERT(config.texture_ptr->sampler);
+    LNA_ASSERT(mesh.texture_ptr);                   // texture must be assigned before calling create descriptor sets
+    LNA_ASSERT(mesh.texture_ptr->image_view);
+    LNA_ASSERT(mesh.texture_ptr->sampler);
 
-    lna::heap_array<VkDescriptorSetLayout> layouts;
-    lna::heap_array_init(
-        layouts
-        );
-    lna::heap_array_set_max_element_count(
-        layouts,
+    VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)lna::memory_pool_reserve(
         *config.temp_memory_pool_ptr,
-        config.swap_chain_image_count
+        mesh.swap_chain_image_count * sizeof(VkDescriptorSetLayout)
         );
-    lna::heap_array_fill_with_unique_value(
-        layouts,
-        config.descriptor_set_layout
-        );
+    LNA_ASSERT(layouts);
+    for (uint32_t i = 0; i < mesh.swap_chain_image_count; ++i)
+    {
+        layouts[i] = config.descriptor_set_layout;
+    }
 
     VkDescriptorSetAllocateInfo allocate_info{};
     allocate_info.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocate_info.descriptorPool        = config.descriptor_pool;
-    allocate_info.descriptorSetCount    = config.swap_chain_image_count;
-    allocate_info.pSetLayouts           = layouts.elements;
+    allocate_info.descriptorSetCount    = mesh.swap_chain_image_count;
+    allocate_info.pSetLayouts           = layouts;
 
-    lna::heap_array_set_max_element_count(
-        mesh.descriptor_sets,
+    mesh.descriptor_sets = (VkDescriptorSet*)lna::memory_pool_reserve(
         *config.swap_chain_memory_pool_ptr,
-        config.swap_chain_image_count
+        mesh.swap_chain_image_count * sizeof(VkDescriptorSet)
         );
+    LNA_ASSERT(mesh.descriptor_sets);
         
     VULKAN_CHECK_RESULT(
         vkAllocateDescriptorSets(
             config.device,
             &allocate_info,
-            mesh.descriptor_sets.elements
+            mesh.descriptor_sets
             )
         )
 
-    for (size_t i = 0; i < config.swap_chain_image_count; ++i)
+    for (size_t i = 0; i < mesh.swap_chain_image_count; ++i)
     {
         VkDescriptorBufferInfo buffer_info{};
-        buffer_info.buffer  = mesh.uniform_buffers.elements[i];
+        buffer_info.buffer  = mesh.uniform_buffers[i];
         buffer_info.offset  = 0;
         buffer_info.range   = sizeof(vulkan_uniform_buffer_object);
 
         VkDescriptorImageInfo image_info{};
         image_info.imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        image_info.imageView    = config.texture_ptr->image_view;
-        image_info.sampler      = config.texture_ptr->sampler;
+        image_info.imageView    = mesh.texture_ptr->image_view;
+        image_info.sampler      = mesh.texture_ptr->sampler;
 
         VkWriteDescriptorSet write_descriptors[2] {};
         write_descriptors[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_descriptors[0].dstSet           = mesh.descriptor_sets.elements[i];
+        write_descriptors[0].dstSet           = mesh.descriptor_sets[i];
         write_descriptors[0].dstBinding       = 0;
         write_descriptors[0].dstArrayElement  = 0;
         write_descriptors[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -327,7 +332,7 @@ void lna::vulkan_mesh_create_descriptor_sets(
         write_descriptors[0].pImageInfo       = nullptr;
         write_descriptors[0].pTexelBufferView = nullptr;
         write_descriptors[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_descriptors[1].dstSet           = mesh.descriptor_sets.elements[i];
+        write_descriptors[1].dstSet           = mesh.descriptor_sets[i];
         write_descriptors[1].dstBinding       = 1;
         write_descriptors[1].dstArrayElement  = 0;
         write_descriptors[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -353,20 +358,22 @@ void lna::vulkan_mesh_clean_uniform_buffer(
 {
     LNA_ASSERT(device);
 
-    for (size_t i = 0; i < mesh.uniform_buffers.element_count; ++i)
+    for (size_t i = 0; i < mesh.swap_chain_image_count; ++i)
     {
         vkDestroyBuffer(
             device,
-            mesh.uniform_buffers.elements[i],
+            mesh.uniform_buffers[i],
             nullptr
             );
         vkFreeMemory(
             device,
-            mesh.uniform_buffers_memory.elements[i],
+            mesh.uniform_buffers_memory[i],
             nullptr
             );
     }
-    lna::heap_array_reset(mesh.uniform_buffers);
+    mesh.uniform_buffers = nullptr;
+    mesh.uniform_buffers_memory = nullptr;
+    mesh.swap_chain_image_count = 0;
 }
 
 void lna::vulkan_mesh_clean_descriptor_sets(
@@ -376,7 +383,7 @@ void lna::vulkan_mesh_clean_descriptor_sets(
     // NOTE: no need to explicity clean up vulkan descriptor sets objects
     // because it is done when the vulkan descriptor pool is destroyed.
     // we just have to reset the array and wait for filling it again.
-    lna::heap_array_reset(mesh.descriptor_sets);
+    mesh.descriptor_sets = nullptr;
 }
 
 void lna::vulkan_mesh_release(

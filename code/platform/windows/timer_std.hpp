@@ -6,20 +6,10 @@
 
 namespace lna
 {
-    struct timer_std
+    struct timer_api
     {
         std::chrono::time_point<std::chrono::system_clock> last_frame_time;
     };
-
-    template<>
-    void timer_start<timer_std>(
-        timer_std& timer
-        );
-
-    template<>
-    double timer_dtime_in_ms<timer_std>(
-        timer_std& timer
-        );
 }
 
 #endif // _LNA_PLATFORM_WINDOWS_TIMER_STD_HPP_

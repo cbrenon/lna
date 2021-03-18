@@ -16,12 +16,12 @@ namespace lna
         WINDOW_RESIZED,
     };
 
-    template<typename input_api>
+    struct input_api;
+
     input_event input_poll_events(
         input_api& input
         );
 
-    template<typename input_api>
     bool input_is_key_pressed(
         input_api& input,
         key k

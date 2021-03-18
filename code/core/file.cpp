@@ -1,33 +1,40 @@
 #include <fstream>
 #include "core/file.hpp"
 #include "core/assert.hpp"
+#include "core/memory_pool.hpp"
 
 namespace lna
 {
-    heap_array<char> file_debug_load(
+    void file_init(
+        file& f
+        )
+    {
+        f.content       = nullptr;
+        f.content_size  = 0;
+    }
+
+    void file_debug_load(
+        file& f,
         const char* filename,
         bool binary,
         memory_pool& pool
         )
     {
-        std::ifstream file(filename, binary ? std::ios::ate | std::ios::binary : std::ios::ate);
-        LNA_ASSERT(file.is_open());
-        uint32_t file_size = static_cast<uint32_t>(file.tellg());
-        heap_array<char> buffer;
-        heap_array_init(
-            buffer
+        LNA_ASSERT(f.content == nullptr);
+        LNA_ASSERT(f.content_size == 0);
+
+        std::ifstream fd(filename, binary ? std::ios::ate | std::ios::binary : std::ios::ate);
+        LNA_ASSERT(fd.is_open());
+
+        f.content_size  = static_cast<uint32_t>(fd.tellg());
+        f.content       = (char*)memory_pool_reserve(pool, f.content_size * sizeof(char));
+        LNA_ASSERT(f.content);
+
+        fd.seekg(0);
+        fd.read(
+            f.content,
+            f.content_size
             );
-        heap_array_set_max_element_count(
-            buffer,
-            pool,
-            file_size
-            );
-        file.seekg(0);
-        file.read(
-            buffer.elements,
-            file_size
-            );
-        file.close();
-        return buffer;
+        fd.close();
     }
 }

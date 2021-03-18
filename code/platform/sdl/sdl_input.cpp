@@ -11,9 +11,8 @@ namespace
 
 namespace lna
 {
-    template<>
-    input_event input_poll_events<sdl_input>(
-        sdl_input& input
+    input_event input_poll_events(
+        input_api& input
         )
     {
         input_event result = input_event::NONE;
@@ -55,9 +54,8 @@ namespace lna
         return result;
     }
 
-    template<>
-    bool input_is_key_pressed<sdl_input>(
-        sdl_input& input,
+    bool input_is_key_pressed(
+        input_api& input,
         key k
         )
     {
