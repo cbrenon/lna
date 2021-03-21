@@ -1,4 +1,4 @@
-WIP C++ game development framework.
+WIP C++ light framework for game prototyping.
 - spare time project
 - Vulkan renderer
 - SDL2 window management
