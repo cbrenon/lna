@@ -1,7 +1,7 @@
 #ifndef _LNA_PLATFORM_VULKAN_VULKAN_MESH_HPP_
 #define _LNA_PLATFORM_VULKAN_VULKAN_MESH_HPP_
 
-#include <vulkan.h>
+#include <vulkan/vulkan.h>
 #include "graphics/vertex.hpp"
 #include "maths/mat4.hpp"
 

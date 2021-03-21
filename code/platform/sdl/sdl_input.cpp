@@ -1,4 +1,5 @@
 #include "platform/sdl/sdl_input.hpp"
+#include "imgui_impl_sdl.h"
 
 namespace
 {
@@ -25,6 +26,7 @@ namespace lna
         SDL_JoystickEventState(SDL_DISABLE);
         while (SDL_PollEvent(&sdl_event))
         {
+            ImGui_ImplSDL2_ProcessEvent(&sdl_event);
             switch (sdl_event.type)
             {
                 case SDL_QUIT:

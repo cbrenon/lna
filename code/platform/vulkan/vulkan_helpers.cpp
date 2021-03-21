@@ -1,4 +1,6 @@
 #include "core/assert.hpp"
+#include "core/memory_pool.hpp"
+#include "core/file.hpp"
 #include "platform/vulkan/vulkan_helpers.hpp"
 #include "graphics/vertex.hpp"
 
@@ -519,4 +521,44 @@ void lna::vulkan_helpers::copy_buffer(
         command_buffer,
         graphics_queue
         );
+}
+
+VkShaderModule lna::vulkan_helpers::load_shader(
+    VkDevice device,
+    const char* filename,
+    lna::memory_pool& pool
+    )
+{
+    LNA_ASSERT(device);
+    LNA_ASSERT(filename);
+
+    lna::file shader_file;
+    shader_file.content = nullptr;
+    shader_file.content_size = 0;
+    lna::file_debug_load(
+        shader_file,
+        filename,
+        true,
+        pool
+        );
+
+    LNA_ASSERT(shader_file.content);
+    LNA_ASSERT(shader_file.content_size > 0);
+    
+    VkShaderModuleCreateInfo shader_module_create_info{};
+    shader_module_create_info.sType     = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shader_module_create_info.codeSize  = shader_file.content_size;
+    shader_module_create_info.pCode     = reinterpret_cast<const uint32_t*>(shader_file.content);
+
+    VkShaderModule shader_module = nullptr;
+    VULKAN_CHECK_RESULT(
+        vkCreateShaderModule(
+            device,
+            &shader_module_create_info,
+            nullptr,
+            &shader_module
+            )
+        )
+
+    return shader_module;
 }

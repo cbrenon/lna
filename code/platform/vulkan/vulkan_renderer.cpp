@@ -13,7 +13,6 @@
 #include "platform/vulkan/vulkan_vertex.hpp"
 #include "platform/sdl/sdl_window.hpp"
 #include "platform/renderer.hpp"
-#include "core/file.hpp"
 #include "core/assert.hpp"
 #include "maths/mat4.hpp"
 
@@ -455,33 +454,6 @@ namespace
             &&  supported_features.samplerAnisotropy;
     }
 
-    VkShaderModule vulkan_create_shader_module(
-        lna::renderer_api& renderer,
-        const char* code,
-        uint32_t code_size
-        )
-    {
-        LNA_ASSERT(renderer.device);
-        LNA_ASSERT(code);
-        LNA_ASSERT(code_size > 0);
-
-        VkShaderModuleCreateInfo shader_module_create_info{};
-        shader_module_create_info.sType     = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        shader_module_create_info.codeSize  = code_size;
-        shader_module_create_info.pCode     = reinterpret_cast<const uint32_t*>(code);
-
-        VkShaderModule shader_module = nullptr;
-        VULKAN_CHECK_RESULT(
-            vkCreateShaderModule(
-                renderer.device,
-                &shader_module_create_info,
-                nullptr,
-                &shader_module
-                )
-            )
-        return shader_module;
-    }
-
     //! VULKAN INIT PROCESS FUNCTION -------------------------------------------
 
     void vulkan_create_instance(
@@ -638,6 +610,7 @@ namespace
         LNA_ASSERT(renderer.physical_device);
         LNA_ASSERT(renderer.device == nullptr);
         LNA_ASSERT(renderer.graphics_queue == nullptr);
+        LNA_ASSERT(renderer.graphics_family == (uint32_t)-1);
 
         vulkan_queue_family_indices indices = vulkan_find_queue_families(
             renderer,
@@ -687,6 +660,9 @@ namespace
                 &renderer.device
                 )
             )
+
+        renderer.graphics_family = indices.graphics_family;
+
         vkGetDeviceQueue(
             renderer.device,
             indices.graphics_family,
@@ -915,52 +891,25 @@ namespace
         LNA_ASSERT(renderer.device);
         LNA_ASSERT(renderer.render_pass);
 
-        lna::file vertex_shader_file;
-        vertex_shader_file.content = nullptr;
-        vertex_shader_file.content_size = 0;
-        lna::file_debug_load(
-            vertex_shader_file,
+        VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
+            renderer.device,
             "shaders/default_vert.spv",
-            true,
             renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL]
             );
-        VkShaderModule vertex_shader_module = vulkan_create_shader_module(
-            renderer,
-            vertex_shader_file.content,
-            vertex_shader_file.content_size
-            );
-        lna::file fragment_shader_file;
-        fragment_shader_file.content = nullptr;
-        fragment_shader_file.content_size = 0;
-        lna::file_debug_load(
-            fragment_shader_file,
+        VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
+            renderer.device,
             "shaders/default_frag.spv",
-            true,
             renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL]
             );
-        VkShaderModule fragment_shader_module = vulkan_create_shader_module(
-            renderer,
-            fragment_shader_file.content,
-            fragment_shader_file.content_size
-            );
-
-        VkPipelineShaderStageCreateInfo vertex_shader_stage_create_info{};
-        vertex_shader_stage_create_info.sType       = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        vertex_shader_stage_create_info.stage       = VK_SHADER_STAGE_VERTEX_BIT;
-        vertex_shader_stage_create_info.module      = vertex_shader_module;
-        vertex_shader_stage_create_info.pName       = "main";
-
-        VkPipelineShaderStageCreateInfo fragment_shader_stage_create_info{};
-        fragment_shader_stage_create_info.sType     = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        fragment_shader_stage_create_info.stage     = VK_SHADER_STAGE_FRAGMENT_BIT;
-        fragment_shader_stage_create_info.module    = fragment_shader_module;
-        fragment_shader_stage_create_info.pName     = "main";
-
-        VkPipelineShaderStageCreateInfo shader_stage_create_infos[] =
-        {
-            vertex_shader_stage_create_info,
-            fragment_shader_stage_create_info
-        };
+        VkPipelineShaderStageCreateInfo shader_stage_create_infos[2]{};
+        shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shader_stage_create_infos[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
+        shader_stage_create_infos[0].module = vertex_shader_module;
+        shader_stage_create_infos[0].pName  = "main";
+        shader_stage_create_infos[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shader_stage_create_infos[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
+        shader_stage_create_infos[1].module = fragment_shader_module;
+        shader_stage_create_infos[1].pName  = "main";
 
         auto vertex_description = lna::vulkan_default_vertex_description();
 
@@ -1155,7 +1104,7 @@ namespace
         VkCommandPoolCreateInfo command_pool_create_info{};
         command_pool_create_info.sType              = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         command_pool_create_info.queueFamilyIndex   = indices.graphics_family;
-        command_pool_create_info.flags              = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT 
+        command_pool_create_info.flags              = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
         VULKAN_CHECK_RESULT(
             vkCreateCommandPool(
@@ -1257,7 +1206,7 @@ namespace
         pool_sizes[0].type              = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         pool_sizes[0].descriptorCount   = renderer.swap_chain_image_count;
         pool_sizes[1].type              = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        pool_sizes[1].descriptorCount   = renderer.swap_chain_image_count;;
+        pool_sizes[1].descriptorCount   = renderer.swap_chain_image_count;
 
         VkDescriptorPoolCreateInfo pool_create_info{};
         pool_create_info.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1410,6 +1359,7 @@ namespace lna
         renderer.debug_messenger                    = nullptr;
         renderer.physical_device                    = nullptr;
         renderer.device                             = nullptr;
+        renderer.graphics_family                    = (uint32_t)-1;
         renderer.graphics_queue                     = nullptr;
         renderer.surface                            = nullptr;
         renderer.present_queue                      = nullptr;
@@ -1433,6 +1383,8 @@ namespace lna
         renderer.swap_chain_framebuffers            = nullptr;
         renderer.command_buffers                    = nullptr;
         renderer.swap_chain_image_count             = 0;
+
+        vulkan_imgui_wrapper_init(renderer.imgui_wrapper);
     }
 
     void renderer_configure(
@@ -1506,6 +1458,20 @@ namespace lna
 
         vulkan_create_command_buffers(renderer);
         vulkan_create_sync_objects(renderer);
+
+        lna::vulkan_imgui_wrapper_config imgui_wrapper_config{};
+        imgui_wrapper_config.window_width           = static_cast<float>(lna::window_width(*config.window_ptr));
+        imgui_wrapper_config.window_height          = static_cast<float>(lna::window_height(*config.window_ptr));
+        imgui_wrapper_config.device                 = renderer.device;
+        imgui_wrapper_config.physical_device        = renderer.physical_device;
+        imgui_wrapper_config.command_pool           = renderer.command_pool;
+        imgui_wrapper_config.graphics_queue         = renderer.graphics_queue;
+        imgui_wrapper_config.render_pass            = renderer.render_pass;
+        imgui_wrapper_config.temp_memory_pool_ptr   = &renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL];
+        lna::vulkan_imgui_wrapper_configure(
+            renderer.imgui_wrapper,
+            imgui_wrapper_config
+            );
     }
 
     texture_handle renderer_new_texture(
@@ -1525,6 +1491,14 @@ namespace lna
         texture_info.physical_device    = renderer.physical_device;
         texture_info.graphics_queue     = renderer.graphics_queue;
         texture_info.filename           = config.filename;
+        texture_info.pixels             = nullptr;
+        texture_info.format             = VK_FORMAT_R8G8B8A8_SRGB;
+        texture_info.mag_filter         = VK_FILTER_LINEAR;
+        texture_info.min_filter         = VK_FILTER_LINEAR;
+        texture_info.mipmap_mode        = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        texture_info.address_mode_u     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        texture_info.address_mode_v     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        texture_info.address_mode_w     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         vulkan_texture_configure(
             renderer.texture_system.textures[new_texture_handle],
             texture_info
@@ -1688,107 +1662,146 @@ namespace lna
             far
             );
 
-        VkCommandBufferBeginInfo    command_buffer_begin_info{};
-        command_buffer_begin_info.sType             = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        command_buffer_begin_info.flags             = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-        command_buffer_begin_info.pInheritanceInfo  = nullptr;
-
-        VULKAN_CHECK_RESULT(
-            vkResetCommandBuffer(
-                renderer.command_buffers[image_index],
-                VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
-                )
-            )
-
-        VULKAN_CHECK_RESULT(
-            vkBeginCommandBuffer(
-                renderer.command_buffers[image_index],
-                &command_buffer_begin_info
-                )
-            )
-
-        VkRenderPassBeginInfo render_pass_begin_info{};
-        render_pass_begin_info.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        render_pass_begin_info.renderPass           = renderer.render_pass;
-        render_pass_begin_info.framebuffer          = renderer.swap_chain_framebuffers[image_index];
-        render_pass_begin_info.renderArea.offset    = { 0, 0 };
-        render_pass_begin_info.renderArea.extent    = renderer.swap_chain_extent;
-        VkClearValue clear_color = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
-        render_pass_begin_info.clearValueCount      = 1;
-        render_pass_begin_info.pClearValues         = &clear_color;
-
-        vkCmdBeginRenderPass(
-            renderer.command_buffers[image_index],
-            &render_pass_begin_info,
-            VK_SUBPASS_CONTENTS_INLINE
-            );
-        vkCmdBindPipeline(
-            renderer.command_buffers[image_index],
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            renderer.graphics_pipeline
-            );
-
-        for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
+        for (size_t i = 0; i < renderer.swap_chain_image_count; ++i)
         {
-            lna::mat4_translation(
-                model,
-                renderer.mesh_system.mesh_positions[i].x,
-                renderer.mesh_system.mesh_positions[i].y,
-                renderer.mesh_system.mesh_positions[i].z
-                );
-            vulkan_mesh_update_uniform_buffer_info update_uniform_buffer_info{};
-            update_uniform_buffer_info.device                   = renderer.device;
-            update_uniform_buffer_info.image_index              = image_index;
-            update_uniform_buffer_info.model_matrix_ptr         = &model;
-            update_uniform_buffer_info.view_matrix_ptr          = &view;
-            update_uniform_buffer_info.projection_matrix_ptr    = &projection;
-            vulkan_mesh_upate_uniform_buffer(
-                renderer.mesh_system.meshes[i],
-                update_uniform_buffer_info
-                );
-            vkCmdBindDescriptorSets(
-                renderer.command_buffers[image_index],
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                renderer.pipeline_layout,
-                0,
-                1,
-                &renderer.mesh_system.meshes[i].descriptor_sets[image_index],
-                0,
-                nullptr
-                );
-            VkBuffer        vertex_buffers[]    = { renderer.mesh_system.meshes[i].vertex_buffer };
-            VkDeviceSize    offsets[]           = { 0 };
-            vkCmdBindVertexBuffers(
-                renderer.command_buffers[image_index],
-                0,
-                1,
-                vertex_buffers,
-                offsets
-                );
-            vkCmdBindIndexBuffer(
-                renderer.command_buffers[image_index],
-                renderer.mesh_system.meshes[i].index_buffer,
-                0,
-                VK_INDEX_TYPE_UINT16
-                );
-            vkCmdDrawIndexed(
-                renderer.command_buffers[image_index],
-                renderer.mesh_system.meshes[i].index_count,
-                1,
-                0,
-                0,
-                0
-                );
-        }
+            VkCommandBufferBeginInfo    command_buffer_begin_info{};
+            command_buffer_begin_info.sType             = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            command_buffer_begin_info.flags             = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+            command_buffer_begin_info.pInheritanceInfo  = nullptr;
 
-        vkCmdEndRenderPass(
-            renderer.command_buffers[image_index]
-            );
-        VULKAN_CHECK_RESULT(
-            vkEndCommandBuffer(
-                renderer.command_buffers[image_index]
+            VULKAN_CHECK_RESULT(
+                vkResetCommandBuffer(
+                    renderer.command_buffers[i],
+                    VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
+                    )
                 )
-            )
+
+            VULKAN_CHECK_RESULT(
+                vkBeginCommandBuffer(
+                    renderer.command_buffers[i],
+                    &command_buffer_begin_info
+                    )
+                )
+
+            VkRenderPassBeginInfo render_pass_begin_info{};
+            render_pass_begin_info.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            render_pass_begin_info.renderPass           = renderer.render_pass;
+            render_pass_begin_info.framebuffer          = renderer.swap_chain_framebuffers[i];
+            render_pass_begin_info.renderArea.offset    = { 0, 0 };
+            render_pass_begin_info.renderArea.extent    = renderer.swap_chain_extent;
+            VkClearValue clear_color = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
+            render_pass_begin_info.clearValueCount      = 1;
+            render_pass_begin_info.pClearValues         = &clear_color;
+
+            vkCmdBeginRenderPass(
+                renderer.command_buffers[i],
+                &render_pass_begin_info,
+                VK_SUBPASS_CONTENTS_INLINE
+                );
+
+            VkViewport viewport;
+            viewport.width      = renderer.swap_chain_extent.width;
+		    viewport.height     = renderer.swap_chain_extent.height;
+		    viewport.minDepth   = 0.0f;
+		    viewport.maxDepth   = 1.0f;
+            vkCmdSetViewport(
+                renderer.command_buffers[i],
+                0,
+                1,
+                &viewport
+                );
+
+            VkRect2D scissor_rect;
+            scissor_rect.offset.x = 0;
+            scissor_rect.offset.y = 0;
+            scissor_rect.extent.width   = renderer.swap_chain_extent.width;
+            scissor_rect.extent.height  = renderer.swap_chain_extent.height;
+            vkCmdSetScissor(
+                renderer.command_buffers[i],
+                0,
+                1,
+                &scissor_rect
+                );
+                
+            vkCmdBindPipeline(
+                renderer.command_buffers[i],
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                renderer.graphics_pipeline
+                );
+
+            for (uint32_t m = 0; m < renderer.mesh_system.cur_mesh_count; ++m)
+            {
+                lna::mat4_translation(
+                    model,
+                    renderer.mesh_system.mesh_positions[m].x,
+                    renderer.mesh_system.mesh_positions[m].y,
+                    renderer.mesh_system.mesh_positions[m].z
+                    );
+                vulkan_mesh_update_uniform_buffer_info update_uniform_buffer_info{};
+                update_uniform_buffer_info.device                   = renderer.device;
+                update_uniform_buffer_info.image_index              = i;
+                update_uniform_buffer_info.model_matrix_ptr         = &model;
+                update_uniform_buffer_info.view_matrix_ptr          = &view;
+                update_uniform_buffer_info.projection_matrix_ptr    = &projection;
+                vulkan_mesh_upate_uniform_buffer(
+                    renderer.mesh_system.meshes[m],
+                    update_uniform_buffer_info
+                    );
+                vkCmdBindDescriptorSets(
+                    renderer.command_buffers[i],
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    renderer.pipeline_layout,
+                    0,
+                    1,
+                    &renderer.mesh_system.meshes[m].descriptor_sets[i],
+                    0,
+                    nullptr
+                    );
+                VkBuffer        vertex_buffers[]    = { renderer.mesh_system.meshes[m].vertex_buffer };
+                VkDeviceSize    offsets[]           = { 0 };
+                vkCmdBindVertexBuffers(
+                    renderer.command_buffers[i],
+                    0,
+                    1,
+                    vertex_buffers,
+                    offsets
+                    );
+                vkCmdBindIndexBuffer(
+                    renderer.command_buffers[i],
+                    renderer.mesh_system.meshes[m].index_buffer,
+                    0,
+                    VK_INDEX_TYPE_UINT16
+                    );
+                vkCmdDrawIndexed(
+                    renderer.command_buffers[i],
+                    renderer.mesh_system.meshes[m].index_count,
+                    1,
+                    0,
+                    0,
+                    0
+                    );
+            }
+
+            vulkan_imgui_wrapper_update(
+               renderer.imgui_wrapper,
+               renderer.device,
+               renderer.physical_device
+               );
+
+            vulkan_imgui_wrapper_render_frame(
+                renderer.imgui_wrapper,
+                renderer.command_buffers[i]
+                );
+
+            vkCmdEndRenderPass(
+                renderer.command_buffers[i]
+                );
+            VULKAN_CHECK_RESULT(
+                vkEndCommandBuffer(
+                    renderer.command_buffers[i]
+                    )
+                )
+        }
 
         VkSubmitInfo submit_info{};
         submit_info.sType                   = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1871,6 +1884,12 @@ namespace lna
                 renderer.device
                 )
             )
+
+        vulkan_imgui_wrapper_release(
+            renderer.imgui_wrapper,
+            renderer.device
+            );
+
         vulkan_cleanup_swap_chain(renderer);
 
         for (uint32_t i = 0; i < renderer.texture_system.cur_texture_count; ++i)

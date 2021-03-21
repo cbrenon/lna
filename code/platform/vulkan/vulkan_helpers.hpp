@@ -1,7 +1,7 @@
 #ifndef _LNA_PLATFORM_VULKAN_VULKAN_HELPERS_HPP_
 #define _LNA_PLATFORM_VULKAN_VULKAN_HELPERS_HPP_
 
-#include <vulkan.h>
+#include <vulkan/vulkan.h>
 #include "core/log.hpp"
 #include "core/assert.hpp"
 
@@ -17,6 +17,8 @@
 
 namespace lna
 {
+    struct memory_pool;
+
     namespace vulkan_helpers
     {
         const char* error_string(
@@ -97,6 +99,12 @@ namespace lna
             VkBuffer src,
             VkBuffer dst,
             VkDeviceSize size
+            );
+
+        VkShaderModule load_shader(
+            VkDevice device,
+            const char* filename,
+            memory_pool& pool
             );
     }
 }

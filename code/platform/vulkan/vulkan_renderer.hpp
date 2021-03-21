@@ -1,9 +1,10 @@
 #ifndef _LAN_PLATFORM_VULKAN_VULKAN_RENDERER_HPP_
 #define _LAN_PLATFORM_VULKAN_VULKAN_RENDERER_HPP_
 
-#include <vulkan.h>
+#include <vulkan/vulkan.h>
 #include "platform/vulkan/vulkan_texture.hpp"
 #include "platform/vulkan/vulkan_mesh.hpp"
+#include "platform/vulkan/vulkan_imgui.hpp"
 #include "core/memory_pool.hpp"
 
 namespace lna
@@ -33,6 +34,7 @@ namespace lna
         VkDebugUtilsMessengerEXT        debug_messenger;
         VkPhysicalDevice                physical_device;
         VkDevice                        device;
+        uint32_t                        graphics_family;
         VkQueue                         graphics_queue;
         VkSurfaceKHR                    surface;
         VkQueue                         present_queue;
@@ -71,6 +73,8 @@ namespace lna
         };
 
         memory_pool                     memory_pools[MEMORY_POOL_COUNT];
+
+        vulkan_imgui_wrapper            imgui_wrapper;
     };
 
     constexpr size_t MEMORY_POOL_SIZES[renderer_api::MEMORY_POOL_COUNT] =

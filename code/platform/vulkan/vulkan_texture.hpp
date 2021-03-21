@@ -1,25 +1,39 @@
 #ifndef _LNA_PLATFORM_VULKAN_VULKAN_TEXTURE_HPP_
 #define _LNA_PLATFORM_VULKAN_VULKAN_TEXTURE_HPP_
 
-#include <vulkan.h>
+#include <vulkan/vulkan.h>
 
 namespace lna
 {
     struct vulkan_texture
     {
-        VkImage             image;
-        VkDeviceMemory      image_memory;
-        VkImageView         image_view;
-        VkSampler           sampler;
+        VkImage                 image;
+        VkDeviceMemory          image_memory;
+        VkImageView             image_view;
+        VkSampler               sampler;
     };
 
     struct vulkan_texture_config_info
     {
-        const char*         filename;
-        VkDevice            device;
-        VkPhysicalDevice    physical_device;
-        VkCommandPool       command_pool;
-        VkQueue             graphics_queue;
+        //! choose one of these options:
+        //! 1: specify filename to load a file
+        const char*             filename;
+        //! 2: specify pixels
+        unsigned char*          pixels;
+        uint32_t                width;
+        uint32_t                height;
+
+        VkDevice                device;
+        VkPhysicalDevice        physical_device;
+        VkCommandPool           command_pool;
+        VkQueue                 graphics_queue;
+        VkFormat                format;
+        VkFilter                mag_filter;
+        VkFilter                min_filter;
+        VkSamplerMipmapMode     mipmap_mode;
+        VkSamplerAddressMode    address_mode_u;
+        VkSamplerAddressMode    address_mode_v;
+        VkSamplerAddressMode    address_mode_w;
     };
 
     void vulkan_texture_configure(

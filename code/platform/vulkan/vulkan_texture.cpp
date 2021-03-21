@@ -24,10 +24,13 @@ void lna::vulkan_texture_configure(
     int             texture_width       = 0;
     int             texture_height      = 0;
     int             texture_channels    = 0;
-    unsigned char*  texture_pixels      =  nullptr;
+    unsigned char*  texture_pixels      = nullptr;
+    VkDeviceSize    image_size          = 0;
 
     if (config.filename)
     {
+        LNA_ASSERT(config.pixels == 0);
+
         texture_pixels = stbi_load(
             config.filename,
             &texture_width,
@@ -35,16 +38,28 @@ void lna::vulkan_texture_configure(
             &texture_channels,
             STBI_rgb_alpha
             );
+        
     }
+    else if (config.pixels)
+    {
+        LNA_ASSERT(config.filename == 0);
+
+        texture_pixels  = config.pixels;
+        texture_width   = config.width;
+        texture_height  = config.height;
+    }
+    else
+    {
+        //! incorrect configuration
+        LNA_ASSERT(0);
+    }
+    image_size = texture_width * texture_height * 4 * sizeof(char);
     
-    LNA_ASSERT(texture_width != 0);
-    LNA_ASSERT(texture_height != 0);
-    LNA_ASSERT(texture_channels != 0);
     LNA_ASSERT(texture_pixels);
+    LNA_ASSERT(image_size > 0);
 
     VkBuffer        staging_buffer;
     VkDeviceMemory  staging_buffer_memory;
-    VkDeviceSize    image_size = texture_width * texture_height * 4;
 
     lna::vulkan_helpers::create_buffer(
         config.device,
@@ -87,7 +102,7 @@ void lna::vulkan_texture_configure(
         config.physical_device,
         static_cast<uint32_t>(texture_width),
         static_cast<uint32_t>(texture_height),
-        VK_FORMAT_R8G8B8A8_SRGB,
+        config.format,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -99,7 +114,7 @@ void lna::vulkan_texture_configure(
         config.command_pool,
         config.graphics_queue,
         texture.image,
-        VK_FORMAT_R8G8B8A8_SRGB,
+        config.format,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         );
@@ -117,7 +132,7 @@ void lna::vulkan_texture_configure(
         config.command_pool,
         config.graphics_queue,
         texture.image,
-        VK_FORMAT_R8G8B8A8_SRGB,
+        config.format,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         );
@@ -137,7 +152,7 @@ void lna::vulkan_texture_configure(
     texture.image_view = lna::vulkan_helpers::create_image_view(
         config.device,
         texture.image,
-        VK_FORMAT_R8G8B8A8_SRGB
+        config.format
         );
 
     //! SAMPLER PART
@@ -150,22 +165,21 @@ void lna::vulkan_texture_configure(
 
     VkSamplerCreateInfo sampler_create_info{};
     sampler_create_info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_create_info.magFilter               = VK_FILTER_LINEAR;
-    sampler_create_info.minFilter               = VK_FILTER_LINEAR;
-    sampler_create_info.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_create_info.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_create_info.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_create_info.magFilter               = config.mag_filter;
+    sampler_create_info.minFilter               = config.min_filter;
+    sampler_create_info.addressModeU            = config.address_mode_u;
+    sampler_create_info.addressModeV            = config.address_mode_v;
+    sampler_create_info.addressModeW            = config.address_mode_w;
     sampler_create_info.anisotropyEnable        = VK_TRUE;
     sampler_create_info.maxAnisotropy           = gpu_properties.limits.maxSamplerAnisotropy;
-    sampler_create_info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_create_info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
     sampler_create_info.unnormalizedCoordinates = VK_FALSE;
     sampler_create_info.compareEnable           = VK_FALSE;
     sampler_create_info.compareOp               = VK_COMPARE_OP_ALWAYS;
-    sampler_create_info.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_create_info.mipmapMode              = config.mipmap_mode;
     sampler_create_info.mipLodBias              = 0.0f;
     sampler_create_info.minLod                  = 0.0f;
     sampler_create_info.maxLod                  = 0.0f;
-
     VULKAN_CHECK_RESULT(
         vkCreateSampler(
             config.device,

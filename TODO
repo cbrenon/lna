@@ -173,6 +173,21 @@ based framework:
         ✔ gamepad update                                                                           @done(21-03-18 16:50)
         ✔ gamepad close                                                                            @done(21-03-18 16:50)
     ☐ imgui integration
-        ☐ add imgui wrapper for vulkan
-        ☐ display framerate and FPS with imgui
-        ☐ add shortcut to show / hide framerate/FPS window
+        ☐ imgui vulkan implementation
+            ✔ imgui configure function                                                             @done(21-03-20 11:19)
+            ✔ imgui release function                                                               @done(21-03-20 11:19)
+            ✔ imgui update buffers function:                                                       @done(21-03-20 21:49)
+                ✔ rename vulkan_tools_gui struct to vulkan_imgui_wrapper                           @done(21-03-20 12:03)
+                ✔ change function prefix to vulkan_imgui_wrapper                                   @done(21-03-20 12:03)
+                ✔ change function parameter to imgui_wrapper                                       @done(21-03-20 12:03)
+                ✔ create/update vulkan buffers in imgui update buffers function                    @done(21-03-20 16:21)
+                    we will use raw code and not try to use refactored code or object
+                    => no vulkan_buffer struct for the moment, just raw code in vulkan_imgui_wrapper_update
+            ✔ imgui draw frame function                                                            @done(21-03-20 21:49)
+            ✔ validate!                                                                            @done(21-03-20 21:49)
+        ☐ clean code
+            ☐ remove comment
+            ☐ move non public from .hpp to .cpp
+            ☐ validate non regression
+    ☐ debug primitives drawing
+    ☐ check for TODO in the code
