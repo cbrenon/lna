@@ -533,8 +533,6 @@ namespace lna
         VkCommandBuffer command_buffer
         )
     {
-        (void)imgui_wrapper;// TODO: remove this line
-
         LNA_ASSERT(command_buffer);
 
         ImGuiIO& io = ImGui::GetIO();

@@ -1,6 +1,7 @@
 #version 450
 
-layout (push_constant) uniform push_constants {
+layout (push_constant) uniform push_constants
+{
 	vec2 scale;
 	vec2 translate;
 } in_push_constants;

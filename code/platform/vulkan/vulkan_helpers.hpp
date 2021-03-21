@@ -77,7 +77,6 @@ namespace lna
             VkCommandPool command_pool,
             VkQueue graphics_queue,
             VkImage image,
-            VkFormat format,
             VkImageLayout old_layout,
             VkImageLayout new_layout
             );

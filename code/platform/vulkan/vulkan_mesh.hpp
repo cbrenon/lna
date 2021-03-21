@@ -65,6 +65,18 @@ namespace lna
         lna::mat4*                  projection_matrix_ptr;
     };
 
+    struct vulkan_mesh_vertex_description
+    {
+        enum
+        {
+            MAX_BINDING     = 1,
+            MAX_ATTRIBUTES  = 3,
+        };
+
+        VkVertexInputBindingDescription     bindings[MAX_BINDING];
+        VkVertexInputAttributeDescription   attributes[MAX_ATTRIBUTES];
+    };
+
     void vulkan_mesh_create_vertex_and_index_buffer(
         vulkan_mesh& mesh,
         vulkan_mesh_create_vertex_and_index_info& config
@@ -98,6 +110,8 @@ namespace lna
         vulkan_mesh& mesh,
         VkDevice device
         );
+
+    vulkan_mesh_vertex_description vulkan_default_mesh_vertex_description();
 }
 
 #endif // _LNA_PLATFORM_VULKAN_VULKAN_MESH_HPP_

@@ -367,13 +367,10 @@ void lna::vulkan_helpers::transition_image_layout(
     VkCommandPool command_pool,
     VkQueue graphics_queue,
     VkImage image,
-    VkFormat format,
     VkImageLayout old_layout,
     VkImageLayout new_layout
     )
 {
-    (void)format; //TODO: not used for the moment, we will see later if we still need it.
-
     VkCommandBuffer command_buffer = lna::vulkan_helpers::begin_single_time_commands(
         device,
         command_pool

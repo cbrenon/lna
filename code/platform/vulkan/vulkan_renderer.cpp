@@ -10,7 +10,6 @@
 #include "platform/vulkan/vulkan_renderer.hpp"
 #include "platform/vulkan/vulkan_helpers.hpp"
 #include "platform/vulkan/vulkan_mesh.hpp"
-#include "platform/vulkan/vulkan_vertex.hpp"
 #include "platform/sdl/sdl_window.hpp"
 #include "platform/renderer.hpp"
 #include "core/assert.hpp"
@@ -911,13 +910,13 @@ namespace
         shader_stage_create_infos[1].module = fragment_shader_module;
         shader_stage_create_infos[1].pName  = "main";
 
-        auto vertex_description = lna::vulkan_default_vertex_description();
+        auto vertex_description = lna::vulkan_default_mesh_vertex_description();
 
         VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info{};
         vertex_input_state_create_info.sType                            = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertex_input_state_create_info.vertexBindingDescriptionCount    = lna::vulkan_vertex_description::MAX_BINDING;
+        vertex_input_state_create_info.vertexBindingDescriptionCount    = lna::vulkan_mesh_vertex_description::MAX_BINDING;
         vertex_input_state_create_info.pVertexBindingDescriptions       = vertex_description.bindings;
-        vertex_input_state_create_info.vertexAttributeDescriptionCount  = lna::vulkan_vertex_description::MAX_ATTRIBUTES;
+        vertex_input_state_create_info.vertexAttributeDescriptionCount  = lna::vulkan_mesh_vertex_description::MAX_ATTRIBUTES;
         vertex_input_state_create_info.pVertexAttributeDescriptions     = vertex_description.attributes;
 
         VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
@@ -1193,7 +1192,6 @@ namespace
         }
     }
 
-    // TODO: we will have to create another descriptor pool when we will be working on the debug primitive as descriptor set will be different (no texture sampler) 
     void vulkan_create_descriptor_pool(
         lna::renderer_api& renderer
         )
