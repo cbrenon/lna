@@ -1,23 +1,22 @@
-Misc:
-    ☐ LNA framework refacto
-        ✔ manage all memory pool in a memory pool manager                                  @done(21-03-27 22:00)
-            the goal is to centralize all memory pool in the same place.
-            vulkan_renderer will use array of pointer on memory_pool and config
-            will have memory_pool parameters.
-        ✔ rename platform to backends                                                      @done(21-03-27 22:28)
-        ✔ error return if gpu does not support Vulkan                                      @started(21-03-27 23:22) @done(21-03-27 23:25) @lasted(3m42s)
-        ☐ camera information in the update uniform function
-        ☐ add renderer_2D struct and functions
-            ☐ sprite
-            ☐ rect
-            ☐ line
-            ☐ circle
-            ☐ cross
-            ☐ text
-            it will be using backend to draw easily 2D things like sprite, geometric shape, text, etc.
+TODO:
+    ☐ add renderer_2D struct and functions
+      ☐ sprite
+      ☐ rect
+      ☐ line
+      ☐ circle
+      ☐ cross
+      ☐ text
     ☐ add sound system
 
 Archive:
+  ✔ LNA framework refacto                                                                  @done(21-03-28 00:24) @project(TODO)
+  ✔ manage all memory pool in a memory pool manager                                        @done(21-03-27 22:00) @project(TODO)
+    the goal is to centralize all memory pool in the same place.
+    vulkan_renderer will use array of pointer on memory_pool and config
+    will have memory_pool parameters.
+  ✔ rename platform to backends                                                            @done(21-03-27 22:28) @project(TODO)
+  ✔ error return if gpu does not support Vulkan                                            @started(21-03-27 23:22) @done(21-03-27 23:25) @lasted(3m42s) @project(TODO)
+  ✔ remove view/projection matrices creation from draw frame                               @done(21-03-28 00:24) @project(TODO)
   ✔ display a SDL window with "definitive" framework design                                @done(21-02-24 19:37) @project(based framework)
   ✔ vulkan renderer                                                                        @done(21-03-06 12:54) @project(based framework)
   ✔ code refacto:                                                                          @done(21-03-18 16:51) @project(based framework)
@@ -208,30 +207,3 @@ Archive:
   ✔ remove comment                                                                         @done(21-03-20 21:55) @project(based framework)
   ✔ move non public from .hpp to .cpp                                                      @done(21-03-20 21:55) @project(based framework)
   ✔ validate non regression                                                                @done(21-03-20 21:55) @project(based framework)
-  ✘ debug primitives drawing @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ design primitive debug system and user interface @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ for the moment we only manage line in 3D space. The goal is to have a proof of concept and will @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ add functionalities later when we need them. @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ We will use that we have done for the mesh management @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ => create vulkan_debug_primitive struct and function in a dedicated file @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ => create vulkan_debug_primitive_system in vulkan_renderere.hpp @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ => etc. @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ We will have some sort of register system like mesh and texture. It will complicate the show / hide part and let @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ user manage this. So no "immediate style rendering" for the moment. We will see later to implement this as I will @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ need more dynamic debug primitive for the beginnning (more gameplay stuff, less level design stuff). @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ Perhaps I am wrong but I see debug primitives with two different things => @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ 1. dynamic primitives which follow object for gameplay programming @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ 2. static primitive which is used for level design and static object @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ So I will add the notion of dynamic debug primitive and static debug primitive @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ dynamic primitive will be like mesh @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ static primitive will be like ImGui @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ ======================================================================== @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ Performance issue warning! @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ ======================================================================== @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ for the moment, we have one draw call per debug primitive. It will be a @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ big performance issue when we will have a lot of debug primitives. @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ We will create debug primitive batch struct and functions later to avoid @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ that but for now we will use a fast dev implementation for a proof of @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ concept. @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ dynamic debug primitive system implementation @cancelled(21-03-21 12:45) @project(based framework)
-  ✘ static debug primitive system implementation @cancelled(21-03-21 12:45) @project(based framework)

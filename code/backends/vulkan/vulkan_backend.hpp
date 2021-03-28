@@ -25,6 +25,8 @@ namespace lna
         uint32_t                        max_mesh_count;
         VkDescriptorSetLayout           descriptor_set_layout;
         VkDescriptorPool                descriptor_pool;
+        mat4                            projection;
+        mat4                            view;
     };
 
     struct memory_pool;

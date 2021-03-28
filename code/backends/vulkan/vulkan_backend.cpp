@@ -1494,6 +1494,28 @@ namespace lna
             imgui_wrapper_config
             );
 
+        // TODO: (TEMP CODE) to remove when we will have a "camera system" and a "graphics object system"
+        const vec3  eye     = { 0.0f, 0.0f, 2.0f };
+        const vec3  target  = { 0.0f, 0.0f, 0.0f };
+        const vec3  up      = { 0.0f, -1.0f, 0.0f };
+        const float fov     = 45.0f;
+        const float aspect  = static_cast<float>(renderer.swap_chain_extent.width) / static_cast<float>(renderer.swap_chain_extent.height);
+        const float near    = 1.0f;
+        const float far     = 10.0f;
+        lna::mat4_loot_at(
+            renderer.mesh_system.view,
+            eye,
+            target,
+            up
+            );
+        lna::mat4_perspective(
+            renderer.mesh_system.projection,
+            fov,
+            aspect,
+            near,
+            far
+            );
+
         return true;
     }
 
@@ -1660,31 +1682,6 @@ namespace lna
             renderer.render_finished_semaphores[renderer.curr_frame],
         };
 
-        // TODO: (TEMP CODE) to remove when we will have a "camera system" and a "graphics object system"
-        const vec3  eye     = { 0.0f, 0.0f, 2.0f };
-        const vec3  target  = { 0.0f, 0.0f, 0.0f };
-        const vec3  up      = { 0.0f, -1.0f, 0.0f };
-        const float fov     = 45.0f;
-        const float aspect  = static_cast<float>(renderer.swap_chain_extent.width) / static_cast<float>(renderer.swap_chain_extent.height);
-        const float near    = 1.0f;
-        const float far     = 10.0f;
-        mat4        model;
-        mat4        view;
-        mat4        projection;
-        lna::mat4_loot_at(
-            view,
-            eye,
-            target,
-            up
-            );
-        lna::mat4_perspective(
-            projection,
-            fov,
-            aspect,
-            near,
-            far
-            );
-
         for (size_t i = 0; i < renderer.swap_chain_image_count; ++i)
         {
             VkCommandBufferBeginInfo    command_buffer_begin_info{};
@@ -1754,7 +1751,8 @@ namespace lna
 
             for (uint32_t m = 0; m < renderer.mesh_system.cur_mesh_count; ++m)
             {
-                lna::mat4_translation(
+                mat4 model;
+                mat4_translation(
                     model,
                     renderer.mesh_system.mesh_positions[m].x,
                     renderer.mesh_system.mesh_positions[m].y,
@@ -1764,8 +1762,8 @@ namespace lna
                 update_uniform_buffer_info.device                   = renderer.device;
                 update_uniform_buffer_info.image_index              = i;
                 update_uniform_buffer_info.model_matrix_ptr         = &model;
-                update_uniform_buffer_info.view_matrix_ptr          = &view;
-                update_uniform_buffer_info.projection_matrix_ptr    = &projection;
+                update_uniform_buffer_info.view_matrix_ptr          = &renderer.mesh_system.view;
+                update_uniform_buffer_info.projection_matrix_ptr    = &renderer.mesh_system.projection;
                 vulkan_mesh_upate_uniform_buffer(
                     renderer.mesh_system.meshes[m],
                     update_uniform_buffer_info
