@@ -5,7 +5,6 @@
 #include "platform/vulkan/vulkan_texture.hpp"
 #include "platform/vulkan/vulkan_mesh.hpp"
 #include "platform/vulkan/vulkan_imgui.hpp"
-#include "core/memory_pool.hpp"
 
 namespace lna
 {
@@ -27,6 +26,8 @@ namespace lna
         VkDescriptorSetLayout           descriptor_set_layout;
         VkDescriptorPool                descriptor_pool;
     };
+
+    struct memory_pool;
 
     struct renderer_api
     {
@@ -72,7 +73,7 @@ namespace lna
             MEMORY_POOL_COUNT,
         };
 
-        memory_pool                     memory_pools[MEMORY_POOL_COUNT];
+        memory_pool*                    memory_pools[MEMORY_POOL_COUNT];
 
         vulkan_imgui_wrapper            imgui_wrapper;
     };

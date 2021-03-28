@@ -7,12 +7,12 @@ namespace lna
 
     struct window_config
     {
-        const char*     title;
-        uint32_t        width;
-        uint32_t        height;
-        bool            fullscreen;
-        bool            enable_validation_layers;
-        memory_pool*    persistent_pool_ptr;
+        const char*             title;
+        uint32_t                width;
+        uint32_t                height;
+        bool                    fullscreen;
+        bool                    enable_validation_layers;
+        memory_pool*            persistent_mem_pool_ptr;
     };
 
     struct window_extension_infos

@@ -180,11 +180,11 @@ void lna::vulkan_mesh_create_uniform_buffer(
     VkDeviceSize uniform_buffer_size = sizeof(lna::vulkan_uniform_buffer_object);
 
     mesh.swap_chain_image_count = config.swap_chain_image_count;
-    mesh.uniform_buffers        = (VkBuffer*)lna::memory_pool_reserve(
+    mesh.uniform_buffers        = (VkBuffer*)lna::memory_pool_reserve_memory(
         *config.swap_chain_memory_pool_ptr,
         mesh.swap_chain_image_count * sizeof(VkBuffer)
         );
-    mesh.uniform_buffers_memory = (VkDeviceMemory*)lna::memory_pool_reserve(
+    mesh.uniform_buffers_memory = (VkDeviceMemory*)lna::memory_pool_reserve_memory(
         *config.swap_chain_memory_pool_ptr,
         mesh.swap_chain_image_count * sizeof(VkDeviceMemory)
         );
@@ -263,7 +263,7 @@ void lna::vulkan_mesh_create_descriptor_sets(
     LNA_ASSERT(mesh.texture_ptr->image_view);
     LNA_ASSERT(mesh.texture_ptr->sampler);
 
-    VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)lna::memory_pool_reserve(
+    VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)lna::memory_pool_reserve_memory(
         *config.temp_memory_pool_ptr,
         mesh.swap_chain_image_count * sizeof(VkDescriptorSetLayout)
         );
@@ -279,7 +279,7 @@ void lna::vulkan_mesh_create_descriptor_sets(
     allocate_info.descriptorSetCount    = mesh.swap_chain_image_count;
     allocate_info.pSetLayouts           = layouts;
 
-    mesh.descriptor_sets = (VkDescriptorSet*)lna::memory_pool_reserve(
+    mesh.descriptor_sets = (VkDescriptorSet*)lna::memory_pool_reserve_memory(
         *config.swap_chain_memory_pool_ptr,
         mesh.swap_chain_image_count * sizeof(VkDescriptorSet)
         );

@@ -5,7 +5,7 @@
 
 namespace lna
 {
-    struct memory_pool_system;
+    struct memory_pool_manager;
     struct window_api;
     struct renderer_api;
 
@@ -17,18 +17,19 @@ namespace lna
 
     struct renderer_config
     {
-        const char* application_name;
-        uint8_t     application_major_ver;
-        uint8_t     application_minor_ver;
-        uint8_t     application_patch_ver;
-        const char* engine_name;
-        uint8_t     engine_major_ver;
-        uint8_t     engine_minor_ver;
-        uint8_t     engine_patch_ver;
-        bool        enable_validation_layers;
-        uint32_t    max_texture_count;
-        uint32_t    max_mesh_count;
-        window_api* window_ptr;
+        const char*             application_name;
+        uint8_t                 application_major_ver;
+        uint8_t                 application_minor_ver;
+        uint8_t                 application_patch_ver;
+        const char*             engine_name;
+        uint8_t                 engine_major_ver;
+        uint8_t                 engine_minor_ver;
+        uint8_t                 engine_patch_ver;
+        bool                    enable_validation_layers;
+        uint32_t                max_texture_count;
+        uint32_t                max_mesh_count;
+        window_api*             window_ptr;
+        memory_pool_manager*    mem_pool_manager_ptr;
     };
 
     struct texture_config
@@ -45,6 +46,8 @@ namespace lna
         vec3            position;
         texture_handle  texture;
     };
+
+    uint32_t renderer_memory_pool_count();
 
     void renderer_init(
         renderer_api& renderer

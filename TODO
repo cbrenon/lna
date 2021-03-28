@@ -1,8 +1,35 @@
 Road to prototype:
-    ☐ Brainstorming on potentials projects
-    ☐ Choose project
-    ☐ Find code project name
-    ☐ Quick design document
+    ✔ Brainstorming on potentials projects                                                 @started(21-03-21 14:37) @done(21-03-21 14:37) @lasted(39s)
+    ✔ Find code project name: CELES                                                        @started(21-03-21 14:38) @done(21-03-21 14:39) @lasted(1m48s)
+    ✔ Choose project                                                                       @started(21-03-21 14:37) @done(21-03-25 22:04) @lasted(4d7h27m10s)
+    ✔ Quick design document                                                                @done(21-03-25 22:04)
+
+Misc:
+    ☐ LNA framework refacto
+        ✔ manage all memory pool in a memory pool manager                                  @done(21-03-27 22:00)
+            the goal is to centralize all memory pool in the same place.
+            vulkan_renderer will use array of pointer on memory_pool and config
+            will have memory_pool parameters.
+        ☐ rename platform to backends
+        ☐ rename renderer to renderer_backend
+        ☐ rename window to window_backend
+        ☐ rename timer to timer_backend
+        ☐ rename input to input_backend
+        ☐ rename gamepad to gamepad_backend
+        ☐ rename vulkan_renderer to vulkan_backend
+        ☐ rename sdl_window to sdl_backend
+            we will have a mix of input, window and gamepad for this one perhaps
+        ☐ error return if gpu does not support Vulkan
+        ☐ camera information in the update uniform function
+        ☐ add renderer_2D struct and functions
+            ☐ sprite
+            ☐ rect
+            ☐ line
+            ☐ circle
+            ☐ cross
+            ☐ text
+            it will be using backend to draw easily 2D things like sprite, geometric shape, text, etc.
+    ☐ add sound system
 
 Archive:
   ✔ display a SDL window with "definitive" framework design                                @done(21-02-24 19:37) @project(based framework)

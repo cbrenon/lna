@@ -16,7 +16,7 @@ namespace lna
         file& f,
         const char* filename,
         bool binary,
-        memory_pool& pool
+        memory_pool& mem_pool
         );
 }
 

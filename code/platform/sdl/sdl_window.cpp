@@ -24,7 +24,7 @@ namespace lna
         )
     {
         LNA_ASSERT(window.handle == nullptr);
-        LNA_ASSERT(config.persistent_pool_ptr);
+        LNA_ASSERT(config.persistent_mem_pool_ptr);
 
         {
             auto result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_TIMER);
@@ -62,8 +62,8 @@ namespace lna
             LNA_ASSERT(result == SDL_TRUE);
 
             window.extension_infos.count    = config.enable_validation_layers ? extension_count + 1 : extension_count;
-            window.extension_infos.names    = (const char **)memory_pool_reserve(
-                *config.persistent_pool_ptr,
+            window.extension_infos.names    = (const char **)memory_pool_reserve_memory(
+                *config.persistent_mem_pool_ptr,
                 window.extension_infos.count * sizeof(const char*)
                 );
             LNA_ASSERT(window.extension_infos.names);

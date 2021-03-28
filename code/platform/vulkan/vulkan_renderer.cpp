@@ -13,6 +13,7 @@
 #include "platform/sdl/sdl_window.hpp"
 #include "platform/renderer.hpp"
 #include "core/assert.hpp"
+#include "core/memory_pool.hpp"
 #include "maths/mat4.hpp"
 
 namespace
@@ -132,8 +133,8 @@ namespace
                 nullptr
                 )
             )
-        VkLayerProperties* available_layers = (VkLayerProperties*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
+        VkLayerProperties* available_layers = (VkLayerProperties*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
             layer_count * sizeof(VkLayerProperties)
             );
         VULKAN_CHECK_RESULT(
@@ -181,8 +182,8 @@ namespace
             &queue_family_count,
             nullptr
             );
-        VkQueueFamilyProperties* queue_families = (VkQueueFamilyProperties*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
+        VkQueueFamilyProperties* queue_families = (VkQueueFamilyProperties*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
             queue_family_count * sizeof(VkQueueFamilyProperties)
             );
         vkGetPhysicalDeviceQueueFamilyProperties(
@@ -236,8 +237,8 @@ namespace
                 nullptr
                 )
             )
-        VkExtensionProperties* available_extensions = (VkExtensionProperties*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
+        VkExtensionProperties* available_extensions = (VkExtensionProperties*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
             extension_count * sizeof(VkExtensionProperties)
             );
         VULKAN_CHECK_RESULT(
@@ -303,8 +304,8 @@ namespace
             )
         if (details.format_count > 0)
         {
-            details.formats = (VkSurfaceFormatKHR*)lna::memory_pool_reserve(
-                renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
+            details.formats = (VkSurfaceFormatKHR*)lna::memory_pool_reserve_memory(
+                *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
                 details.format_count * sizeof(VkSurfaceFormatKHR)
                 );
             VULKAN_CHECK_RESULT(
@@ -327,8 +328,8 @@ namespace
             )
         if (details.present_mode_count > 0)
         {
-            details.present_modes = (VkPresentModeKHR*)lna::memory_pool_reserve(
-                renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
+            details.present_modes = (VkPresentModeKHR*)lna::memory_pool_reserve_memory(
+                *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
                 details.present_mode_count * sizeof(VkPresentModeKHR)
                 );
             VULKAN_CHECK_RESULT(
@@ -574,8 +575,8 @@ namespace
             )
         LNA_ASSERT(device_count > 0);
 
-        VkPhysicalDevice* devices = (VkPhysicalDevice*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
+        VkPhysicalDevice* devices = (VkPhysicalDevice*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
             device_count * sizeof(VkPhysicalDevice)
         );
         VULKAN_CHECK_RESULT(
@@ -624,8 +625,8 @@ namespace
         };
         uint32_t unique_queue_family_count = (indices.graphics_family == indices.present_family) ? 1 : 2;
 
-        VkDeviceQueueCreateInfo* queue_create_infos = (VkDeviceQueueCreateInfo*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
+        VkDeviceQueueCreateInfo* queue_create_infos = (VkDeviceQueueCreateInfo*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL],
             unique_queue_family_count * sizeof(VkDeviceQueueCreateInfo)
             );
 
@@ -757,8 +758,8 @@ namespace
             )
 
         renderer.swap_chain_image_count = image_count;
-        renderer.swap_chain_images = (VkImage*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+        renderer.swap_chain_images = (VkImage*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
             image_count * sizeof(VkImage)
             );
         VULKAN_CHECK_RESULT(
@@ -777,8 +778,8 @@ namespace
         lna::renderer_api& renderer
         )
     {
-        renderer.swap_chain_image_views = (VkImageView*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+        renderer.swap_chain_image_views = (VkImageView*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
             renderer.swap_chain_image_count * sizeof(VkImageView)
             );
 
@@ -893,12 +894,12 @@ namespace
         VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
             renderer.device,
             "shaders/default_vert.spv",
-            renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL]
+            *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
             renderer.device,
             "shaders/default_frag.spv",
-            renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL]
+            *renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkPipelineShaderStageCreateInfo shader_stage_create_infos[2]{};
         shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -1057,8 +1058,8 @@ namespace
     {
         LNA_ASSERT(renderer.device);
 
-        renderer.swap_chain_framebuffers = (VkFramebuffer*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+        renderer.swap_chain_framebuffers = (VkFramebuffer*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
             renderer.swap_chain_image_count * sizeof(VkFramebuffer)
             );
         for (size_t i = 0; i < renderer.swap_chain_image_count; ++i)
@@ -1121,8 +1122,8 @@ namespace
     {
         LNA_ASSERT(renderer.device);
 
-        renderer.command_buffers = (VkCommandBuffer*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+        renderer.command_buffers = (VkCommandBuffer*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
             renderer.swap_chain_image_count * sizeof(VkCommandBuffer)
             );
 
@@ -1147,8 +1148,8 @@ namespace
     {
         LNA_ASSERT(renderer.device);
 
-        renderer.images_in_flight_fences = (VkFence*)lna::memory_pool_reserve(
-            renderer.memory_pools[lna::renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL],
+        renderer.images_in_flight_fences = (VkFence*)lna::memory_pool_reserve_memory(
+            *renderer.memory_pools[lna::renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL],
             renderer.swap_chain_image_count * sizeof(VkFence)
             );
         for (uint32_t i = 0; i < renderer.swap_chain_image_count; ++i)
@@ -1289,7 +1290,7 @@ namespace
             );
 
         lna::memory_pool_empty(
-            renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+            *renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
             );
         renderer.swap_chain_images          = nullptr;
         renderer.swap_chain_image_views     = nullptr;
@@ -1325,7 +1326,7 @@ namespace
             uniform_buffer_info.device                      = renderer.device;
             uniform_buffer_info.physical_device             = renderer.physical_device;
             uniform_buffer_info.swap_chain_image_count      = renderer.swap_chain_image_count;
-            uniform_buffer_info.swap_chain_memory_pool_ptr  = &renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
+            uniform_buffer_info.swap_chain_memory_pool_ptr  = renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
             lna::vulkan_mesh_create_uniform_buffer(
                 renderer.mesh_system.meshes[i],
                 uniform_buffer_info
@@ -1335,8 +1336,8 @@ namespace
             descriptor_sets_info.physical_device            = renderer.physical_device;
             descriptor_sets_info.descriptor_pool            = renderer.mesh_system.descriptor_pool;
             descriptor_sets_info.descriptor_set_layout      = renderer.mesh_system.descriptor_set_layout;
-            descriptor_sets_info.swap_chain_memory_pool_ptr = &renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
-            descriptor_sets_info.temp_memory_pool_ptr       = &renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL];
+            descriptor_sets_info.swap_chain_memory_pool_ptr = renderer.memory_pools[lna::renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
+            descriptor_sets_info.temp_memory_pool_ptr       = renderer.memory_pools[lna::renderer_api::FRAME_LIFETIME_MEMORY_POOL];
             lna::vulkan_mesh_create_descriptor_sets(
                 renderer.mesh_system.meshes[i],
                 descriptor_sets_info
@@ -1382,6 +1383,11 @@ namespace lna
         renderer.command_buffers                    = nullptr;
         renderer.swap_chain_image_count             = 0;
 
+        for (uint32_t i = 0; i < renderer_api::MEMORY_POOL_COUNT; ++i)
+        {
+            renderer.memory_pools[i] = nullptr;
+        }
+
         vulkan_imgui_wrapper_init(renderer.imgui_wrapper);
     }
 
@@ -1391,16 +1397,19 @@ namespace lna
         )
     {
         LNA_ASSERT(config.window_ptr);
+        LNA_ASSERT(config.mem_pool_manager_ptr);
 
         renderer.curr_frame = 0;
 
         for (uint32_t i = 0; i < renderer_api::MEMORY_POOL_COUNT; ++i)
         {
-            renderer.memory_pools[i].content = nullptr;
-            renderer.memory_pools[i].content_cur_size = 0;
-            renderer.memory_pools[i].content_max_size = 0;
+            renderer.memory_pools[i] = memory_pool_manager_new_pool(
+                *config.mem_pool_manager_ptr
+                );
+            LNA_ASSERT(renderer.memory_pools[i]);
+
             memory_pool_allocate_megabytes(
-                renderer.memory_pools[i],
+                *renderer.memory_pools[i],
                 MEMORY_POOL_SIZES[i]
                 );
         }
@@ -1423,7 +1432,10 @@ namespace lna
 
         renderer.texture_system.max_texture_count = config.max_texture_count;
         renderer.texture_system.textures = renderer.texture_system.max_texture_count > 0 ?
-            (vulkan_texture*)memory_pool_reserve(renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL], renderer.texture_system.max_texture_count * sizeof(vulkan_texture)) : nullptr;
+            (vulkan_texture*)memory_pool_reserve_memory(
+                *renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL],
+                renderer.texture_system.max_texture_count * sizeof(vulkan_texture)
+                ) : nullptr;
         for (uint32_t i = 0; i < renderer.texture_system.max_texture_count; ++i)
         {
             renderer.texture_system.textures[i].image           = nullptr;
@@ -1434,9 +1446,15 @@ namespace lna
 
         renderer.mesh_system.max_mesh_count = config.max_mesh_count;
         renderer.mesh_system.meshes = renderer.mesh_system.max_mesh_count > 0 ?
-            (vulkan_mesh*)memory_pool_reserve(renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL], renderer.mesh_system.max_mesh_count * sizeof(vulkan_mesh)) : nullptr;
+            (vulkan_mesh*)memory_pool_reserve_memory(
+                *renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL],
+                renderer.mesh_system.max_mesh_count * sizeof(vulkan_mesh)
+                ) : nullptr;
         renderer.mesh_system.mesh_positions = renderer.mesh_system.max_mesh_count > 0 ?
-            (vec3*)memory_pool_reserve(renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL], renderer.mesh_system.max_mesh_count * sizeof(vec3)) : nullptr;
+            (vec3*)memory_pool_reserve_memory(
+                *renderer.memory_pools[renderer_api::PERSISTENT_LIFETIME_MEMORY_POOL],
+                renderer.mesh_system.max_mesh_count * sizeof(vec3)
+                ) : nullptr;
         for (uint32_t i = 0; i < renderer.mesh_system.max_mesh_count; ++i)
         {
             renderer.mesh_system.meshes[i].vertex_buffer            = nullptr;
@@ -1465,7 +1483,7 @@ namespace lna
         imgui_wrapper_config.command_pool           = renderer.command_pool;
         imgui_wrapper_config.graphics_queue         = renderer.graphics_queue;
         imgui_wrapper_config.render_pass            = renderer.render_pass;
-        imgui_wrapper_config.temp_memory_pool_ptr   = &renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL];
+        imgui_wrapper_config.temp_memory_pool_ptr   = renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL];
         lna::vulkan_imgui_wrapper_configure(
             renderer.imgui_wrapper,
             imgui_wrapper_config
@@ -1542,7 +1560,7 @@ namespace lna
         uniform_buffer_info.device                      = renderer.device;
         uniform_buffer_info.physical_device             = renderer.physical_device;
         uniform_buffer_info.swap_chain_image_count      = renderer.swap_chain_image_count;
-        uniform_buffer_info.swap_chain_memory_pool_ptr  = &renderer.memory_pools[renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
+        uniform_buffer_info.swap_chain_memory_pool_ptr  = renderer.memory_pools[renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
         vulkan_mesh_create_uniform_buffer(
             mesh,
             uniform_buffer_info
@@ -1552,8 +1570,8 @@ namespace lna
         descriptor_sets_info.physical_device            = renderer.physical_device;
         descriptor_sets_info.descriptor_pool            = renderer.mesh_system.descriptor_pool;
         descriptor_sets_info.descriptor_set_layout      = renderer.mesh_system.descriptor_set_layout;
-        descriptor_sets_info.swap_chain_memory_pool_ptr = &renderer.memory_pools[renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
-        descriptor_sets_info.temp_memory_pool_ptr       = &renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL];
+        descriptor_sets_info.swap_chain_memory_pool_ptr = renderer.memory_pools[renderer_api::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
+        descriptor_sets_info.temp_memory_pool_ptr       = renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL];
         vulkan_mesh_create_descriptor_sets(
             mesh,
             descriptor_sets_info
@@ -1868,7 +1886,7 @@ namespace lna
         renderer.curr_frame = (renderer.curr_frame + 1) % VULKAN_MAX_FRAMES_IN_FLIGHT;
 
         lna::memory_pool_empty(
-            renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL]
+            *renderer.memory_pools[renderer_api::FRAME_LIFETIME_MEMORY_POOL]
             );
     }
 
@@ -1956,12 +1974,10 @@ namespace lna
             renderer.instance,
             nullptr
             );
+    }
 
-        for (uint32_t i = 0; i < renderer_api::MEMORY_POOL_COUNT; ++i)
-        {
-            memory_pool_free(
-                renderer.memory_pools[i]
-            );
-        }
+    uint32_t renderer_memory_pool_count()
+    {
+        return renderer_api::MEMORY_POOL_COUNT;
     }
 }

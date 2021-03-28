@@ -9,7 +9,7 @@ namespace lna
         file& f,
         const char* filename,
         bool binary,
-        memory_pool& pool
+        memory_pool& mem_pool
         )
     {
         LNA_ASSERT(f.content == nullptr);
@@ -19,7 +19,10 @@ namespace lna
         LNA_ASSERT(fd.is_open());
 
         f.content_size  = static_cast<uint32_t>(fd.tellg());
-        f.content       = (char*)memory_pool_reserve(pool, f.content_size * sizeof(char));
+        f.content       = (char*)memory_pool_reserve_memory(
+            mem_pool,
+            f.content_size * sizeof(char)
+            );
         LNA_ASSERT(f.content);
 
         fd.seekg(0);
