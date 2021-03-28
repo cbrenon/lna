@@ -456,7 +456,7 @@ namespace
 
     //! VULKAN INIT PROCESS FUNCTION -------------------------------------------
 
-    void vulkan_create_instance(
+    bool vulkan_create_instance(
         lna::renderer_backend& renderer,
         const lna::renderer_backend_config& config
         )
@@ -469,9 +469,8 @@ namespace
             && !vulkan_check_validation_layer_support(renderer)
             )
         {
-            //TODO: find a better way to return error
-            LNA_ASSERT(0);
-            return;
+            lna::log::error("cannot find valid Vulkan support GPU");
+            return false;
         }
 
         VkApplicationInfo application_info {};
@@ -515,6 +514,8 @@ namespace
                 &renderer.instance
                 )
             )
+
+        return true;
     }
 
     void vulkan_setup_debug_messenger(
@@ -1391,7 +1392,7 @@ namespace lna
         vulkan_imgui_wrapper_init(renderer.imgui_wrapper);
     }
 
-    void renderer_backend_configure(
+    bool renderer_backend_configure(
         renderer_backend& renderer,
         const renderer_backend_config& config
         )
@@ -1400,6 +1401,11 @@ namespace lna
         LNA_ASSERT(config.mem_pool_manager_ptr);
 
         renderer.curr_frame = 0;
+
+        if (!vulkan_create_instance(renderer, config))
+        {
+            return false;
+        }
 
         for (uint32_t i = 0; i < renderer_backend::MEMORY_POOL_COUNT; ++i)
         {
@@ -1414,7 +1420,6 @@ namespace lna
                 );
         }
 
-        vulkan_create_instance(renderer, config);
         if (config.enable_validation_layers)
         {
             vulkan_setup_debug_messenger(renderer);
@@ -1488,6 +1493,8 @@ namespace lna
             renderer.imgui_wrapper,
             imgui_wrapper_config
             );
+
+        return true;
     }
 
     texture_handle renderer_backend_new_texture(
@@ -1974,6 +1981,8 @@ namespace lna
             renderer.instance,
             nullptr
             );
+
+        renderer_backend_init(renderer);
     }
 
     uint32_t renderer_memory_pool_count()

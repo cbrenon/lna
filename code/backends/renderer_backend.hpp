@@ -54,7 +54,7 @@ namespace lna
         renderer_backend& renderer
         );
 
-    void renderer_backend_configure(
+    bool renderer_backend_configure(
         renderer_backend& renderer,
         const renderer_backend_config& config
         );

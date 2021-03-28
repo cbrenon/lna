@@ -5,7 +5,7 @@ Misc:
             vulkan_renderer will use array of pointer on memory_pool and config
             will have memory_pool parameters.
         ✔ rename platform to backends                                                      @done(21-03-27 22:28)
-        ☐ error return if gpu does not support Vulkan
+        ✔ error return if gpu does not support Vulkan                                      @started(21-03-27 23:22) @done(21-03-27 23:25) @lasted(3m42s)
         ☐ camera information in the update uniform function
         ☐ add renderer_2D struct and functions
             ☐ sprite
