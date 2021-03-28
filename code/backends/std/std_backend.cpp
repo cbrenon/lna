@@ -1,16 +1,16 @@
-#include "backends/windows/std_timer.hpp"
+#include "backends/std/std_backend.hpp"
 
 namespace lna
 {
-    void timer_start(
-        timer_api& timer
+    void timer_backend_start(
+        timer_backend& timer
         )
     {
         timer.last_frame_time = std::chrono::system_clock::now();
     }
 
-    double timer_dtime_in_ms(
-        timer_api& timer
+    double timer_backend_dtime_in_ms(
+        timer_backend& timer
         )
     {
         auto delta_time     = std::chrono::system_clock::now() - timer.last_frame_time;

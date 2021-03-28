@@ -1,5 +1,5 @@
-#ifndef _LAN_BACKENDS_VULKAN_VULKAN_RENDERER_HPP_
-#define _LAN_BACKENDS_VULKAN_VULKAN_RENDERER_HPP_
+#ifndef _LAN_BACKENDS_VULKAN_VULKAN_BACKEND_HPP_
+#define _LAN_BACKENDS_VULKAN_VULKAN_BACKEND_HPP_
 
 #include <vulkan/vulkan.h>
 #include "backends/vulkan/vulkan_texture.hpp"
@@ -29,7 +29,7 @@ namespace lna
 
     struct memory_pool;
 
-    struct renderer_api
+    struct renderer_backend
     {
         VkInstance                      instance;
         VkDebugUtilsMessengerEXT        debug_messenger;
@@ -78,7 +78,7 @@ namespace lna
         vulkan_imgui_wrapper            imgui_wrapper;
     };
 
-    constexpr size_t MEMORY_POOL_SIZES[renderer_api::MEMORY_POOL_COUNT] =
+    constexpr size_t MEMORY_POOL_SIZES[renderer_backend::MEMORY_POOL_COUNT] =
     {
         256, // SIZE IN MEGABYTES
         256, // SIZE IN MEGABYTES
@@ -86,4 +86,4 @@ namespace lna
     };
 }
 
-#endif // _LAN_BACKENDS_VULKAN_VULKAN_RENDERER_HPP_
+#endif // _LAN_BACKENDS_VULKAN_VULKAN_BACKEND_HPP_

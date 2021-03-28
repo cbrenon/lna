@@ -1,5 +1,5 @@
-#ifndef _LNA_BACKENDS_RENDERER_HPP_
-#define _LNA_BACKENDS_RENDERER_HPP_
+#ifndef _LNA_BACKENDS_RENDERER_BACKEND_HPP_
+#define _LNA_BACKENDS_RENDERER_BACKEND_HPP_
 
 #include <cstdint>
 #include "graphics/vertex.hpp"
@@ -7,8 +7,8 @@
 namespace lna
 {
     struct memory_pool_manager;
-    struct window_api;
-    struct renderer_api;
+    struct window_backend;
+    struct renderer_backend;
 
     typedef uint32_t texture_handle;
     typedef uint32_t mesh_handle;
@@ -16,7 +16,7 @@ namespace lna
     constexpr uint32_t INVALID_TEXTURE_HANDLE   = (uint32_t)-1;
     constexpr uint32_t INVALID_MESH_HANDLE      = (uint32_t)-1;
 
-    struct renderer_config
+    struct renderer_backend_config
     {
         const char*             application_name;
         uint8_t                 application_major_ver;
@@ -29,7 +29,7 @@ namespace lna
         bool                    enable_validation_layers;
         uint32_t                max_texture_count;
         uint32_t                max_mesh_count;
-        window_api*             window_ptr;
+        window_backend*         window_ptr;
         memory_pool_manager*    mem_pool_manager_ptr;
     };
 
@@ -50,35 +50,35 @@ namespace lna
 
     uint32_t renderer_memory_pool_count();
 
-    void renderer_init(
-        renderer_api& renderer
+    void renderer_backend_init(
+        renderer_backend& renderer
         );
 
-    void renderer_configure(
-        renderer_api& renderer,
-        const renderer_config& config
+    void renderer_backend_configure(
+        renderer_backend& renderer,
+        const renderer_backend_config& config
         );
 
-    texture_handle renderer_new_texture(
-        renderer_api& renderer,
+    texture_handle renderer_backend_new_texture(
+        renderer_backend& renderer,
         const texture_config& config
         );
 
-    mesh_handle renderer_new_mesh(
-        renderer_api& renderer,
+    mesh_handle renderer_backend_new_mesh(
+        renderer_backend& renderer,
         const mesh_config& config
         );
 
-    void renderer_draw_frame(
-        renderer_api& renderer,
+    void renderer_backend_draw_frame(
+        renderer_backend& renderer,
         bool framebuffer_resized,
         uint32_t framebuffer_width,
         uint32_t framebuffer_height
         );
 
-    void renderer_release(
-        renderer_api& renderer
+    void renderer_backend_release(
+        renderer_backend& renderer
         );
 }
 
-#endif // _LNA_BACKENDS_RENDERER_HPP_
+#endif // _LNA_BACKENDS_RENDERER_BACKEND_HPP_

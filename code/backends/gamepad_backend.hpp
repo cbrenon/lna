@@ -1,13 +1,13 @@
-#ifndef _LNA_BACKENDS_GAMEPAD_HPP_
-#define _LNA_BACKENDS_GAMEPAD_HPP_
+#ifndef _LNA_BACKENDS_GAMEPAD_BACKEND_HPP_
+#define _LNA_BACKENDS_GAMEPAD_BACKEND_HPP_
 
 namespace lna
 {
     constexpr size_t MAX_GAMEPAD_BUTTON_COUNT = 15;
 
-    struct gamepad_api;
+    struct gamepad_backend;
 
-    struct gamepad_config
+    struct gamepad_backend_config
     {
         int     device_index;
         float   left_stick_axis_max_value;
@@ -55,25 +55,25 @@ namespace lna
 
     int gamepad_count();
 
-    void gamepad_init(
-        gamepad_api& gamepad
+    void gamepad_backend_init(
+        gamepad_backend& gamepad
         );
 
-    void gamepad_open(
-        gamepad_api& gamepad,
-        const gamepad_config& config
+    void gamepad_backend_open(
+        gamepad_backend& gamepad,
+        const gamepad_backend_config& config
         );
 
-    void gamepad_update(
-        gamepad_api& gamepad
+    void gamepad_backend_update(
+        gamepad_backend& gamepad
         );
 
-    const gamepad_info& gamepad_last_update_info(
-        gamepad_api& gamepad
+    const gamepad_info& gamepad_backend_info(
+        gamepad_backend& gamepad
         );
     
-    void gamepad_close(
-        gamepad_api& gamepad
+    void gamepad_backend_close(
+        gamepad_backend& gamepad
         );
 }
 
