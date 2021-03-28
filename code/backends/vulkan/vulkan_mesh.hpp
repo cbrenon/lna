@@ -2,12 +2,13 @@
 #define _LNA_BACKENDS_VULKAN_VULKAN_MESH_HPP_
 
 #include <vulkan/vulkan.h>
-#include "graphics/vertex.hpp"
 #include "maths/mat4.hpp"
 
 namespace lna
 {
     struct vulkan_texture;
+    struct memory_pool;
+    struct vertex;
 
     struct vulkan_mesh
     {
@@ -35,8 +36,6 @@ namespace lna
         uint32_t                    vertex_count;
         uint32_t                    index_count;
     };
-
-    struct memory_pool;
 
     struct vulkan_mesh_create_uniform_buffer_info
     {

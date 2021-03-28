@@ -1,9 +1,10 @@
 #include <cstring>
-#include "core/assert.hpp"
-#include "core/memory_pool.hpp"
 #include "backends/vulkan/vulkan_mesh.hpp"
 #include "backends/vulkan/vulkan_helpers.hpp"
 #include "backends/vulkan/vulkan_texture.hpp"
+#include "core/assert.hpp"
+#include "core/memory_pool.hpp"
+#include "graphics/vertex.hpp"
 
 namespace lna
 {

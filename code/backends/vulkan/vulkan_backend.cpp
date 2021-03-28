@@ -1244,6 +1244,8 @@ namespace
             renderer.swap_chain_image_count,
             renderer.command_buffers
             );
+
+        //! MESH GRAPHICS OBJECT -----------------------------------------------
         vkDestroyPipeline(
             renderer.device,
             renderer.graphics_pipeline,
@@ -1254,6 +1256,23 @@ namespace
             renderer.pipeline_layout,
             nullptr
             );
+        for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
+        {
+            lna::vulkan_mesh_clean_uniform_buffer(
+                renderer.mesh_system.meshes[i],
+                renderer.device
+                );
+            lna::vulkan_mesh_clean_descriptor_sets(
+                renderer.mesh_system.meshes[i]
+                );
+        }
+        vkDestroyDescriptorPool(
+            renderer.device,
+            renderer.mesh_system.descriptor_pool,
+            nullptr
+            );
+        //! MESH GRAPHICS OBJECT -----------------------------------------------
+
         vkDestroyRenderPass(
             renderer.device,
             renderer.render_pass,
@@ -1270,23 +1289,6 @@ namespace
         vkDestroySwapchainKHR(
             renderer.device,
             renderer.swap_chain,
-            nullptr
-            );
-
-        for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
-        {
-            lna::vulkan_mesh_clean_uniform_buffer(
-                renderer.mesh_system.meshes[i],
-                renderer.device
-                );
-            lna::vulkan_mesh_clean_descriptor_sets(
-                renderer.mesh_system.meshes[i]
-                );
-        }
-
-        vkDestroyDescriptorPool(
-            renderer.device,
-            renderer.mesh_system.descriptor_pool,
             nullptr
             );
 
@@ -1313,14 +1315,18 @@ namespace
                 )
             )
 
+        //! BACKEND ------------------------------------------------------------
         vulkan_cleanup_swap_chain(renderer);
         vulkan_create_swap_chain(renderer, framebuffer_width, framebuffer_height);
         vulkan_create_image_views(renderer);
         vulkan_create_render_pass(renderer);
-        vulkan_create_graphics_pipeline(renderer);
         vulkan_create_framebuffers(renderer);
-        vulkan_create_descriptor_pool(renderer);
+        vulkan_create_command_buffers(renderer);
+        //! BACKEND ------------------------------------------------------------
 
+        //! MESH GRAPHICS OBJECT -----------------------------------------------
+        vulkan_create_graphics_pipeline(renderer);
+        vulkan_create_descriptor_pool(renderer);
         for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
         {
             lna::vulkan_mesh_create_uniform_buffer_info uniform_buffer_info{};
@@ -1344,8 +1350,7 @@ namespace
                 descriptor_sets_info
                 );
         }
-
-        vulkan_create_command_buffers(renderer);
+        //! MESH GRAPHICS OBJECT -----------------------------------------------
     }
 }
 
@@ -1400,13 +1405,12 @@ namespace lna
         LNA_ASSERT(config.window_ptr);
         LNA_ASSERT(config.mem_pool_manager_ptr);
 
+        //! BACKEND ------------------------------------------------------------
         renderer.curr_frame = 0;
-
-        if (!vulkan_create_instance(renderer, config))
+        if (!vulkan_create_instance(renderer, config)) //! BACKEND
         {
             return false;
         }
-
         for (uint32_t i = 0; i < renderer_backend::MEMORY_POOL_COUNT; ++i)
         {
             renderer.memory_pools[i] = memory_pool_manager_new_pool(
@@ -1419,22 +1423,25 @@ namespace lna
                 MEMORY_POOL_SIZES[i]
                 );
         }
-
         if (config.enable_validation_layers)
         {
-            vulkan_setup_debug_messenger(renderer);
+            vulkan_setup_debug_messenger(renderer); //! BACKEND
         }
-        vulkan_create_surface(renderer, config);
-        vulkan_pick_physical_device(renderer);
-        vulkan_create_logical_device(renderer, config);
-        vulkan_create_swap_chain(renderer, lna::window_backend_width(*config.window_ptr), lna::window_backend_height(*config.window_ptr));
-        vulkan_create_image_views(renderer);
-        vulkan_create_render_pass(renderer);
-        vulkan_create_descriptor_set_layout(renderer);
-        vulkan_create_graphics_pipeline(renderer);
-        vulkan_create_framebuffers(renderer);
-        vulkan_create_command_pool(renderer);
+        vulkan_create_surface(renderer, config); //! BACKEND
+        vulkan_pick_physical_device(renderer); //! BACKEND
+        vulkan_create_logical_device(renderer, config); //! BACKEND
+        vulkan_create_swap_chain(renderer, lna::window_backend_width(*config.window_ptr), lna::window_backend_height(*config.window_ptr)); //! BACKEND
+        vulkan_create_image_views(renderer); //! BACKEND
+        vulkan_create_render_pass(renderer); //! BACKEND
+        vulkan_create_framebuffers(renderer); //! BACKEND
+        vulkan_create_command_pool(renderer); //! BACKEND
+        vulkan_create_command_buffers(renderer); //! BACKEND
+        vulkan_create_sync_objects(renderer); //! BACKEND
+        //! BACKEND ------------------------------------------------------------
 
+        //! MESH GRAPHICS OBJECT -----------------------------------------------
+        vulkan_create_descriptor_set_layout(renderer); //! GRAPHICS OBJECT
+        vulkan_create_graphics_pipeline(renderer); //! GRAPHICS OBJECT
         renderer.texture_system.max_texture_count = config.max_texture_count;
         renderer.texture_system.textures = renderer.texture_system.max_texture_count > 0 ?
             (vulkan_texture*)memory_pool_reserve_memory(
@@ -1474,12 +1481,10 @@ namespace lna
             renderer.mesh_system.meshes[i].swap_chain_image_count   = 0;
             renderer.mesh_system.mesh_positions[i]                  = { 0.0f, 0.0f, 0.0f };
         }
+        vulkan_create_descriptor_pool(renderer); //! GRAPHICS OBJECT
+        //! MESH GRAPHICS OBJECT -----------------------------------------------
 
-        vulkan_create_descriptor_pool(renderer);
-
-        vulkan_create_command_buffers(renderer);
-        vulkan_create_sync_objects(renderer);
-
+        //! IMGUI GRAPHICS OBJECT ----------------------------------------------
         lna::vulkan_imgui_wrapper_config imgui_wrapper_config{};
         imgui_wrapper_config.window_width           = static_cast<float>(lna::window_backend_width(*config.window_ptr));
         imgui_wrapper_config.window_height          = static_cast<float>(lna::window_backend_height(*config.window_ptr));
@@ -1493,7 +1498,9 @@ namespace lna
             renderer.imgui_wrapper,
             imgui_wrapper_config
             );
+        //! IMGUI GRAPHICS OBJECT ----------------------------------------------
 
+        //! TEMP ---------------------------------------------------------------
         // TODO: (TEMP CODE) to remove when we will have a "camera system" and a "graphics object system"
         const vec3  eye     = { 0.0f, 0.0f, 2.0f };
         const vec3  target  = { 0.0f, 0.0f, 0.0f };
@@ -1515,6 +1522,7 @@ namespace lna
             near,
             far
             );
+        //! TEMP ---------------------------------------------------------------
 
         return true;
     }
@@ -1742,13 +1750,13 @@ namespace lna
                 1,
                 &scissor_rect
                 );
-                
+
+            //! MESH GRAPHICS OBJECT ------------------------------------------- 
             vkCmdBindPipeline(
                 renderer.command_buffers[i],
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 renderer.graphics_pipeline
                 );
-
             for (uint32_t m = 0; m < renderer.mesh_system.cur_mesh_count; ++m)
             {
                 mat4 model;
@@ -1802,17 +1810,19 @@ namespace lna
                     0
                     );
             }
+            //! MESH GRAPHICS OBJECT -------------------------------------------
 
+            //! IMGUI GRAPHICS OBJECT ------------------------------------------
             vulkan_imgui_wrapper_update(
                renderer.imgui_wrapper,
                renderer.device,
                renderer.physical_device
                );
-
-            vulkan_imgui_wrapper_render_frame(
+            vulkan_imgui_wrapper_draw_frame(
                 renderer.imgui_wrapper,
                 renderer.command_buffers[i]
                 );
+            //! IMGUI GRAPHICS OBJECT ------------------------------------------
 
             vkCmdEndRenderPass(
                 renderer.command_buffers[i]
@@ -1906,10 +1916,12 @@ namespace lna
                 )
             )
 
+        //! IMGUI GRAPHICS OBJECT ----------------------------------------------
         vulkan_imgui_wrapper_release(
             renderer.imgui_wrapper,
             renderer.device
             );
+        //! IMGUI GRAPHICS OBJECT ----------------------------------------------
 
         vulkan_cleanup_swap_chain(renderer);
 
@@ -1921,12 +1933,12 @@ namespace lna
                 );
         }
         
+        //! MESH GRAPHICS OBJECT -----------------------------------------------
         vkDestroyDescriptorSetLayout(
             renderer.device,
             renderer.mesh_system.descriptor_set_layout,
             nullptr
             );
-
         for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
         {
             vulkan_mesh_release(
@@ -1934,6 +1946,7 @@ namespace lna
                 renderer.device
                 );
         }
+        //! MESH GRAPHICS OBJECT -----------------------------------------------
 
         for (size_t i = 0; i < VULKAN_MAX_FRAMES_IN_FLIGHT; ++i)
         {

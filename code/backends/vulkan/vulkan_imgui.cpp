@@ -528,7 +528,7 @@ namespace lna
         }
     }
 
-    void vulkan_imgui_wrapper_render_frame(
+    void vulkan_imgui_wrapper_draw_frame(
         vulkan_imgui_wrapper& imgui_wrapper,
         VkCommandBuffer command_buffer
         )

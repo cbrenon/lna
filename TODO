@@ -1,12 +1,15 @@
 TODO:
-    ☐ add renderer_2D struct and functions
-      ☐ sprite
-      ☐ rect
-      ☐ line
-      ☐ circle
-      ☐ cross
-      ☐ text
-    ☐ add sound system
+  ☐ extract graphics pipeline creation from renderer_backend
+    graphics pipeline is linked to graphics object type so it must be created outside
+    renderer backend like we have done with ImGui wrapper.
+  ☐ add renderer_2D struct and functions
+    ☐ sprite
+    ☐ rect
+    ☐ line
+    ☐ circle
+    ☐ cross
+    ☐ text
+  ☐ add sound system
 
 Archive:
   ✔ LNA framework refacto                                                                  @done(21-03-28 00:24) @project(TODO)
