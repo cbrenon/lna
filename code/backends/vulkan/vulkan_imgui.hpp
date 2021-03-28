@@ -1,11 +1,11 @@
-#ifndef _LNA_PLATFORM_VULKAN_VULKAN_IMGUI_HPP_
-#define _LNA_PLATFORM_VULKAN_VULKAN_IMGUI_HPP_
+#ifndef _LNA_BACKENDS_VULKAN_VULKAN_IMGUI_HPP_
+#define _LNA_BACKENDS_VULKAN_VULKAN_IMGUI_HPP_
 
 #include <vulkan/vulkan.h>
 #include "imgui.h"
 #include "maths/vec2.hpp"
 #include "maths/vec4.hpp"
-#include "platform/vulkan/vulkan_texture.hpp"
+#include "backends/vulkan/vulkan_texture.hpp"
 
 namespace lna
 {
@@ -75,4 +75,4 @@ namespace lna
         );
 }
 
-#endif // _LNA_PLATFORM_VULKAN_VULKAN_IMGUI_HPP_
+#endif // _LNA_BACKENDS_VULKAN_VULKAN_IMGUI_HPP_

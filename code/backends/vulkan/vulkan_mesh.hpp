@@ -1,5 +1,5 @@
-#ifndef _LNA_PLATFORM_VULKAN_VULKAN_MESH_HPP_
-#define _LNA_PLATFORM_VULKAN_VULKAN_MESH_HPP_
+#ifndef _LNA_BACKENDS_VULKAN_VULKAN_MESH_HPP_
+#define _LNA_BACKENDS_VULKAN_VULKAN_MESH_HPP_
 
 #include <vulkan/vulkan.h>
 #include "graphics/vertex.hpp"
@@ -114,4 +114,4 @@ namespace lna
     vulkan_mesh_vertex_description vulkan_default_mesh_vertex_description();
 }
 
-#endif // _LNA_PLATFORM_VULKAN_VULKAN_MESH_HPP_
+#endif // _LNA_BACKENDS_VULKAN_VULKAN_MESH_HPP_

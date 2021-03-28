@@ -1,6 +1,7 @@
-#ifndef _LNA_PLATFORM_RENDERER_HPP_
-#define _LNA_PLATFORM_RENDERER_HPP_
+#ifndef _LNA_BACKENDS_RENDERER_HPP_
+#define _LNA_BACKENDS_RENDERER_HPP_
 
+#include <cstdint>
 #include "graphics/vertex.hpp"
 
 namespace lna
@@ -80,4 +81,4 @@ namespace lna
         );
 }
 
-#endif // _LNA_GRAPHICS_RENDERER_HPP_
+#endif // _LNA_BACKENDS_RENDERER_HPP_

@@ -1,16 +1,10 @@
-Road to prototype:
-    ✔ Brainstorming on potentials projects                                                 @started(21-03-21 14:37) @done(21-03-21 14:37) @lasted(39s)
-    ✔ Find code project name: CELES                                                        @started(21-03-21 14:38) @done(21-03-21 14:39) @lasted(1m48s)
-    ✔ Choose project                                                                       @started(21-03-21 14:37) @done(21-03-25 22:04) @lasted(4d7h27m10s)
-    ✔ Quick design document                                                                @done(21-03-25 22:04)
-
 Misc:
     ☐ LNA framework refacto
         ✔ manage all memory pool in a memory pool manager                                  @done(21-03-27 22:00)
             the goal is to centralize all memory pool in the same place.
             vulkan_renderer will use array of pointer on memory_pool and config
             will have memory_pool parameters.
-        ☐ rename platform to backends
+        ✔ rename platform to backends                                                      @done(21-03-27 22:28)
         ☐ rename renderer to renderer_backend
         ☐ rename window to window_backend
         ☐ rename timer to timer_backend

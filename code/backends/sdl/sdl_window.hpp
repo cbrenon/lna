@@ -1,5 +1,5 @@
-#ifndef _LNA_PLATFORM_SDL_SDL_WINDOW_HPP_
-#define _LNA_PLATFORM_SDL_SDL_WINDOW_HPP_
+#ifndef _LNA_BACKENDS_SDL_SDL_WINDOW_HPP_
+#define _LNA_BACKENDS_SDL_SDL_WINDOW_HPP_
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlanguage-extension-token"
@@ -9,7 +9,7 @@
 #include <SDL_vulkan.h>
 #pragma warning(pop)
 #pragma clang diagnostic pop
-#include "platform/window.hpp"
+#include "backends/window.hpp"
 
 namespace lna
 {
@@ -24,4 +24,4 @@ namespace lna
     };
 }
 
-#endif // _LNA_PLATFORM_SDL_SDL_WINDOW_HPP_
+#endif // _LNA_BACKENDS_SDL_SDL_WINDOW_HPP_

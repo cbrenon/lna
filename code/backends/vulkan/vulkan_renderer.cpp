@@ -7,11 +7,11 @@
 #pragma warning(pop)
 #pragma clang diagnostic pop
 
-#include "platform/vulkan/vulkan_renderer.hpp"
-#include "platform/vulkan/vulkan_helpers.hpp"
-#include "platform/vulkan/vulkan_mesh.hpp"
-#include "platform/sdl/sdl_window.hpp"
-#include "platform/renderer.hpp"
+#include "backends/vulkan/vulkan_renderer.hpp"
+#include "backends/vulkan/vulkan_helpers.hpp"
+#include "backends/vulkan/vulkan_mesh.hpp"
+#include "backends/sdl/sdl_window.hpp"
+#include "backends/renderer.hpp"
 #include "core/assert.hpp"
 #include "core/memory_pool.hpp"
 #include "maths/mat4.hpp"

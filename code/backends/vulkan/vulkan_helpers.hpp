@@ -1,5 +1,5 @@
-#ifndef _LNA_PLATFORM_VULKAN_VULKAN_HELPERS_HPP_
-#define _LNA_PLATFORM_VULKAN_VULKAN_HELPERS_HPP_
+#ifndef _LNA_BACKENDS_VULKAN_VULKAN_HELPERS_HPP_
+#define _LNA_BACKENDS_VULKAN_VULKAN_HELPERS_HPP_
 
 #include <vulkan/vulkan.h>
 #include "core/log.hpp"
@@ -108,4 +108,4 @@ namespace lna
     }
 }
 
-#endif // _LNA_PLATFORM_VULKAN_VULKAN_HELPERS_HPP_
+#endif // _LNA_BACKENDS_VULKAN_VULKAN_HELPERS_HPP_

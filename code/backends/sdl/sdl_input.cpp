@@ -1,4 +1,4 @@
-#include "platform/sdl/sdl_input.hpp"
+#include "backends/sdl/sdl_input.hpp"
 #include "imgui_impl_sdl.h"
 
 namespace

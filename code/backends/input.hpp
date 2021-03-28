@@ -1,5 +1,5 @@
-#ifndef _LNA_PLATFORM_INPUT_HPP_
-#define _LNA_PLATFORM_INPUT_HPP_
+#ifndef _LNA_BACKENDS_INPUT_HPP_
+#define _LNA_BACKENDS_INPUT_HPP_
 
 namespace lna
 {
@@ -28,4 +28,4 @@ namespace lna
         );
 }
 
-#endif // _LNA_PLATFORM_INPUT_HPP_
+#endif // _LNA_BACKENDS_INPUT_HPP_

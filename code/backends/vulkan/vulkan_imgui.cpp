@@ -1,7 +1,7 @@
 #include <cstring>
 #include <algorithm>
-#include "platform/vulkan/vulkan_imgui.hpp"
-#include "platform/vulkan/vulkan_helpers.hpp"
+#include "backends/vulkan/vulkan_imgui.hpp"
+#include "backends/vulkan/vulkan_helpers.hpp"
 #include "core/assert.hpp"
 #include "core/memory_pool.hpp"
 

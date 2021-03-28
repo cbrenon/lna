@@ -1,10 +1,10 @@
-#ifndef _LAN_PLATFORM_VULKAN_VULKAN_RENDERER_HPP_
-#define _LAN_PLATFORM_VULKAN_VULKAN_RENDERER_HPP_
+#ifndef _LAN_BACKENDS_VULKAN_VULKAN_RENDERER_HPP_
+#define _LAN_BACKENDS_VULKAN_VULKAN_RENDERER_HPP_
 
 #include <vulkan/vulkan.h>
-#include "platform/vulkan/vulkan_texture.hpp"
-#include "platform/vulkan/vulkan_mesh.hpp"
-#include "platform/vulkan/vulkan_imgui.hpp"
+#include "backends/vulkan/vulkan_texture.hpp"
+#include "backends/vulkan/vulkan_mesh.hpp"
+#include "backends/vulkan/vulkan_imgui.hpp"
 
 namespace lna
 {
@@ -86,4 +86,4 @@ namespace lna
     };
 }
 
-#endif // _LAN_PLATFORM_VULKAN_VULKAN_RENDERER_HPP_
+#endif // _LAN_BACKENDS_VULKAN_VULKAN_RENDERER_HPP_

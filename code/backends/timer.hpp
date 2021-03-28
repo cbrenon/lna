@@ -1,5 +1,5 @@
-#ifndef _LNA_PLATFORM_TIMER_HPP_
-#define _LNA_PLATFORM_TIMER_HPP_
+#ifndef _LNA_BACKENDS_TIMER_HPP_
+#define _LNA_BACKENDS_TIMER_HPP_
 
 namespace lna
 {
@@ -14,4 +14,4 @@ namespace lna
         );
 }
 
-#endif // _LNA_PLATFORM_TIMER_HPP_
+#endif // _LNA_BACKENDS_TIMER_HPP_

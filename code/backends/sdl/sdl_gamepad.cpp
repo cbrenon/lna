@@ -1,5 +1,5 @@
 #include <cmath>
-#include "platform/sdl/sdl_gamepad.hpp"
+#include "backends/sdl/sdl_gamepad.hpp"
 #include "core/assert.hpp"
 
 namespace lna

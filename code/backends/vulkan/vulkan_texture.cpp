@@ -6,8 +6,8 @@
 #include <stb_image.h>
 #pragma warning(pop)
 #pragma clang diagnostic pop
-#include "platform/vulkan/vulkan_texture.hpp"
-#include "platform/vulkan/vulkan_helpers.hpp"
+#include "backends/vulkan/vulkan_texture.hpp"
+#include "backends/vulkan/vulkan_helpers.hpp"
 
 void lna::vulkan_texture_configure(
     lna::vulkan_texture& texture,

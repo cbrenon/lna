@@ -1,5 +1,7 @@
-#ifndef _LNA_PLATFORM_WINDOW_HPP_
-#define _LNA_PLATFORM_WINDOW_HPP_
+#ifndef _LNA_BACKENDS_WINDOW_HPP_
+#define _LNA_BACKENDS_WINDOW_HPP_
+
+#include <cstdint>
 
 namespace lna
 {
@@ -53,4 +55,4 @@ namespace lna
         );
 }
 
-#endif // _LNA_PLATFORM_WINDOW_HPP_
+#endif // _LNA_BACKENDS_WINDOW_HPP_
