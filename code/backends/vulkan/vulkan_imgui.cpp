@@ -1,47 +1,45 @@
 #include <cstring>
 #include <algorithm>
+#include "backends/imgui_backend.hpp"
 #include "backends/vulkan/vulkan_imgui.hpp"
 #include "backends/vulkan/vulkan_helpers.hpp"
+#include "backends/vulkan/vulkan_texture.hpp"
+#include "backends/vulkan/vulkan_backend.hpp"
 #include "core/assert.hpp"
 #include "core/memory_pool.hpp"
+#include "imgui.h"
 
 namespace lna
 {
-    void vulkan_imgui_wrapper_init(
-        vulkan_imgui_wrapper& imgui_wrapper
+    void imgui_backend_configure(
+        imgui_backend& backend,
+        imgui_backend_config& config
         )
     {
-        imgui_wrapper.vertex_buffer             = VK_NULL_HANDLE;
-        imgui_wrapper.vertex_buffer_memory      = VK_NULL_HANDLE;
-        imgui_wrapper.index_buffer              = VK_NULL_HANDLE;
-        imgui_wrapper.index_buffer_memory       = VK_NULL_HANDLE;
-        imgui_wrapper.pipeline_cache            = VK_NULL_HANDLE;
-        imgui_wrapper.pipeline_layout           = VK_NULL_HANDLE;
-        imgui_wrapper.pipeline                  = VK_NULL_HANDLE;
-        imgui_wrapper.descriptor_pool           = VK_NULL_HANDLE;
-        imgui_wrapper.descriptor_set_layout     = VK_NULL_HANDLE;
-        imgui_wrapper.descriptor_set            = VK_NULL_HANDLE;
-        imgui_wrapper.font_texture.image        = nullptr;
-        imgui_wrapper.font_texture.image_memory = nullptr;
-        imgui_wrapper.font_texture.image_view   = nullptr;
-        imgui_wrapper.font_texture.sampler      = nullptr;
-        imgui_wrapper.vertex_count              = 0;
-        imgui_wrapper.index_count               = 0;
-        imgui_wrapper.vertex_data_mapped        = nullptr;
-        imgui_wrapper.index_data_mapped         = nullptr;
-    }
+        LNA_ASSERT(backend.vertex_buffer == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.vertex_buffer_memory == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.index_buffer == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.index_buffer_memory == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.pipeline_cache == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.pipeline_layout == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.pipeline == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.descriptor_pool == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.descriptor_set_layout == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.descriptor_set == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.font_texture_ptr == nullptr);
+        LNA_ASSERT(backend.vertex_count == 0);
+        LNA_ASSERT(backend.index_count == 0);
+        LNA_ASSERT(backend.vertex_data_mapped == nullptr);
+        LNA_ASSERT(backend.index_data_mapped == nullptr);
 
-    void vulkan_imgui_wrapper_configure(
-        vulkan_imgui_wrapper& imgui_wrapper,
-        vulkan_imgui_wrapper_config& config
-        )
-    {
-        LNA_ASSERT(config.device);
-        LNA_ASSERT(config.physical_device);
-        LNA_ASSERT(config.command_pool);
-        LNA_ASSERT(config.graphics_queue);
-        LNA_ASSERT(config.render_pass);
-        LNA_ASSERT(config.temp_memory_pool_ptr);
+        LNA_ASSERT(config.renderer_backend_ptr);
+        LNA_ASSERT(config.renderer_backend_ptr->device);
+        LNA_ASSERT(config.renderer_backend_ptr->physical_device);
+        LNA_ASSERT(config.renderer_backend_ptr->command_pool);
+        LNA_ASSERT(config.renderer_backend_ptr->graphics_queue);
+        LNA_ASSERT(config.renderer_backend_ptr->render_pass);
+        LNA_ASSERT(config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]);
+        LNA_ASSERT(config.texture_backend_ptr);
 
         //! STYLE
 
@@ -67,27 +65,42 @@ namespace lna
             &texture_width,
             &texture_height
             );
-
-        vulkan_texture_config_info texture_config_info{};
-        texture_config_info.device          = config.device;
-        texture_config_info.physical_device = config.physical_device;
-        texture_config_info.filename        = nullptr;
-        texture_config_info.pixels          = font_data;
-        texture_config_info.width           = static_cast<uint32_t>(texture_width);
-        texture_config_info.height          = static_cast<uint32_t>(texture_height);
-        texture_config_info.graphics_queue  = config.graphics_queue;
-        texture_config_info.command_pool    = config.command_pool;
-        texture_config_info.format          = VK_FORMAT_R8G8B8A8_UNORM;
-        texture_config_info.mag_filter      = VK_FILTER_LINEAR;
-        texture_config_info.min_filter      = VK_FILTER_LINEAR;
-        texture_config_info.mipmap_mode     = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        texture_config_info.address_mode_u  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        texture_config_info.address_mode_v  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        texture_config_info.address_mode_w  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        vulkan_texture_configure(
-            imgui_wrapper.font_texture,
-            texture_config_info
+        texture_config font_texture_config{};
+        font_texture_config.pixels      = font_data;
+        font_texture_config.width       = static_cast<uint32_t>(texture_width);
+        font_texture_config.height      = static_cast<uint32_t>(texture_height);
+        font_texture_config.fmt         = texture_config::format::R8G8B8A8_UNORM;
+        font_texture_config.mag         = texture_config::filter::LINEAR;
+        font_texture_config.min         = texture_config::filter::LINEAR;
+        font_texture_config.mipmap      = texture_config::mipmap_mode::LINEAR;
+        font_texture_config.u           = texture_config::sampler_address_mode::CLAMP_TO_EDGE;
+        font_texture_config.v           = texture_config::sampler_address_mode::CLAMP_TO_EDGE;
+        font_texture_config.w           = texture_config::sampler_address_mode::CLAMP_TO_EDGE;
+        backend.font_texture_ptr        = texture_backend_new_texture(
+            *config.texture_backend_ptr,
+            font_texture_config
             );
+
+        // vulkan_texture_config_info texture_config_info{};
+        // texture_config_info.device          = config.device;
+        // texture_config_info.physical_device = config.physical_device;
+        // texture_config_info.filename        = nullptr;
+        // texture_config_info.pixels          = font_data;
+        // texture_config_info.width           = static_cast<uint32_t>(texture_width);
+        // texture_config_info.height          = static_cast<uint32_t>(texture_height);
+        // texture_config_info.graphics_queue  = config.graphics_queue;
+        // texture_config_info.command_pool    = config.command_pool;
+        // texture_config_info.format          = VK_FORMAT_R8G8B8A8_UNORM;
+        // texture_config_info.mag_filter      = VK_FILTER_LINEAR;
+        // texture_config_info.min_filter      = VK_FILTER_LINEAR;
+        // texture_config_info.mipmap_mode     = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        // texture_config_info.address_mode_u  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        // texture_config_info.address_mode_v  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        // texture_config_info.address_mode_w  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        // vulkan_texture_configure(
+        //     imgui_wrapper.font_texture,
+        //     texture_config_info
+        //     );
 
         //! DESCRIPTORS
 
@@ -101,10 +114,10 @@ namespace lna
         pool_create_info.maxSets                    = 2;
         VULKAN_CHECK_RESULT(
             vkCreateDescriptorPool(
-                config.device,
+                config.renderer_backend_ptr->device,
                 &pool_create_info,
                 nullptr,
-                &imgui_wrapper.descriptor_pool
+                &backend.descriptor_pool
                 )
         )
 
@@ -119,38 +132,38 @@ namespace lna
         set_layout_create_info.bindingCount     = 1;
         VULKAN_CHECK_RESULT(
             vkCreateDescriptorSetLayout(
-                config.device,
+                config.renderer_backend_ptr->device,
                 &set_layout_create_info,
                 nullptr,
-                &imgui_wrapper.descriptor_set_layout
+                &backend.descriptor_set_layout
                 )
             )
 
         VkDescriptorSetAllocateInfo set_allocate_info{};
         set_allocate_info.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        set_allocate_info.descriptorPool        = imgui_wrapper.descriptor_pool;
-        set_allocate_info.pSetLayouts           = &imgui_wrapper.descriptor_set_layout;
+        set_allocate_info.descriptorPool        = backend.descriptor_pool;
+        set_allocate_info.pSetLayouts           = &backend.descriptor_set_layout;
         set_allocate_info.descriptorSetCount    = 1;
         VULKAN_CHECK_RESULT(
             vkAllocateDescriptorSets(
-                config.device,
+                config.renderer_backend_ptr->device,
                 &set_allocate_info,
-                &imgui_wrapper.descriptor_set
+                &backend.descriptor_set
                 )
             )
         VkDescriptorImageInfo descriptor_image_info{};
-        descriptor_image_info.sampler               = imgui_wrapper.font_texture.sampler;
-        descriptor_image_info.imageView             = imgui_wrapper.font_texture.image_view;
+        descriptor_image_info.sampler               = backend.font_texture_ptr->sampler;
+        descriptor_image_info.imageView             = backend.font_texture_ptr->image_view;
         descriptor_image_info.imageLayout           = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet write_descriptor_sets[1]{};
         write_descriptor_sets[0].sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_descriptor_sets[0].dstSet             = imgui_wrapper.descriptor_set;
+        write_descriptor_sets[0].dstSet             = backend.descriptor_set;
         write_descriptor_sets[0].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         write_descriptor_sets[0].dstBinding         = 0;
         write_descriptor_sets[0].pImageInfo         = &descriptor_image_info;
         write_descriptor_sets[0].descriptorCount    = 1;
         vkUpdateDescriptorSets(
-            config.device,
+            config.renderer_backend_ptr->device,
             1,
             write_descriptor_sets,
             0,
@@ -163,10 +176,10 @@ namespace lna
         pipeline_cache_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
         VULKAN_CHECK_RESULT(
             vkCreatePipelineCache(
-                config.device,
+                config.renderer_backend_ptr->device,
                 &pipeline_cache_create_info,
                 nullptr,
-                &imgui_wrapper.pipeline_cache
+                &backend.pipeline_cache
                 )
             )
 
@@ -177,15 +190,15 @@ namespace lna
         VkPipelineLayoutCreateInfo layout_create_info{};
         layout_create_info.sType                    = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         layout_create_info.setLayoutCount           = 1;
-        layout_create_info.pSetLayouts              = &imgui_wrapper.descriptor_set_layout;
+        layout_create_info.pSetLayouts              = &backend.descriptor_set_layout;
         layout_create_info.pushConstantRangeCount   = 1;
         layout_create_info.pPushConstantRanges      = &push_constant_range;
         VULKAN_CHECK_RESULT(
             vkCreatePipelineLayout(
-                config.device,
+                config.renderer_backend_ptr->device,
                 &layout_create_info,
                 nullptr,
-                &imgui_wrapper.pipeline_layout
+                &backend.pipeline_layout
                 )
             )
 
@@ -243,8 +256,8 @@ namespace lna
         VkPipelineShaderStageCreateInfo shader_stage_create_infos[2]{};
         VkGraphicsPipelineCreateInfo pipeline_create_info {};
 		pipeline_create_info.sType                              = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipeline_create_info.layout                             = imgui_wrapper.pipeline_layout;
-		pipeline_create_info.renderPass                         = config.render_pass;
+		pipeline_create_info.layout                             = backend.pipeline_layout;
+		pipeline_create_info.renderPass                         = config.renderer_backend_ptr->render_pass;
 		pipeline_create_info.flags                              = 0;
 		pipeline_create_info.basePipelineIndex                  = -1;
 		pipeline_create_info.basePipelineHandle                 = VK_NULL_HANDLE;
@@ -284,14 +297,14 @@ namespace lna
 
 
         VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
-            config.device,
+            config.renderer_backend_ptr->device,
             "shaders/imgui_vert.spv",
-            *config.temp_memory_pool_ptr
+            *config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
-            config.device,
+            config.renderer_backend_ptr->device,
             "shaders/imgui_frag.spv",
-            *config.temp_memory_pool_ptr
+            *config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
             );
         shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shader_stage_create_infos[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
@@ -304,54 +317,54 @@ namespace lna
 
         VULKAN_CHECK_RESULT(
             vkCreateGraphicsPipelines(
-                config.device,
-                imgui_wrapper.pipeline_cache,
+                config.renderer_backend_ptr->device,
+                backend.pipeline_cache,
                 1,
                 &pipeline_create_info,
                 nullptr,
-                &imgui_wrapper.pipeline
+                &backend.pipeline
                 )
             )
 
-        vkDestroyShaderModule(config.device, fragment_shader_module, nullptr);
-        vkDestroyShaderModule(config.device, vertex_shader_module, nullptr);
+        vkDestroyShaderModule(config.renderer_backend_ptr->device, fragment_shader_module, nullptr);
+        vkDestroyShaderModule(config.renderer_backend_ptr->device, vertex_shader_module, nullptr);
     }
 
-    void vulkan_imgui_wrapper_update(
-        vulkan_imgui_wrapper& imgui_wrapper,
-        VkDevice device,
-        VkPhysicalDevice physical_device
+    void imgui_backend_update(
+        imgui_backend& backend
         )
     {
-        LNA_ASSERT(device);
-        LNA_ASSERT(physical_device);
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
+        LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
 
-        ImDrawData* im_draw_data = ImGui::GetDrawData();
-
-        VkDeviceSize vertex_buffer_size = im_draw_data->TotalVtxCount * sizeof(ImDrawVert);
-        VkDeviceSize index_buffer_size = im_draw_data->TotalIdxCount * sizeof (ImDrawIdx);
+        VkDevice            device              = backend.renderer_backend_ptr->device;
+        VkPhysicalDevice    physical_device     = backend.renderer_backend_ptr->physical_device;
+        ImDrawData*         im_draw_data        = ImGui::GetDrawData();
+        VkDeviceSize        vertex_buffer_size  = im_draw_data->TotalVtxCount * sizeof(ImDrawVert);
+        VkDeviceSize        index_buffer_size   = im_draw_data->TotalIdxCount * sizeof (ImDrawIdx);
 
         if ((vertex_buffer_size == 0) || (index_buffer_size == 0))
         {
             return;
         }
 
-        if ((imgui_wrapper.vertex_buffer == VK_NULL_HANDLE) || (imgui_wrapper.vertex_count != im_draw_data->TotalVtxCount))
+        if ((backend.vertex_buffer == VK_NULL_HANDLE) || (backend.vertex_count != im_draw_data->TotalVtxCount))
         {
-            if (imgui_wrapper.vertex_data_mapped)
+            if (backend.vertex_data_mapped)
             {
-                vkUnmapMemory(device, imgui_wrapper.vertex_buffer_memory);
-                imgui_wrapper.vertex_data_mapped = nullptr;
+                vkUnmapMemory(device, backend.vertex_buffer_memory);
+                backend.vertex_data_mapped = nullptr;
             }
-            if (imgui_wrapper.vertex_buffer)
+            if (backend.vertex_buffer)
             {
-                vkDestroyBuffer(device, imgui_wrapper.vertex_buffer, nullptr);
-                imgui_wrapper.vertex_buffer = nullptr;
+                vkDestroyBuffer(device, backend.vertex_buffer, nullptr);
+                backend.vertex_buffer = nullptr;
             }
-            if (imgui_wrapper.vertex_buffer_memory)
+            if (backend.vertex_buffer_memory)
             {
-                vkFreeMemory(device, imgui_wrapper.vertex_buffer_memory, nullptr);
-                imgui_wrapper.vertex_buffer_memory = nullptr;
+                vkFreeMemory(device, backend.vertex_buffer_memory, nullptr);
+                backend.vertex_buffer_memory = nullptr;
             }
             VkBufferCreateInfo buffer_create_info{};
             buffer_create_info.sType    = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -362,13 +375,13 @@ namespace lna
                     device,
                     &buffer_create_info,
                     nullptr,
-                    &imgui_wrapper.vertex_buffer
+                    &backend.vertex_buffer
                 )
             )
             VkMemoryRequirements    memory_requirements;
             vkGetBufferMemoryRequirements(
                 device,
-                imgui_wrapper.vertex_buffer,
+                backend.vertex_buffer,
                 &memory_requirements
                 );
             VkMemoryAllocateInfo    memory_allocate_info{};
@@ -384,45 +397,45 @@ namespace lna
                     device,
                     &memory_allocate_info,
                     nullptr,
-                    &imgui_wrapper.vertex_buffer_memory
+                    &backend.vertex_buffer_memory
                     )
                 )
             VULKAN_CHECK_RESULT(
                 vkBindBufferMemory(
                     device,
-                    imgui_wrapper.vertex_buffer,
-                    imgui_wrapper.vertex_buffer_memory,
+                    backend.vertex_buffer,
+                    backend.vertex_buffer_memory,
                     0
                     )
             )
-            imgui_wrapper.vertex_count = im_draw_data->TotalVtxCount;
+            backend.vertex_count = im_draw_data->TotalVtxCount;
             VULKAN_CHECK_RESULT(
                 vkMapMemory(
                     device,
-                    imgui_wrapper.vertex_buffer_memory,
+                    backend.vertex_buffer_memory,
                     0,
                     VK_WHOLE_SIZE,
                     0,
-                    &imgui_wrapper.vertex_data_mapped
+                    &backend.vertex_data_mapped
                     )
                 )
         }
-        if ((imgui_wrapper.index_buffer == VK_NULL_HANDLE) || (imgui_wrapper.index_count < im_draw_data->TotalIdxCount))
+        if ((backend.index_buffer == VK_NULL_HANDLE) || (backend.index_count < im_draw_data->TotalIdxCount))
         {
-            if (imgui_wrapper.index_data_mapped)
+            if (backend.index_data_mapped)
             {
-                vkUnmapMemory(device, imgui_wrapper.index_buffer_memory);
-                imgui_wrapper.index_data_mapped = nullptr;
+                vkUnmapMemory(device, backend.index_buffer_memory);
+                backend.index_data_mapped = nullptr;
             }
-            if (imgui_wrapper.index_buffer)
+            if (backend.index_buffer)
             {
-                vkDestroyBuffer(device, imgui_wrapper.index_buffer, nullptr);
-                imgui_wrapper.index_buffer = nullptr;
+                vkDestroyBuffer(device, backend.index_buffer, nullptr);
+                backend.index_buffer = nullptr;
             }
-            if (imgui_wrapper.index_buffer_memory)
+            if (backend.index_buffer_memory)
             {
-                vkFreeMemory(device, imgui_wrapper.index_buffer_memory, nullptr);
-                imgui_wrapper.index_buffer_memory = nullptr;
+                vkFreeMemory(device, backend.index_buffer_memory, nullptr);
+                backend.index_buffer_memory = nullptr;
             }
             VkBufferCreateInfo buffer_create_info{};
             buffer_create_info.sType    = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -433,13 +446,13 @@ namespace lna
                     device,
                     &buffer_create_info,
                     nullptr,
-                    &imgui_wrapper.index_buffer
+                    &backend.index_buffer
                 )
             )
             VkMemoryRequirements    memory_requirements;
             vkGetBufferMemoryRequirements(
                 device,
-                imgui_wrapper.index_buffer,
+                backend.index_buffer,
                 &memory_requirements
                 );
             VkMemoryAllocateInfo    memory_allocate_info{};
@@ -455,32 +468,32 @@ namespace lna
                     device,
                     &memory_allocate_info,
                     nullptr,
-                    &imgui_wrapper.index_buffer_memory
+                    &backend.index_buffer_memory
                     )
                 )
             VULKAN_CHECK_RESULT(
                 vkBindBufferMemory(
                     device,
-                    imgui_wrapper.index_buffer,
-                    imgui_wrapper.index_buffer_memory,
+                    backend.index_buffer,
+                    backend.index_buffer_memory,
                     0
                     )
             )
-            imgui_wrapper.index_count = im_draw_data->TotalIdxCount;
+            backend.index_count = im_draw_data->TotalIdxCount;
             VULKAN_CHECK_RESULT(
                 vkMapMemory(
                     device,
-                    imgui_wrapper.index_buffer_memory,
+                    backend.index_buffer_memory,
                     0,
                     VK_WHOLE_SIZE,
                     0,
-                    &imgui_wrapper.index_data_mapped
+                    &backend.index_data_mapped
                     )
                 )
         }
 
-        ImDrawVert* vertex_dst  = (ImDrawVert*)imgui_wrapper.vertex_data_mapped;
-        ImDrawIdx*  index_dst   = (ImDrawIdx*)imgui_wrapper.index_data_mapped;
+        ImDrawVert* vertex_dst  = (ImDrawVert*)backend.vertex_data_mapped;
+        ImDrawIdx*  index_dst   = (ImDrawIdx*)backend.index_data_mapped;
         for (int i = 0; i < im_draw_data->CmdListsCount; ++i)
         {
             const ImDrawList* cmd_list = im_draw_data->CmdLists[i];
@@ -501,7 +514,7 @@ namespace lna
         {
             VkMappedMemoryRange mapped_memory_range{};
             mapped_memory_range.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            mapped_memory_range.memory  = imgui_wrapper.vertex_buffer_memory;
+            mapped_memory_range.memory  = backend.vertex_buffer_memory;
             mapped_memory_range.offset  = 0;
             mapped_memory_range.size    = vertex_buffer_size;
             VULKAN_CHECK_RESULT(
@@ -515,7 +528,7 @@ namespace lna
         {
             VkMappedMemoryRange mapped_memory_range{};
             mapped_memory_range.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            mapped_memory_range.memory  = imgui_wrapper.index_buffer_memory;
+            mapped_memory_range.memory  = backend.index_buffer_memory;
             mapped_memory_range.offset  = 0;
             mapped_memory_range.size    = index_buffer_size;
             VULKAN_CHECK_RESULT(
@@ -528,29 +541,28 @@ namespace lna
         }
     }
 
-    void vulkan_imgui_wrapper_draw_frame(
-        vulkan_imgui_wrapper& imgui_wrapper,
-        VkCommandBuffer command_buffer
+    void imgui_backend_draw_frame(
+        imgui_backend& backend
         )
     {
-        LNA_ASSERT(command_buffer);
+        LNA_ASSERT(backend.renderer_backend_ptr);
 
         ImGuiIO& io = ImGui::GetIO();
 
         vkCmdBindDescriptorSets(
             command_buffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            imgui_wrapper.pipeline_layout,
+            backend.pipeline_layout,
             0,
             1,
-            &imgui_wrapper.descriptor_set,
+            &backend.descriptor_set,
             0,
             nullptr
             );
         vkCmdBindPipeline(
             command_buffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            imgui_wrapper.pipeline
+            backend.pipeline
             );
 
         VkViewport viewport;
@@ -565,18 +577,18 @@ namespace lna
             &viewport
             );
 
-        imgui_wrapper.push_const_block.scale.x = 2.0f / io.DisplaySize.x;
-        imgui_wrapper.push_const_block.scale.y = 2.0f / io.DisplaySize.y;
-        imgui_wrapper.push_const_block.translate.x = -1.0f;
-        imgui_wrapper.push_const_block.translate.y = -1.0f;
+        backend.push_const_block.scale.x = 2.0f / io.DisplaySize.x;
+        backend.push_const_block.scale.y = 2.0f / io.DisplaySize.y;
+        backend.push_const_block.translate.x = -1.0f;
+        backend.push_const_block.translate.y = -1.0f;
 
         vkCmdPushConstants(
             command_buffer,
-            imgui_wrapper.pipeline_layout,
+            backend.pipeline_layout,
             VK_SHADER_STAGE_VERTEX_BIT,
             0,
             sizeof(vulkan_imgui_push_const_block),
-            &imgui_wrapper.push_const_block
+            &backend.push_const_block
             );
 
         ImDrawData* im_draw_data    = ImGui::GetDrawData();
@@ -589,12 +601,12 @@ namespace lna
                 command_buffer,
                 0,
                 1,
-                &imgui_wrapper.vertex_buffer,
+                &backend.vertex_buffer,
                 offsets
                 );
             vkCmdBindIndexBuffer(
                 command_buffer,
-                imgui_wrapper.index_buffer,
+                backend.index_buffer,
                 0,
                 VK_INDEX_TYPE_UINT16
                 );
@@ -630,25 +642,27 @@ namespace lna
         }
     }
 
-    void vulkan_imgui_wrapper_release(
-        vulkan_imgui_wrapper& imgui_wrapper,
-        VkDevice device
+    void imgui_backend_release(
+        imgui_backend& backend
         )
     {
         ImGui::DestroyContext();
 
-        if (imgui_wrapper.vertex_buffer)        vkDestroyBuffer(device, imgui_wrapper.vertex_buffer, nullptr);
-        if (imgui_wrapper.vertex_buffer_memory) vkFreeMemory(device, imgui_wrapper.vertex_buffer_memory, nullptr);
-        if (imgui_wrapper.index_buffer)         vkDestroyBuffer(device, imgui_wrapper.index_buffer, nullptr);
-        if (imgui_wrapper.index_buffer_memory)  vkFreeMemory(device, imgui_wrapper.index_buffer_memory, nullptr);
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
 
-        vulkan_texture_release(imgui_wrapper.font_texture, device);
-        vkDestroyPipelineCache(device, imgui_wrapper.pipeline_cache, nullptr);
-        vkDestroyPipeline(device, imgui_wrapper.pipeline, nullptr);
-        vkDestroyPipelineLayout(device, imgui_wrapper.pipeline_layout, nullptr);
-        vkDestroyDescriptorPool(device, imgui_wrapper.descriptor_pool, nullptr);
-        vkDestroyDescriptorSetLayout(device, imgui_wrapper.descriptor_set_layout, nullptr);
+        if (backend.vertex_buffer)        vkDestroyBuffer(backend.renderer_backend_ptr->device, backend.vertex_buffer, nullptr);
+        if (backend.vertex_buffer_memory) vkFreeMemory(backend.renderer_backend_ptr->device, backend.vertex_buffer_memory, nullptr);
+        if (backend.index_buffer)         vkDestroyBuffer(backend.renderer_backend_ptr->device, backend.index_buffer, nullptr);
+        if (backend.index_buffer_memory)  vkFreeMemory(backend.renderer_backend_ptr->device, backend.index_buffer_memory, nullptr);
 
-        vulkan_imgui_wrapper_init(imgui_wrapper);
+        //vulkan_texture_release(imgui_wrapper.font_texture, device);
+        vkDestroyPipelineCache(backend.renderer_backend_ptr->device, backend.pipeline_cache, nullptr);
+        vkDestroyPipeline(backend.renderer_backend_ptr->device, backend.pipeline, nullptr);
+        vkDestroyPipelineLayout(backend.renderer_backend_ptr->device, backend.pipeline_layout, nullptr);
+        vkDestroyDescriptorPool(backend.renderer_backend_ptr->device, backend.descriptor_pool, nullptr);
+        vkDestroyDescriptorSetLayout(backend.renderer_backend_ptr->device, backend.descriptor_set_layout, nullptr);
+
+        //vulkan_imgui_wrapper_init(imgui_wrapper);
     }
 }

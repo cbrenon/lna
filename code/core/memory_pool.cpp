@@ -27,15 +27,6 @@ namespace
 
 namespace lna
 {
-    void memory_pool_manager_init(
-        memory_pool_manager& mem_pool_manager
-        )
-    {
-        mem_pool_manager.pools          = nullptr;
-        mem_pool_manager.cur_pool_count = 0;
-        mem_pool_manager.max_pool_count = 0;
-    }
-
     void memory_pool_manager_configure(
         memory_pool_manager& mem_pool_manager,
         uint32_t max_pool_count

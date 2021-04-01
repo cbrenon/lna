@@ -1,8 +1,7 @@
+#include "backends/vulkan/vulkan_helpers.hpp"
 #include "core/assert.hpp"
 #include "core/memory_pool.hpp"
 #include "core/file.hpp"
-#include "backends/vulkan/vulkan_helpers.hpp"
-#include "graphics/vertex.hpp"
 
 const char* lna::vulkan_helpers::error_string(VkResult error_code)
     {

@@ -18,11 +18,7 @@ namespace lna
         uint32_t        cur_pool_count;
         uint32_t        max_pool_count;
     };
-
-    void memory_pool_manager_init(
-        memory_pool_manager& mem_pool_manager
-        );
-
+    
     void memory_pool_manager_configure(
         memory_pool_manager& mem_pool_manager,
         uint32_t max_pool_count

@@ -25,10 +25,6 @@ namespace lna
 
     struct window_backend;
 
-    void window_backend_init(
-        window_backend& window
-        );
-
     void window_backend_configure(
         window_backend& window,
         const window_backend_config& config

@@ -2,34 +2,39 @@
 #define _LAN_BACKENDS_VULKAN_VULKAN_BACKEND_HPP_
 
 #include <vulkan/vulkan.h>
-#include "backends/vulkan/vulkan_texture.hpp"
-#include "backends/vulkan/vulkan_mesh.hpp"
-#include "backends/vulkan/vulkan_imgui.hpp"
+//#include "backends/vulkan/vulkan_imgui.hpp"
 
 namespace lna
 {
     constexpr uint32_t VULKAN_MAX_FRAMES_IN_FLIGHT = 2;
 
-    struct vulkan_texture_system
-    {
-        vulkan_texture*                 textures;
-        uint32_t                        cur_texture_count;
-        uint32_t                        max_texture_count;
-    };
-
-    struct vulkan_mesh_system
-    {
-        vulkan_mesh*                    meshes;
-        vec3*                           mesh_positions;
-        uint32_t                        cur_mesh_count;
-        uint32_t                        max_mesh_count;
-        VkDescriptorSetLayout           descriptor_set_layout;
-        VkDescriptorPool                descriptor_pool;
-        mat4                            projection;
-        mat4                            view;
-    };
-
     struct memory_pool;
+
+    // TODO: to remove when vulkan_texture_backend is implemented
+    // struct vulkan_texture_system
+    // {
+    //     vulkan_texture*                 textures;
+    //     uint32_t                        cur_texture_count;
+    //     uint32_t                        max_texture_count;
+    // };
+
+    // TODO: to remove when vulkan_mesh_backend is implemented
+    // struct vulkan_mesh_system
+    // {
+    //     vulkan_mesh*                    meshes;
+    //     vec3*                           mesh_positions;
+    //     uint32_t                        cur_mesh_count;
+    //     uint32_t                        max_mesh_count;
+    //     VkDescriptorSetLayout           descriptor_set_layout;
+    //     VkDescriptorPool                descriptor_pool;
+    //     mat4                            projection;
+    //     mat4                            view;
+    // };
+
+    struct renderer_backend;
+
+    typedef void (*vulkan_on_swap_chain_cleanup) (void* owner);
+    typedef void (*vulkan_on_swap_chain_recreate)(void* owner);
 
     struct renderer_backend
     {
@@ -45,13 +50,14 @@ namespace lna
         VkFormat                        swap_chain_image_format;
         VkExtent2D                      swap_chain_extent;
         VkRenderPass                    render_pass;
-        VkPipeline                      graphics_pipeline;
-        VkPipelineLayout                pipeline_layout;
         VkCommandPool                   command_pool;
         size_t                          curr_frame;
 
-        vulkan_texture_system           texture_system;
-        vulkan_mesh_system              mesh_system;
+        //VkPipeline                      graphics_pipeline;  // TODO: to remove when vulkan_mesh_backend is implemented
+        //VkPipelineLayout                pipeline_layout;    // TODO: to remove when vulkan_mesh_backend is implemented
+
+        //vulkan_texture_system           texture_system;     // TODO: to remove when vulkan_texture_backend is implemented
+        //vulkan_mesh_system              mesh_system;        // TODO: to remove when vulkan_mesh_backend is implemented
 
         VkSemaphore                     image_available_semaphores[VULKAN_MAX_FRAMES_IN_FLIGHT];
         VkSemaphore                     render_finished_semaphores[VULKAN_MAX_FRAMES_IN_FLIGHT];
@@ -77,7 +83,16 @@ namespace lna
 
         memory_pool*                    memory_pools[MEMORY_POOL_COUNT];
 
-        vulkan_imgui_wrapper            imgui_wrapper;
+        enum
+        {
+            MAX_SWAP_CHAIN_CALLBACKS = 10,
+        };
+
+        vulkan_on_swap_chain_cleanup    swap_chain_cleanup_callbacks[MAX_SWAP_CHAIN_CALLBACKS];
+        vulkan_on_swap_chain_recreate   swap_chain_recreate_callbacks[MAX_SWAP_CHAIN_CALLBACKS];
+        void*                           swap_chain_callback_owners[MAX_SWAP_CHAIN_CALLBACKS];
+
+        //vulkan_imgui_wrapper            imgui_wrapper;      // TODO: remove from vulkan_backend
     };
 
     constexpr size_t MEMORY_POOL_SIZES[renderer_backend::MEMORY_POOL_COUNT] =
@@ -86,6 +101,13 @@ namespace lna
         256, // SIZE IN MEGABYTES
         256, // SIZE IN MEGABYTES
     };
+
+    void vulkan_renderer_backend_register_swap_chain_callbacks(
+        renderer_backend& backend,
+        vulkan_on_swap_chain_cleanup on_clean_up,
+        vulkan_on_swap_chain_recreate on_recreate,
+        void* owner
+        );
 }
 
 #endif // _LAN_BACKENDS_VULKAN_VULKAN_BACKEND_HPP_

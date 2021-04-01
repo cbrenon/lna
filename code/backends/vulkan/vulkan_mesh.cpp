@@ -1,446 +1,1229 @@
 #include <cstring>
+#include "backends/mesh_backend.hpp"
 #include "backends/vulkan/vulkan_mesh.hpp"
 #include "backends/vulkan/vulkan_helpers.hpp"
 #include "backends/vulkan/vulkan_texture.hpp"
+#include "backends/vulkan/vulkan_backend.hpp"
 #include "core/assert.hpp"
 #include "core/memory_pool.hpp"
-#include "graphics/vertex.hpp"
+#include "maths/mat4.hpp"
 
 namespace lna
 {
     struct vulkan_uniform_buffer_object
     {
-        alignas(16) lna::mat4       model;
-        alignas(16) lna::mat4       view;
-        alignas(16) lna::mat4       projection;
+        alignas(16) mat4    model;
+        alignas(16) mat4    view;
+        alignas(16) mat4    projection;
     };
 }
 
-void lna::vulkan_mesh_create_vertex_and_index_buffer(
-    lna::vulkan_mesh& mesh,
-    lna::vulkan_mesh_create_vertex_and_index_info& config
-    )
+namespace
 {
-    LNA_ASSERT(mesh.vertex_buffer == nullptr);
-    LNA_ASSERT(mesh.vertex_buffer_memory == nullptr);
-    LNA_ASSERT(mesh.index_buffer == nullptr);
-    LNA_ASSERT(mesh.index_buffer_memory == nullptr);
-    LNA_ASSERT(mesh.vertex_count == 0);
-    LNA_ASSERT(mesh.index_count == 0);
-    LNA_ASSERT(config.device);
-    LNA_ASSERT(config.physical_device);
-    LNA_ASSERT(config.command_pool);
-    LNA_ASSERT(config.graphics_queue);
-    LNA_ASSERT(config.vertices);
-    LNA_ASSERT(config.indices);
-    LNA_ASSERT(config.vertex_count > 0);
-    LNA_ASSERT(config.index_count > 0);
-
-    //! VERTEX BUFFER PART
+    struct vulkan_mesh_vertex_description
     {
-        mesh.vertex_count  = config.vertex_count;
-        auto vertex_buffer_size = sizeof(config.vertices[0]) * mesh.vertex_count;
-        VkBuffer        staging_buffer;
-        VkDeviceMemory  staging_buffer_memory;
-        lna::vulkan_helpers::create_buffer(
-            config.device,
-            config.physical_device,
-            vertex_buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            staging_buffer,
-            staging_buffer_memory
-            );
-        void* vertices_data;
-        VULKAN_CHECK_RESULT(
-            vkMapMemory(
-                config.device,
-                staging_buffer_memory,
-                0,
-                vertex_buffer_size,
-                0,
-                &vertices_data
-                )
-            )
-	    std::memcpy(
-            vertices_data,
-            config.vertices,
-            vertex_buffer_size
-            );
-	    vkUnmapMemory(
-            config.device,
-            staging_buffer_memory
-            );
-        lna::vulkan_helpers::create_buffer(
-            config.device,
-            config.physical_device,
-            vertex_buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            mesh.vertex_buffer,
-            mesh.vertex_buffer_memory
-            );
-        lna::vulkan_helpers::copy_buffer(
-            config.device,
-            config.command_pool,
-            config.graphics_queue,
-            staging_buffer,
-            mesh.vertex_buffer,
-            vertex_buffer_size
-            );
-        vkDestroyBuffer(
-            config.device,
-            staging_buffer,
-            nullptr
-            );
-        vkFreeMemory(
-            config.device,
-            staging_buffer_memory,
-            nullptr
-            );
+        enum
+        {
+            MAX_BINDING     = 1,
+            MAX_ATTRIBUTES  = 3,
+        };
+
+        VkVertexInputBindingDescription     bindings[MAX_BINDING];
+        VkVertexInputAttributeDescription   attributes[MAX_ATTRIBUTES];
+    };
+
+    vulkan_mesh_vertex_description vulkan_default_mesh_vertex_description()
+    {
+        vulkan_mesh_vertex_description result;
+        result.bindings[0].binding      = 0;
+        result.bindings[0].stride       = sizeof(lna::vertex);
+        result.bindings[0].inputRate    = VK_VERTEX_INPUT_RATE_VERTEX;
+        result.attributes[0].binding    = 0;
+        result.attributes[0].location   = 0;
+        result.attributes[0].format     = VK_FORMAT_R32G32B32_SFLOAT;
+        result.attributes[0].offset     = offsetof(lna::vertex, position);
+        result.attributes[1].binding    = 0;
+        result.attributes[1].location   = 1;
+        result.attributes[1].format     = VK_FORMAT_R32G32B32A32_SFLOAT;
+        result.attributes[1].offset     = offsetof(lna::vertex, color);
+        result.attributes[2].binding    = 0;
+        result.attributes[2].location   = 2;
+        result.attributes[2].format     = VK_FORMAT_R32G32_SFLOAT;
+        result.attributes[2].offset     = offsetof(lna::vertex, uv);
+        return result;
     }
 
-    //! INDEX BUFFER PART
-    {
-        mesh.index_count   = config.index_count;
-        auto index_buffer_size = sizeof(config.indices[0]) * mesh.index_count;
-        VkBuffer        staging_buffer;
-        VkDeviceMemory  staging_buffer_memory;
-        lna::vulkan_helpers::create_buffer(
-            config.device,
-            config.physical_device,
-            index_buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            staging_buffer,
-            staging_buffer_memory
-            );
-        void* indices_data;
-        VULKAN_CHECK_RESULT(
-            vkMapMemory(
-                config.device,
-                staging_buffer_memory,
-                0,
-                index_buffer_size,
-                0,
-                &indices_data
-                )
-            )
-        std::memcpy(
-            indices_data,
-            config.indices,
-            index_buffer_size
-            );
-        vkUnmapMemory(
-            config.device,
-            staging_buffer_memory
-            );
-        lna::vulkan_helpers::create_buffer(
-            config.device,
-            config.physical_device,
-            index_buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            mesh.index_buffer,
-            mesh.index_buffer_memory
-            );
-        lna::vulkan_helpers::copy_buffer(
-            config.device,
-            config.command_pool,
-            config.graphics_queue,
-            staging_buffer,
-            mesh.index_buffer,
-            index_buffer_size
-            );
-        vkDestroyBuffer(
-            config.device,
-            staging_buffer,
-            nullptr
-            );
-        vkFreeMemory(
-            config.device,
-            staging_buffer_memory,
-            nullptr
-            );
-    }
-}
-
-void lna::vulkan_mesh_create_uniform_buffer(
-    lna::vulkan_mesh& mesh,
-    lna::vulkan_mesh_create_uniform_buffer_info& config
-    )
-{
-    LNA_ASSERT(mesh.uniform_buffers == nullptr);
-    LNA_ASSERT(mesh.uniform_buffers_memory == nullptr);
-    LNA_ASSERT(mesh.swap_chain_image_count == 0);
-    LNA_ASSERT(config.device);
-    LNA_ASSERT(config.physical_device);
-    LNA_ASSERT(config.swap_chain_image_count > 0);
-    LNA_ASSERT(config.swap_chain_memory_pool_ptr);
-
-    VkDeviceSize uniform_buffer_size = sizeof(lna::vulkan_uniform_buffer_object);
-
-    mesh.swap_chain_image_count = config.swap_chain_image_count;
-    mesh.uniform_buffers        = (VkBuffer*)lna::memory_pool_reserve_memory(
-        *config.swap_chain_memory_pool_ptr,
-        mesh.swap_chain_image_count * sizeof(VkBuffer)
-        );
-    mesh.uniform_buffers_memory = (VkDeviceMemory*)lna::memory_pool_reserve_memory(
-        *config.swap_chain_memory_pool_ptr,
-        mesh.swap_chain_image_count * sizeof(VkDeviceMemory)
-        );
-    LNA_ASSERT(mesh.uniform_buffers);
-    LNA_ASSERT(mesh.uniform_buffers_memory);
-
-    for (size_t i = 0; i < config.swap_chain_image_count; ++i)
-    {
-        lna::vulkan_helpers::create_buffer(
-            config.device,
-            config.physical_device,
-            uniform_buffer_size,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            mesh.uniform_buffers[i],
-            mesh.uniform_buffers_memory[i]
-            );
-    }
-}
-
-void lna::vulkan_mesh_upate_uniform_buffer(
-    lna::vulkan_mesh& mesh,
-    lna::vulkan_mesh_update_uniform_buffer_info& config
-    )
-{
-    LNA_ASSERT(mesh.uniform_buffers_memory);
-    LNA_ASSERT(config.device);
-    LNA_ASSERT(config.image_index < mesh.swap_chain_image_count);
-    LNA_ASSERT(config.model_matrix_ptr);
-    LNA_ASSERT(config.view_matrix_ptr);
-    LNA_ASSERT(config.projection_matrix_ptr);
-
-    lna::vulkan_uniform_buffer_object ubo{};
-
-    ubo.model       = *config.model_matrix_ptr;
-    ubo.view        = *config.view_matrix_ptr;
-    ubo.projection  = *config.projection_matrix_ptr;
-
-    void* data;
-    VULKAN_CHECK_RESULT(
-        vkMapMemory(
-            config.device,
-            mesh.uniform_buffers_memory[config.image_index],
-            0,
-            sizeof(ubo),
-            0,
-            &data
-            )
+    void vulkan_create_graphics_pipeline(
+        lna::mesh_backend& backend
         )
-    memcpy(
-        data,
-        &ubo,
-        sizeof(ubo)
-        );
-    vkUnmapMemory(
-        config.device,
-        mesh.uniform_buffers_memory[config.image_index]
-        );
-}
-
-void lna::vulkan_mesh_create_descriptor_sets(
-    lna::vulkan_mesh& mesh,
-    lna::vulkan_mesh_create_descriptor_sets_info& config
-    )
-{
-    LNA_ASSERT(mesh.descriptor_sets == nullptr);
-    LNA_ASSERT(mesh.swap_chain_image_count != 0 );  // vulkan_mesh_upate_uniform_buffer must have been called before
-    LNA_ASSERT(mesh.uniform_buffers_memory);        // vulkan_mesh_upate_uniform_buffer must have been called before
-    LNA_ASSERT(config.device);
-    LNA_ASSERT(config.physical_device);
-    LNA_ASSERT(config.descriptor_pool);
-    LNA_ASSERT(config.descriptor_set_layout);
-    LNA_ASSERT(config.temp_memory_pool_ptr);
-    LNA_ASSERT(config.swap_chain_memory_pool_ptr);
-    LNA_ASSERT(mesh.texture_ptr);                   // texture must be assigned before calling create descriptor sets
-    LNA_ASSERT(mesh.texture_ptr->image_view);
-    LNA_ASSERT(mesh.texture_ptr->sampler);
-
-    VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)lna::memory_pool_reserve_memory(
-        *config.temp_memory_pool_ptr,
-        mesh.swap_chain_image_count * sizeof(VkDescriptorSetLayout)
-        );
-    LNA_ASSERT(layouts);
-    for (uint32_t i = 0; i < mesh.swap_chain_image_count; ++i)
     {
-        layouts[i] = config.descriptor_set_layout;
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
+        LNA_ASSERT(backend.renderer_backend_ptr->render_pass);
+        LNA_ASSERT(backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]);
+        LNA_ASSERT(backend.pipeline_layout == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.pipeline == VK_NULL_HANDLE);
+
+        VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
+            backend.renderer_backend_ptr->device,
+            "shaders/default_vert.spv",
+            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            );
+        VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
+            backend.renderer_backend_ptr->device,
+            "shaders/default_frag.spv",
+            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            );
+        VkPipelineShaderStageCreateInfo shader_stage_create_infos[2]{};
+        shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shader_stage_create_infos[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
+        shader_stage_create_infos[0].module = vertex_shader_module;
+        shader_stage_create_infos[0].pName  = "main";
+        shader_stage_create_infos[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shader_stage_create_infos[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
+        shader_stage_create_infos[1].module = fragment_shader_module;
+        shader_stage_create_infos[1].pName  = "main";
+
+        auto vertex_description = vulkan_default_mesh_vertex_description();
+
+        VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info{};
+        vertex_input_state_create_info.sType                            = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertex_input_state_create_info.vertexBindingDescriptionCount    = vulkan_mesh_vertex_description::MAX_BINDING;
+        vertex_input_state_create_info.pVertexBindingDescriptions       = vertex_description.bindings;
+        vertex_input_state_create_info.vertexAttributeDescriptionCount  = vulkan_mesh_vertex_description::MAX_ATTRIBUTES;
+        vertex_input_state_create_info.pVertexAttributeDescriptions     = vertex_description.attributes;
+
+        VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
+        input_assembly_state_create_info.sType                          = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        input_assembly_state_create_info.topology                       = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        input_assembly_state_create_info.primitiveRestartEnable         = VK_FALSE;
+
+        VkViewport viewport{};
+        viewport.x          = 0.0f;
+        viewport.y          = 0.0f;
+        viewport.width      = static_cast<float>(backend.renderer_backend_ptr->swap_chain_extent.width);
+        viewport.height     = static_cast<float>(backend.renderer_backend_ptr->swap_chain_extent.height);
+        viewport.minDepth   = 0.0f;
+        viewport.maxDepth   = 1.0f;
+
+        VkRect2D scissor{};
+        scissor.offset      = { 0, 0 };
+        scissor.extent      = backend.renderer_backend_ptr->swap_chain_extent;
+
+        VkPipelineViewportStateCreateInfo viewport_state_create_info{};
+        viewport_state_create_info.sType            = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewport_state_create_info.viewportCount    = 1;
+        viewport_state_create_info.pViewports       = &viewport;
+        viewport_state_create_info.scissorCount     = 1;
+        viewport_state_create_info.pScissors        = &scissor;
+
+        VkPipelineRasterizationStateCreateInfo rasterization_state_create_info{};
+        rasterization_state_create_info.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterization_state_create_info.depthClampEnable        = VK_FALSE;
+        rasterization_state_create_info.rasterizerDiscardEnable = VK_FALSE;
+        rasterization_state_create_info.polygonMode             = VK_POLYGON_MODE_FILL;
+        rasterization_state_create_info.lineWidth               = 1.0f;
+        rasterization_state_create_info.cullMode                = VK_CULL_MODE_BACK_BIT;
+        rasterization_state_create_info.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterization_state_create_info.depthBiasEnable         = VK_FALSE;
+        rasterization_state_create_info.depthBiasConstantFactor = 0.0f;
+        rasterization_state_create_info.depthBiasClamp          = 0.0f;
+        rasterization_state_create_info.depthBiasSlopeFactor    = 0.0f;
+
+        VkPipelineMultisampleStateCreateInfo multisample_state_create_info{};
+        multisample_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisample_state_create_info.sampleShadingEnable   = VK_FALSE;
+        multisample_state_create_info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
+        multisample_state_create_info.minSampleShading      = 1.0f;
+        multisample_state_create_info.pSampleMask           = nullptr;
+        multisample_state_create_info.alphaToCoverageEnable = VK_FALSE;
+        multisample_state_create_info.alphaToOneEnable      = VK_FALSE;
+
+        VkPipelineColorBlendAttachmentState color_blend_attachment_state{};
+        color_blend_attachment_state.colorWriteMask =
+              VK_COLOR_COMPONENT_R_BIT
+            | VK_COLOR_COMPONENT_G_BIT
+            | VK_COLOR_COMPONENT_B_BIT
+            | VK_COLOR_COMPONENT_A_BIT
+            ;
+        color_blend_attachment_state.blendEnable            = VK_FALSE;
+        color_blend_attachment_state.srcColorBlendFactor    = VK_BLEND_FACTOR_ONE;
+        color_blend_attachment_state.dstColorBlendFactor    = VK_BLEND_FACTOR_ZERO;
+        color_blend_attachment_state.colorBlendOp           = VK_BLEND_OP_ADD;
+        color_blend_attachment_state.srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE;
+        color_blend_attachment_state.dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO;
+        color_blend_attachment_state.alphaBlendOp           = VK_BLEND_OP_ADD;
+
+        VkPipelineColorBlendStateCreateInfo color_blender_state_create_info{};
+        color_blender_state_create_info.sType               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        color_blender_state_create_info.logicOpEnable       = VK_FALSE;
+        color_blender_state_create_info.logicOp             = VK_LOGIC_OP_COPY;
+        color_blender_state_create_info.attachmentCount     = 1;
+        color_blender_state_create_info.pAttachments        = &color_blend_attachment_state;
+        color_blender_state_create_info.blendConstants[0]   = 0.0f;
+        color_blender_state_create_info.blendConstants[1]   = 0.0f;
+        color_blender_state_create_info.blendConstants[2]   = 0.0f;
+        color_blender_state_create_info.blendConstants[3]   = 0.0f;
+
+        VkDynamicState dynamic_states[] =
+        {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_LINE_WIDTH
+        };
+
+        VkPipelineDynamicStateCreateInfo dynamic_state_create_info{};
+        dynamic_state_create_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamic_state_create_info.dynamicStateCount = 2;
+        dynamic_state_create_info.pDynamicStates    = dynamic_states;
+
+        VkPipelineLayoutCreateInfo  layout_create_info{};
+        layout_create_info.sType                    = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        layout_create_info.setLayoutCount           = 1;
+        layout_create_info.pSetLayouts              = &backend.descriptor_set_layout;
+        layout_create_info.pushConstantRangeCount   = 0;
+        layout_create_info.pPushConstantRanges      = nullptr;
+
+        VULKAN_CHECK_RESULT(
+            vkCreatePipelineLayout(
+                backend.renderer_backend_ptr->device,
+                &layout_create_info,
+                nullptr,
+                &backend.pipeline_layout
+                )
+            )
+
+        VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
+        graphics_pipeline_create_info.sType                 = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        graphics_pipeline_create_info.stageCount            = 2;
+        graphics_pipeline_create_info.pStages               = shader_stage_create_infos;
+        graphics_pipeline_create_info.pVertexInputState     = &vertex_input_state_create_info;
+        graphics_pipeline_create_info.pInputAssemblyState   = &input_assembly_state_create_info;
+        graphics_pipeline_create_info.pViewportState        = &viewport_state_create_info;
+        graphics_pipeline_create_info.pRasterizationState   = &rasterization_state_create_info;
+        graphics_pipeline_create_info.pMultisampleState     = &multisample_state_create_info;
+        graphics_pipeline_create_info.pDepthStencilState    = nullptr;
+        graphics_pipeline_create_info.pColorBlendState      = &color_blender_state_create_info;
+        graphics_pipeline_create_info.pDynamicState         = nullptr;
+        graphics_pipeline_create_info.layout                = backend.pipeline_layout;
+        graphics_pipeline_create_info.renderPass            = backend.renderer_backend_ptr->render_pass;
+        graphics_pipeline_create_info.subpass               = 0;
+        graphics_pipeline_create_info.basePipelineHandle    = VK_NULL_HANDLE;
+        graphics_pipeline_create_info.basePipelineIndex     = -1;
+
+        VULKAN_CHECK_RESULT(
+            vkCreateGraphicsPipelines(
+                backend.renderer_backend_ptr->device,
+                VK_NULL_HANDLE,
+                1,
+                &graphics_pipeline_create_info,
+                nullptr,
+                &backend.pipeline
+                )
+            )
+
+        vkDestroyShaderModule(backend.renderer_backend_ptr->device, fragment_shader_module, nullptr);
+        vkDestroyShaderModule(backend.renderer_backend_ptr->device, vertex_shader_module, nullptr);
     }
 
-    VkDescriptorSetAllocateInfo allocate_info{};
-    allocate_info.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocate_info.descriptorPool        = config.descriptor_pool;
-    allocate_info.descriptorSetCount    = mesh.swap_chain_image_count;
-    allocate_info.pSetLayouts           = layouts;
+    void vulkan_create_descriptor_pool(
+        lna::mesh_backend& backend
+        )
+    {
 
-    mesh.descriptor_sets = (VkDescriptorSet*)lna::memory_pool_reserve_memory(
-        *config.swap_chain_memory_pool_ptr,
-        mesh.swap_chain_image_count * sizeof(VkDescriptorSet)
-        );
-    LNA_ASSERT(mesh.descriptor_sets);
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
+        LNA_ASSERT(backend.descriptor_pool == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.max_mesh_count > 0);
+
+        VkDescriptorPoolSize pool_sizes[2] {};
+        pool_sizes[0].type              = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        pool_sizes[0].descriptorCount   = backend.renderer_backend_ptr->swap_chain_image_count;
+        pool_sizes[1].type              = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        pool_sizes[1].descriptorCount   = backend.renderer_backend_ptr->swap_chain_image_count;
+
+        VkDescriptorPoolCreateInfo pool_create_info{};
+        pool_create_info.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_create_info.poolSizeCount  = static_cast<uint32_t>(sizeof(pool_sizes) / sizeof(pool_sizes[0]));
+        pool_create_info.pPoolSizes     = pool_sizes;
+        pool_create_info.maxSets        = backend.renderer_backend_ptr->swap_chain_image_count * backend.max_mesh_count;
+
+        VULKAN_CHECK_RESULT(
+            vkCreateDescriptorPool(
+                backend.renderer_backend_ptr->device,
+                &pool_create_info,
+                nullptr,
+                &backend.descriptor_pool
+                )
+            )
+    }
+
+    void vulkan_mesh_create_uniform_buffer(
+        lna::mesh& mesh,
+        lna::mesh_backend& backend
+        )
+    {
+        LNA_ASSERT(mesh.uniform_buffers == nullptr);
+        LNA_ASSERT(mesh.uniform_buffers_memory == nullptr);
+        LNA_ASSERT(mesh.swap_chain_image_count == 0);
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
+        LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
+        LNA_ASSERT(backend.renderer_backend_ptr->swap_chain_image_count > 0);
+        LNA_ASSERT(backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]);
+
+        VkDeviceSize uniform_buffer_size    = sizeof(lna::vulkan_uniform_buffer_object);
+        mesh.swap_chain_image_count         = backend.renderer_backend_ptr->swap_chain_image_count;
+        mesh.uniform_buffers                = (VkBuffer*)lna::memory_pool_reserve_memory(
+            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+            mesh.swap_chain_image_count * sizeof(VkBuffer)
+            );
+        mesh.uniform_buffers_memory         = (VkDeviceMemory*)lna::memory_pool_reserve_memory(
+            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+            mesh.swap_chain_image_count * sizeof(VkDeviceMemory)
+            );
+
+        LNA_ASSERT(mesh.uniform_buffers);
+        LNA_ASSERT(mesh.uniform_buffers_memory);
+
+        for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_image_count; ++i)
+        {
+            lna::vulkan_helpers::create_buffer(
+                backend.renderer_backend_ptr->device,
+                backend.renderer_backend_ptr->physical_device,
+                uniform_buffer_size,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                mesh.uniform_buffers[i],
+                mesh.uniform_buffers_memory[i]
+                );
+        }
+    }
+
+    void vulkan_mesh_create_descriptor_sets(
+        lna::mesh& mesh,
+        lna::mesh_backend& backend
+        )
+    {
+        LNA_ASSERT(mesh.descriptor_sets == nullptr);
+        LNA_ASSERT(mesh.swap_chain_image_count != 0 );  // vulkan_mesh_upate_uniform_buffer must have been called before
+        LNA_ASSERT(mesh.uniform_buffers_memory);        // vulkan_mesh_upate_uniform_buffer must have been called before
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
+        LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
+        LNA_ASSERT(backend.descriptor_pool);
+        LNA_ASSERT(backend.descriptor_set_layout);
+        LNA_ASSERT(backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]);
+        LNA_ASSERT(backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]);
+        LNA_ASSERT(mesh.texture_ptr);                   // texture must be assigned before calling create descriptor sets
+        LNA_ASSERT(mesh.texture_ptr->image_view);
+        LNA_ASSERT(mesh.texture_ptr->sampler);
+
+        VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)lna::memory_pool_reserve_memory(
+            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL],
+            mesh.swap_chain_image_count * sizeof(VkDescriptorSetLayout)
+            );
+        LNA_ASSERT(layouts);
+        for (uint32_t i = 0; i < mesh.swap_chain_image_count; ++i)
+        {
+            layouts[i] = backend.descriptor_set_layout;
+        }
+
+        VkDescriptorSetAllocateInfo allocate_info{};
+        allocate_info.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocate_info.descriptorPool        = backend.descriptor_pool;
+        allocate_info.descriptorSetCount    = mesh.swap_chain_image_count;
+        allocate_info.pSetLayouts           = layouts;
+
+        mesh.descriptor_sets = (VkDescriptorSet*)lna::memory_pool_reserve_memory(
+            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+            mesh.swap_chain_image_count * sizeof(VkDescriptorSet)
+            );
+        LNA_ASSERT(mesh.descriptor_sets);
+
+        VULKAN_CHECK_RESULT(
+            vkAllocateDescriptorSets(
+                backend.renderer_backend_ptr->device,
+                &allocate_info,
+                mesh.descriptor_sets
+                )
+            )
+
+        for (size_t i = 0; i < mesh.swap_chain_image_count; ++i)
+        {
+            VkDescriptorBufferInfo buffer_info{};
+            buffer_info.buffer  = mesh.uniform_buffers[i];
+            buffer_info.offset  = 0;
+            buffer_info.range   = sizeof(lna::vulkan_uniform_buffer_object);
+
+            VkDescriptorImageInfo image_info{};
+            image_info.imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            image_info.imageView    = mesh.texture_ptr->image_view;
+            image_info.sampler      = mesh.texture_ptr->sampler;
+
+            VkWriteDescriptorSet write_descriptors[2] {};
+            write_descriptors[0].sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_descriptors[0].dstSet             = mesh.descriptor_sets[i];
+            write_descriptors[0].dstBinding         = 0;
+            write_descriptors[0].dstArrayElement    = 0;
+            write_descriptors[0].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            write_descriptors[0].descriptorCount    = 1;
+            write_descriptors[0].pBufferInfo        = &buffer_info;
+            write_descriptors[0].pImageInfo         = nullptr;
+            write_descriptors[0].pTexelBufferView   = nullptr;
+            write_descriptors[1].sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write_descriptors[1].dstSet             = mesh.descriptor_sets[i];
+            write_descriptors[1].dstBinding         = 1;
+            write_descriptors[1].dstArrayElement    = 0;
+            write_descriptors[1].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            write_descriptors[1].descriptorCount    = 1;
+            write_descriptors[1].pBufferInfo        = nullptr;
+            write_descriptors[1].pImageInfo         = &image_info;
+            write_descriptors[1].pTexelBufferView   = nullptr;
+
+            vkUpdateDescriptorSets(
+                backend.renderer_backend_ptr->device,
+                static_cast<uint32_t>(sizeof(write_descriptors) / sizeof(write_descriptors[0])),
+                write_descriptors,
+                0,
+                nullptr
+                );
+        }
+    }
+
+    void vulkan_mesh_on_swap_chain_cleanup(void* owner)
+    {
+        LNA_ASSERT(owner);
+
+        lna::mesh_backend* backend = (lna::mesh_backend*)owner;
+
+        LNA_ASSERT(backend->renderer_backend_ptr);
+
+        vkDestroyPipeline(
+            backend->renderer_backend_ptr->device,
+            backend->pipeline,
+            nullptr
+            );
+        vkDestroyPipelineLayout(
+            backend->renderer_backend_ptr->device,
+            backend->pipeline_layout,
+            nullptr
+            );
+
+        for (uint32_t i = 0; i < backend->cur_mesh_count; ++i)
+        {
+            for (size_t j = 0; j < backend->meshes[i].swap_chain_image_count; ++j)
+            {
+                vkDestroyBuffer(
+                    backend->renderer_backend_ptr->device,
+                    backend->meshes[i].uniform_buffers[j],
+                    nullptr
+                    );
+                vkFreeMemory(
+                    backend->renderer_backend_ptr->device,
+                    backend->meshes[i].uniform_buffers_memory[j],
+                    nullptr
+                    );
+            }
+            backend->meshes[i].uniform_buffers          = nullptr;
+            backend->meshes[i].uniform_buffers_memory   = nullptr;
+            backend->meshes[i].swap_chain_image_count   = 0;
+
+            // NOTE: no need to explicity clean up vulkan descriptor sets objects
+            // because it is done when the vulkan descriptor pool is destroyed.
+            // we just have to reset the array and wait for filling it again.
+            // the memory pool where we reserved memory for descriptor_sets has already
+            // been reset by the vulkan renderer backend.
+            backend->meshes[i].descriptor_sets = nullptr;
+        }
+        vkDestroyDescriptorPool(
+            backend->renderer_backend_ptr->device,
+            backend->descriptor_pool,
+            nullptr
+            );
+    }
+
+    void vulkan_mesh_on_swap_chain_recreate(void* owner)
+    {
+        LNA_ASSERT(owner);
+
+        lna::mesh_backend* backend = (lna::mesh_backend*)owner;
+
+        vulkan_create_graphics_pipeline(*backend);
+        vulkan_create_descriptor_pool(*backend);
+
+        for (uint32_t i = 0; i < backend->cur_mesh_count; ++i)
+        {
+            vulkan_mesh_create_uniform_buffer(
+                backend->meshes[i],
+                *backend
+                );
+            vulkan_mesh_create_descriptor_sets(
+                backend->meshes[i],
+                *backend
+                );
+        }
+
+        // vulkan_create_graphics_pipeline(renderer);
+        // vulkan_create_descriptor_pool(renderer);
+        // for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
+        // {
+        //     lna::vulkan_mesh_create_uniform_buffer_info uniform_buffer_info{};
+        //     uniform_buffer_info.device                      = renderer.device;
+        //     uniform_buffer_info.physical_device             = renderer.physical_device;
+        //     uniform_buffer_info.swap_chain_image_count      = renderer.swap_chain_image_count;
+        //     uniform_buffer_info.swap_chain_memory_pool_ptr  = renderer.memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
+        //     lna::vulkan_mesh_create_uniform_buffer(
+        //         renderer.mesh_system.meshes[i],
+        //         uniform_buffer_info
+        //         );
+        //     lna::vulkan_mesh_create_descriptor_sets_info descriptor_sets_info{};
+        //     descriptor_sets_info.device                     = renderer.device;
+        //     descriptor_sets_info.physical_device            = renderer.physical_device;
+        //     descriptor_sets_info.descriptor_pool            = renderer.mesh_system.descriptor_pool;
+        //     descriptor_sets_info.descriptor_set_layout      = renderer.mesh_system.descriptor_set_layout;
+        //     descriptor_sets_info.swap_chain_memory_pool_ptr = renderer.memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
+        //     descriptor_sets_info.temp_memory_pool_ptr       = renderer.memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL];
+        //     lna::vulkan_mesh_create_descriptor_sets(
+        //         renderer.mesh_system.meshes[i],
+        //         descriptor_sets_info
+        //         );
+        // }
+
+    }
+}
+
+namespace lna
+{
+    void mesh_backend_configure(
+        mesh_backend& backend,
+        mesh_backend_config& config
+        )
+    {
+        LNA_ASSERT(backend.renderer_backend_ptr == nullptr);
+        LNA_ASSERT(backend.descriptor_set_layout == VK_NULL_HANDLE);
+        LNA_ASSERT(backend.meshes == nullptr);
+        LNA_ASSERT(backend.cur_mesh_count == 0);
+        LNA_ASSERT(backend.max_mesh_count == 0);
+        LNA_ASSERT(config.renderer_backend_ptr);
+        LNA_ASSERT(config.persistent_memory_pool_ptr);
+        LNA_ASSERT(config.max_mesh_count > 0 );
+
+        vulkan_renderer_backend_register_swap_chain_callbacks(
+            *backend.renderer_backend_ptr,
+            vulkan_mesh_on_swap_chain_cleanup,
+            vulkan_mesh_on_swap_chain_recreate,
+            &backend
+            );
+
+        backend.renderer_backend_ptr    = config.renderer_backend_ptr;
+        backend.max_mesh_count          = config.max_mesh_count;
+        backend.meshes                  = (mesh*)memory_pool_reserve_memory(
+            *config.persistent_memory_pool_ptr,
+            config.max_mesh_count * sizeof(mesh)
+            );
+        LNA_ASSERT(backend.meshes);
         
-    VULKAN_CHECK_RESULT(
-        vkAllocateDescriptorSets(
-            config.device,
-            &allocate_info,
-            mesh.descriptor_sets
+        for (uint32_t i = 0; i < backend.max_mesh_count; ++i)
+        {
+            backend.meshes[i].vertex_buffer             = VK_NULL_HANDLE;
+            backend.meshes[i].vertex_buffer_memory      = VK_NULL_HANDLE;
+            backend.meshes[i].index_buffer              = VK_NULL_HANDLE;
+            backend.meshes[i].index_buffer_memory       = VK_NULL_HANDLE;
+            backend.meshes[i].vertex_count              = 0;
+            backend.meshes[i].index_count               = 0;
+            backend.meshes[i].uniform_buffers           = nullptr;
+            backend.meshes[i].uniform_buffers_memory    = nullptr;
+            backend.meshes[i].descriptor_sets           = nullptr;
+            backend.meshes[i].swap_chain_image_count    = 0;
+            backend.meshes[i].texture_ptr               = nullptr;
+        }
+
+        //! DESCRIPTOR SET LAYOUT
+
+        VkDescriptorSetLayoutBinding ubo_layout_binding{};
+        ubo_layout_binding.binding                  = 0;
+        ubo_layout_binding.descriptorCount          = 1;
+        ubo_layout_binding.descriptorType           = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        ubo_layout_binding.stageFlags               = VK_SHADER_STAGE_VERTEX_BIT;
+        ubo_layout_binding.pImmutableSamplers       = nullptr;
+
+        VkDescriptorSetLayoutBinding sampler_layout_binding{};
+        sampler_layout_binding.binding              = 1;
+        sampler_layout_binding.descriptorCount      = 1;
+        sampler_layout_binding.descriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        sampler_layout_binding.stageFlags           = VK_SHADER_STAGE_FRAGMENT_BIT;
+        sampler_layout_binding.pImmutableSamplers   = nullptr;
+
+        VkDescriptorSetLayoutBinding bindings[2];
+        bindings[0] = ubo_layout_binding;
+        bindings[1] = sampler_layout_binding;
+
+        VkDescriptorSetLayoutCreateInfo layout_create_info{};
+        layout_create_info.sType                    = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layout_create_info.bindingCount             = static_cast<uint32_t>(sizeof(bindings) / sizeof(bindings[0]));
+        layout_create_info.pBindings                = bindings;
+
+        VULKAN_CHECK_RESULT(
+            vkCreateDescriptorSetLayout(
+                backend.renderer_backend_ptr->device,
+                &layout_create_info,
+                nullptr,
+                &backend.descriptor_set_layout
+                )
             )
+
+        //! GRAPHICS PIPELINE
+
+        vulkan_create_graphics_pipeline(backend);
+
+        //! DESCRIPTOR POOL
+
+        vulkan_create_descriptor_pool(backend);
+    }
+
+    mesh* mesh_backend_new_mesh(
+        mesh_backend& backend,
+        mesh_config& config
         )
-
-    for (size_t i = 0; i < mesh.swap_chain_image_count; ++i)
     {
-        VkDescriptorBufferInfo buffer_info{};
-        buffer_info.buffer  = mesh.uniform_buffers[i];
-        buffer_info.offset  = 0;
-        buffer_info.range   = sizeof(vulkan_uniform_buffer_object);
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
+        LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
+        LNA_ASSERT(backend.renderer_backend_ptr->command_pool);
+        LNA_ASSERT(backend.renderer_backend_ptr->graphics_queue);
+        LNA_ASSERT(backend.meshes);
+        LNA_ASSERT(backend.cur_mesh_count < backend.max_mesh_count);
+        LNA_ASSERT(config.vertices);
+        LNA_ASSERT(config.indices);
+        LNA_ASSERT(config.vertex_count > 0);
+        LNA_ASSERT(config.index_count > 0);
 
-        VkDescriptorImageInfo image_info{};
-        image_info.imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        image_info.imageView    = mesh.texture_ptr->image_view;
-        image_info.sampler      = mesh.texture_ptr->sampler;
+        mesh& new_mesh = backend.meshes[backend.cur_mesh_count++];
 
-        VkWriteDescriptorSet write_descriptors[2] {};
-        write_descriptors[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_descriptors[0].dstSet           = mesh.descriptor_sets[i];
-        write_descriptors[0].dstBinding       = 0;
-        write_descriptors[0].dstArrayElement  = 0;
-        write_descriptors[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write_descriptors[0].descriptorCount  = 1;
-        write_descriptors[0].pBufferInfo      = &buffer_info;
-        write_descriptors[0].pImageInfo       = nullptr;
-        write_descriptors[0].pTexelBufferView = nullptr;
-        write_descriptors[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_descriptors[1].dstSet           = mesh.descriptor_sets[i];
-        write_descriptors[1].dstBinding       = 1;
-        write_descriptors[1].dstArrayElement  = 0;
-        write_descriptors[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        write_descriptors[1].descriptorCount  = 1;
-        write_descriptors[1].pBufferInfo      = nullptr;
-        write_descriptors[1].pImageInfo       = &image_info;
-        write_descriptors[1].pTexelBufferView = nullptr;
+        LNA_ASSERT(new_mesh.vertex_buffer == VK_NULL_HANDLE);
+        LNA_ASSERT(new_mesh.vertex_buffer_memory == VK_NULL_HANDLE);
+        LNA_ASSERT(new_mesh.index_buffer == VK_NULL_HANDLE);
+        LNA_ASSERT(new_mesh.index_buffer_memory == VK_NULL_HANDLE);
+        LNA_ASSERT(new_mesh.vertex_count == 0);
+        LNA_ASSERT(new_mesh.index_count == 0);
+        LNA_ASSERT(new_mesh.uniform_buffers == nullptr);
+        LNA_ASSERT(new_mesh.uniform_buffers_memory == nullptr);
+        LNA_ASSERT(new_mesh.descriptor_sets == nullptr);
+        LNA_ASSERT(new_mesh.swap_chain_image_count == 0);
+        LNA_ASSERT(new_mesh.texture_ptr == nullptr);
 
-        vkUpdateDescriptorSets(
-            config.device,
-            static_cast<uint32_t>(sizeof(write_descriptors) / sizeof(write_descriptors[0])),
-            write_descriptors,
-            0,
-            nullptr
+        //! VERTEX BUFFER PART
+
+        {
+            new_mesh.vertex_count   = config.vertex_count;
+            auto vertex_buffer_size = sizeof(config.vertices[0]) * new_mesh.vertex_count;
+            VkBuffer        staging_buffer;
+            VkDeviceMemory  staging_buffer_memory;
+            lna::vulkan_helpers::create_buffer(
+                backend.renderer_backend_ptr->device,
+                backend.renderer_backend_ptr->physical_device,
+                vertex_buffer_size,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                staging_buffer,
+                staging_buffer_memory
+                );
+            void* vertices_data;
+            VULKAN_CHECK_RESULT(
+                vkMapMemory(
+                    backend.renderer_backend_ptr->device,
+                    staging_buffer_memory,
+                    0,
+                    vertex_buffer_size,
+                    0,
+                    &vertices_data
+                    )
+                )
+	        std::memcpy(
+                vertices_data,
+                config.vertices,
+                vertex_buffer_size
+                );
+	        vkUnmapMemory(
+                backend.renderer_backend_ptr->device,
+                staging_buffer_memory
+                );
+            lna::vulkan_helpers::create_buffer(
+                backend.renderer_backend_ptr->device,
+                backend.renderer_backend_ptr->physical_device,
+                vertex_buffer_size,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                new_mesh.vertex_buffer,
+                new_mesh.vertex_buffer_memory
+                );
+            lna::vulkan_helpers::copy_buffer(
+                backend.renderer_backend_ptr->device,
+                backend.renderer_backend_ptr->command_pool,
+                backend.renderer_backend_ptr->graphics_queue,
+                staging_buffer,
+                new_mesh.vertex_buffer,
+                vertex_buffer_size
+                );
+            vkDestroyBuffer(
+                backend.renderer_backend_ptr->device,
+                staging_buffer,
+                nullptr
+                );
+            vkFreeMemory(
+                backend.renderer_backend_ptr->device,
+                staging_buffer_memory,
+                nullptr
+                );
+        }
+
+        //! INDEX BUFFER PART
+
+        {
+            new_mesh.index_count   = config.index_count;
+            auto index_buffer_size = sizeof(config.indices[0]) * new_mesh.index_count;
+            VkBuffer        staging_buffer;
+            VkDeviceMemory  staging_buffer_memory;
+            lna::vulkan_helpers::create_buffer(
+                backend.renderer_backend_ptr->device,
+                backend.renderer_backend_ptr->physical_device,
+                index_buffer_size,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                staging_buffer,
+                staging_buffer_memory
+                );
+            void* indices_data;
+            VULKAN_CHECK_RESULT(
+                vkMapMemory(
+                    backend.renderer_backend_ptr->device,
+                    staging_buffer_memory,
+                    0,
+                    index_buffer_size,
+                    0,
+                    &indices_data
+                    )
+                )
+            std::memcpy(
+                indices_data,
+                config.indices,
+                index_buffer_size
+                );
+            vkUnmapMemory(
+                backend.renderer_backend_ptr->device,
+                staging_buffer_memory
+                );
+            lna::vulkan_helpers::create_buffer(
+                backend.renderer_backend_ptr->device,
+                backend.renderer_backend_ptr->physical_device,
+                index_buffer_size,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                new_mesh.index_buffer,
+                new_mesh.index_buffer_memory
+                );
+            lna::vulkan_helpers::copy_buffer(
+                backend.renderer_backend_ptr->device,
+                backend.renderer_backend_ptr->command_pool,
+                backend.renderer_backend_ptr->graphics_queue,
+                staging_buffer,
+                new_mesh.index_buffer,
+                index_buffer_size
+                );
+            vkDestroyBuffer(
+                backend.renderer_backend_ptr->device,
+                staging_buffer,
+                nullptr
+                );
+            vkFreeMemory(
+                backend.renderer_backend_ptr->device,
+                staging_buffer_memory,
+                nullptr
+                );
+        }
+
+        //! UNIFORM BUFFER
+
+        vulkan_mesh_create_uniform_buffer(
+            new_mesh,
+            backend
             );
+
+        //! DESCRIPTOR SETS
+
+        vulkan_mesh_create_descriptor_sets(
+            new_mesh,
+            backend
+            );
+
+        return &new_mesh;
+    }
+
+    void mesh_backend_release(
+        mesh_backend& backend
+        )
+    {
+        LNA_ASSERT(backend.renderer_backend_ptr);
+
+        if (backend.descriptor_set_layout)
+        {
+            vkDestroyDescriptorSetLayout(
+                backend.renderer_backend_ptr->device,
+                backend.descriptor_set_layout,
+                nullptr
+                );
+        }
+
+        for (uint32_t i = 0; i < backend.cur_mesh_count; ++i)
+        {
+            vkDestroyBuffer(
+                backend.renderer_backend_ptr->device,
+                backend.meshes[i].index_buffer,
+                nullptr
+                );
+            vkFreeMemory(
+                backend.renderer_backend_ptr->device,
+                backend.meshes[i].index_buffer_memory,
+                nullptr
+                );
+            vkDestroyBuffer(
+                backend.renderer_backend_ptr->device,
+                backend.meshes[i].vertex_buffer,
+                nullptr
+                );
+            vkFreeMemory(
+                backend.renderer_backend_ptr->device,
+                backend.meshes[i].vertex_buffer_memory,
+                nullptr
+                );
+        }
     }
 }
 
-void lna::vulkan_mesh_clean_uniform_buffer(
-    lna::vulkan_mesh& mesh,
-    VkDevice device
-    )
-{
-    LNA_ASSERT(device);
+// void lna::vulkan_mesh_create_vertex_and_index_buffer(
+//     lna::vulkan_mesh& mesh,
+//     lna::vulkan_mesh_create_vertex_and_index_info& config
+//     )
+// {
+//     LNA_ASSERT(mesh.vertex_buffer == nullptr);
+//     LNA_ASSERT(mesh.vertex_buffer_memory == nullptr);
+//     LNA_ASSERT(mesh.index_buffer == nullptr);
+//     LNA_ASSERT(mesh.index_buffer_memory == nullptr);
+//     LNA_ASSERT(mesh.vertex_count == 0);
+//     LNA_ASSERT(mesh.index_count == 0);
+//     LNA_ASSERT(config.device);
+//     LNA_ASSERT(config.physical_device);
+//     LNA_ASSERT(config.command_pool);
+//     LNA_ASSERT(config.graphics_queue);
+//     LNA_ASSERT(config.vertices);
+//     LNA_ASSERT(config.indices);
+//     LNA_ASSERT(config.vertex_count > 0);
+//     LNA_ASSERT(config.index_count > 0);
 
-    for (size_t i = 0; i < mesh.swap_chain_image_count; ++i)
-    {
-        vkDestroyBuffer(
-            device,
-            mesh.uniform_buffers[i],
-            nullptr
-            );
-        vkFreeMemory(
-            device,
-            mesh.uniform_buffers_memory[i],
-            nullptr
-            );
-    }
-    mesh.uniform_buffers = nullptr;
-    mesh.uniform_buffers_memory = nullptr;
-    mesh.swap_chain_image_count = 0;
-}
+//     //! VERTEX BUFFER PART
+//     {
+//         mesh.vertex_count  = config.vertex_count;
+//         auto vertex_buffer_size = sizeof(config.vertices[0]) * mesh.vertex_count;
+//         VkBuffer        staging_buffer;
+//         VkDeviceMemory  staging_buffer_memory;
+//         lna::vulkan_helpers::create_buffer(
+//             config.device,
+//             config.physical_device,
+//             vertex_buffer_size,
+//             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+//             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+//             staging_buffer,
+//             staging_buffer_memory
+//             );
+//         void* vertices_data;
+//         VULKAN_CHECK_RESULT(
+//             vkMapMemory(
+//                 config.device,
+//                 staging_buffer_memory,
+//                 0,
+//                 vertex_buffer_size,
+//                 0,
+//                 &vertices_data
+//                 )
+//             )
+// 	    std::memcpy(
+//             vertices_data,
+//             config.vertices,
+//             vertex_buffer_size
+//             );
+// 	    vkUnmapMemory(
+//             config.device,
+//             staging_buffer_memory
+//             );
+//         lna::vulkan_helpers::create_buffer(
+//             config.device,
+//             config.physical_device,
+//             vertex_buffer_size,
+//             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+//             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+//             mesh.vertex_buffer,
+//             mesh.vertex_buffer_memory
+//             );
+//         lna::vulkan_helpers::copy_buffer(
+//             config.device,
+//             config.command_pool,
+//             config.graphics_queue,
+//             staging_buffer,
+//             mesh.vertex_buffer,
+//             vertex_buffer_size
+//             );
+//         vkDestroyBuffer(
+//             config.device,
+//             staging_buffer,
+//             nullptr
+//             );
+//         vkFreeMemory(
+//             config.device,
+//             staging_buffer_memory,
+//             nullptr
+//             );
+//     }
 
-void lna::vulkan_mesh_clean_descriptor_sets(
-    lna::vulkan_mesh& mesh
-    )
-{
-    // NOTE: no need to explicity clean up vulkan descriptor sets objects
-    // because it is done when the vulkan descriptor pool is destroyed.
-    // we just have to reset the array and wait for filling it again.
-    mesh.descriptor_sets = nullptr;
-}
+//     //! INDEX BUFFER PART
+//     {
+//         mesh.index_count   = config.index_count;
+//         auto index_buffer_size = sizeof(config.indices[0]) * mesh.index_count;
+//         VkBuffer        staging_buffer;
+//         VkDeviceMemory  staging_buffer_memory;
+//         lna::vulkan_helpers::create_buffer(
+//             config.device,
+//             config.physical_device,
+//             index_buffer_size,
+//             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+//             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+//             staging_buffer,
+//             staging_buffer_memory
+//             );
+//         void* indices_data;
+//         VULKAN_CHECK_RESULT(
+//             vkMapMemory(
+//                 config.device,
+//                 staging_buffer_memory,
+//                 0,
+//                 index_buffer_size,
+//                 0,
+//                 &indices_data
+//                 )
+//             )
+//         std::memcpy(
+//             indices_data,
+//             config.indices,
+//             index_buffer_size
+//             );
+//         vkUnmapMemory(
+//             config.device,
+//             staging_buffer_memory
+//             );
+//         lna::vulkan_helpers::create_buffer(
+//             config.device,
+//             config.physical_device,
+//             index_buffer_size,
+//             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+//             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+//             mesh.index_buffer,
+//             mesh.index_buffer_memory
+//             );
+//         lna::vulkan_helpers::copy_buffer(
+//             config.device,
+//             config.command_pool,
+//             config.graphics_queue,
+//             staging_buffer,
+//             mesh.index_buffer,
+//             index_buffer_size
+//             );
+//         vkDestroyBuffer(
+//             config.device,
+//             staging_buffer,
+//             nullptr
+//             );
+//         vkFreeMemory(
+//             config.device,
+//             staging_buffer_memory,
+//             nullptr
+//             );
+//     }
+// }
 
-void lna::vulkan_mesh_release(
-    lna::vulkan_mesh& mesh,
-    VkDevice device
-    )
-{
-    LNA_ASSERT(mesh.vertex_buffer);
-    LNA_ASSERT(mesh.vertex_buffer_memory);
-    LNA_ASSERT(mesh.index_buffer);
-    LNA_ASSERT(mesh.index_buffer_memory);
-    LNA_ASSERT(device);
+// void lna::vulkan_mesh_create_uniform_buffer(
+//     lna::vulkan_mesh& mesh,
+//     lna::vulkan_mesh_create_uniform_buffer_info& config
+//     )
+// {
+//     LNA_ASSERT(mesh.uniform_buffers == nullptr);
+//     LNA_ASSERT(mesh.uniform_buffers_memory == nullptr);
+//     LNA_ASSERT(mesh.swap_chain_image_count == 0);
+//     LNA_ASSERT(config.device);
+//     LNA_ASSERT(config.physical_device);
+//     LNA_ASSERT(config.swap_chain_image_count > 0);
+//     LNA_ASSERT(config.swap_chain_memory_pool_ptr);
 
-    lna::vulkan_mesh_clean_uniform_buffer(
-        mesh,
-        device
-        );
+//     VkDeviceSize uniform_buffer_size = sizeof(lna::vulkan_uniform_buffer_object);
 
-    lna::vulkan_mesh_clean_descriptor_sets(
-        mesh
-        );
+//     mesh.swap_chain_image_count = config.swap_chain_image_count;
+//     mesh.uniform_buffers        = (VkBuffer*)lna::memory_pool_reserve_memory(
+//         *config.swap_chain_memory_pool_ptr,
+//         mesh.swap_chain_image_count * sizeof(VkBuffer)
+//         );
+//     mesh.uniform_buffers_memory = (VkDeviceMemory*)lna::memory_pool_reserve_memory(
+//         *config.swap_chain_memory_pool_ptr,
+//         mesh.swap_chain_image_count * sizeof(VkDeviceMemory)
+//         );
+//     LNA_ASSERT(mesh.uniform_buffers);
+//     LNA_ASSERT(mesh.uniform_buffers_memory);
 
-    vkDestroyBuffer(
-        device,
-        mesh.index_buffer,
-        nullptr
-        );
-    vkFreeMemory(
-        device,
-        mesh.index_buffer_memory,
-        nullptr
-        );
-    vkDestroyBuffer(
-        device,
-        mesh.vertex_buffer,
-        nullptr
-        );
-    vkFreeMemory(
-        device,
-        mesh.vertex_buffer_memory,
-        nullptr
-        );
+//     for (size_t i = 0; i < config.swap_chain_image_count; ++i)
+//     {
+//         lna::vulkan_helpers::create_buffer(
+//             config.device,
+//             config.physical_device,
+//             uniform_buffer_size,
+//             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+//             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+//             mesh.uniform_buffers[i],
+//             mesh.uniform_buffers_memory[i]
+//             );
+//     }
+// }
+
+// void lna::vulkan_mesh_upate_uniform_buffer(
+//     lna::vulkan_mesh& mesh,
+//     lna::vulkan_mesh_update_uniform_buffer_info& config
+//     )
+// {
+//     LNA_ASSERT(mesh.uniform_buffers_memory);
+//     LNA_ASSERT(config.device);
+//     LNA_ASSERT(config.image_index < mesh.swap_chain_image_count);
+//     LNA_ASSERT(config.model_matrix_ptr);
+//     LNA_ASSERT(config.view_matrix_ptr);
+//     LNA_ASSERT(config.projection_matrix_ptr);
+
+//     lna::vulkan_uniform_buffer_object ubo{};
+
+//     ubo.model       = *config.model_matrix_ptr;
+//     ubo.view        = *config.view_matrix_ptr;
+//     ubo.projection  = *config.projection_matrix_ptr;
+
+//     void* data;
+//     VULKAN_CHECK_RESULT(
+//         vkMapMemory(
+//             config.device,
+//             mesh.uniform_buffers_memory[config.image_index],
+//             0,
+//             sizeof(ubo),
+//             0,
+//             &data
+//             )
+//         )
+//     memcpy(
+//         data,
+//         &ubo,
+//         sizeof(ubo)
+//         );
+//     vkUnmapMemory(
+//         config.device,
+//         mesh.uniform_buffers_memory[config.image_index]
+//         );
+// }
+
+// void lna::vulkan_mesh_create_descriptor_sets(
+//     lna::vulkan_mesh& mesh,
+//     lna::vulkan_mesh_create_descriptor_sets_info& config
+//     )
+// {
+//     LNA_ASSERT(mesh.descriptor_sets == nullptr);
+//     LNA_ASSERT(mesh.swap_chain_image_count != 0 );  // vulkan_mesh_upate_uniform_buffer must have been called before
+//     LNA_ASSERT(mesh.uniform_buffers_memory);        // vulkan_mesh_upate_uniform_buffer must have been called before
+//     LNA_ASSERT(config.device);
+//     LNA_ASSERT(config.physical_device);
+//     LNA_ASSERT(config.descriptor_pool);
+//     LNA_ASSERT(config.descriptor_set_layout);
+//     LNA_ASSERT(config.temp_memory_pool_ptr);
+//     LNA_ASSERT(config.swap_chain_memory_pool_ptr);
+//     LNA_ASSERT(mesh.texture_ptr);                   // texture must be assigned before calling create descriptor sets
+//     LNA_ASSERT(mesh.texture_ptr->image_view);
+//     LNA_ASSERT(mesh.texture_ptr->sampler);
+
+//     VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)lna::memory_pool_reserve_memory(
+//         *config.temp_memory_pool_ptr,
+//         mesh.swap_chain_image_count * sizeof(VkDescriptorSetLayout)
+//         );
+//     LNA_ASSERT(layouts);
+//     for (uint32_t i = 0; i < mesh.swap_chain_image_count; ++i)
+//     {
+//         layouts[i] = config.descriptor_set_layout;
+//     }
+
+//     VkDescriptorSetAllocateInfo allocate_info{};
+//     allocate_info.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+//     allocate_info.descriptorPool        = config.descriptor_pool;
+//     allocate_info.descriptorSetCount    = mesh.swap_chain_image_count;
+//     allocate_info.pSetLayouts           = layouts;
+
+//     mesh.descriptor_sets = (VkDescriptorSet*)lna::memory_pool_reserve_memory(
+//         *config.swap_chain_memory_pool_ptr,
+//         mesh.swap_chain_image_count * sizeof(VkDescriptorSet)
+//         );
+//     LNA_ASSERT(mesh.descriptor_sets);
+        
+//     VULKAN_CHECK_RESULT(
+//         vkAllocateDescriptorSets(
+//             config.device,
+//             &allocate_info,
+//             mesh.descriptor_sets
+//             )
+//         )
+
+//     for (size_t i = 0; i < mesh.swap_chain_image_count; ++i)
+//     {
+//         VkDescriptorBufferInfo buffer_info{};
+//         buffer_info.buffer  = mesh.uniform_buffers[i];
+//         buffer_info.offset  = 0;
+//         buffer_info.range   = sizeof(vulkan_uniform_buffer_object);
+
+//         VkDescriptorImageInfo image_info{};
+//         image_info.imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+//         image_info.imageView    = mesh.texture_ptr->image_view;
+//         image_info.sampler      = mesh.texture_ptr->sampler;
+
+//         VkWriteDescriptorSet write_descriptors[2] {};
+//         write_descriptors[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//         write_descriptors[0].dstSet           = mesh.descriptor_sets[i];
+//         write_descriptors[0].dstBinding       = 0;
+//         write_descriptors[0].dstArrayElement  = 0;
+//         write_descriptors[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+//         write_descriptors[0].descriptorCount  = 1;
+//         write_descriptors[0].pBufferInfo      = &buffer_info;
+//         write_descriptors[0].pImageInfo       = nullptr;
+//         write_descriptors[0].pTexelBufferView = nullptr;
+//         write_descriptors[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//         write_descriptors[1].dstSet           = mesh.descriptor_sets[i];
+//         write_descriptors[1].dstBinding       = 1;
+//         write_descriptors[1].dstArrayElement  = 0;
+//         write_descriptors[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+//         write_descriptors[1].descriptorCount  = 1;
+//         write_descriptors[1].pBufferInfo      = nullptr;
+//         write_descriptors[1].pImageInfo       = &image_info;
+//         write_descriptors[1].pTexelBufferView = nullptr;
+
+//         vkUpdateDescriptorSets(
+//             config.device,
+//             static_cast<uint32_t>(sizeof(write_descriptors) / sizeof(write_descriptors[0])),
+//             write_descriptors,
+//             0,
+//             nullptr
+//             );
+//     }
+// }
+
+// void lna::vulkan_mesh_clean_uniform_buffer(
+//     lna::vulkan_mesh& mesh,
+//     VkDevice device
+//     )
+// {
+//     LNA_ASSERT(device);
+
+//     for (size_t i = 0; i < mesh.swap_chain_image_count; ++i)
+//     {
+//         vkDestroyBuffer(
+//             device,
+//             mesh.uniform_buffers[i],
+//             nullptr
+//             );
+//         vkFreeMemory(
+//             device,
+//             mesh.uniform_buffers_memory[i],
+//             nullptr
+//             );
+//     }
+//     mesh.uniform_buffers = nullptr;
+//     mesh.uniform_buffers_memory = nullptr;
+//     mesh.swap_chain_image_count = 0;
+// }
+
+// void lna::vulkan_mesh_clean_descriptor_sets(
+//     lna::vulkan_mesh& mesh
+//     )
+// {
+//     // NOTE: no need to explicity clean up vulkan descriptor sets objects
+//     // because it is done when the vulkan descriptor pool is destroyed.
+//     // we just have to reset the array and wait for filling it again.
+//     mesh.descriptor_sets = nullptr;
+// }
+
+// void lna::vulkan_mesh_release(
+//     lna::vulkan_mesh& mesh,
+//     VkDevice device
+//     )
+// {
+//     LNA_ASSERT(mesh.vertex_buffer);
+//     LNA_ASSERT(mesh.vertex_buffer_memory);
+//     LNA_ASSERT(mesh.index_buffer);
+//     LNA_ASSERT(mesh.index_buffer_memory);
+//     LNA_ASSERT(device);
+
+//     lna::vulkan_mesh_clean_uniform_buffer(
+//         mesh,
+//         device
+//         );
+
+//     lna::vulkan_mesh_clean_descriptor_sets(
+//         mesh
+//         );
+
+//     vkDestroyBuffer(
+//         device,
+//         mesh.index_buffer,
+//         nullptr
+//         );
+//     vkFreeMemory(
+//         device,
+//         mesh.index_buffer_memory,
+//         nullptr
+//         );
+//     vkDestroyBuffer(
+//         device,
+//         mesh.vertex_buffer,
+//         nullptr
+//         );
+//     vkFreeMemory(
+//         device,
+//         mesh.vertex_buffer_memory,
+//         nullptr
+//         );
     
-    mesh.vertex_buffer          = nullptr;
-    mesh.vertex_buffer_memory   = nullptr;
-    mesh.index_buffer           = nullptr;
-    mesh.index_buffer_memory    = nullptr;
-    mesh.vertex_count           = 0;
-    mesh.index_count            = 0;
-    mesh.uniform_buffers        = nullptr;
-    mesh.uniform_buffers_memory = nullptr;
-    mesh.descriptor_sets        = nullptr;
-    mesh.swap_chain_image_count = 0;
-}
+//     mesh.vertex_buffer          = nullptr;
+//     mesh.vertex_buffer_memory   = nullptr;
+//     mesh.index_buffer           = nullptr;
+//     mesh.index_buffer_memory    = nullptr;
+//     mesh.vertex_count           = 0;
+//     mesh.index_count            = 0;
+//     mesh.uniform_buffers        = nullptr;
+//     mesh.uniform_buffers_memory = nullptr;
+//     mesh.descriptor_sets        = nullptr;
+//     mesh.swap_chain_image_count = 0;
+// }
 
-lna::vulkan_mesh_vertex_description lna::vulkan_default_mesh_vertex_description()
-{
-    lna::vulkan_mesh_vertex_description result;
-    result.bindings[0].binding      = 0;
-    result.bindings[0].stride       = sizeof(lna::vertex);
-    result.bindings[0].inputRate    = VK_VERTEX_INPUT_RATE_VERTEX;
-    result.attributes[0].binding    = 0;
-    result.attributes[0].location   = 0;
-    result.attributes[0].format     = VK_FORMAT_R32G32B32_SFLOAT;
-    result.attributes[0].offset     = offsetof(lna::vertex, position);
-    result.attributes[1].binding    = 0;
-    result.attributes[1].location   = 1;
-    result.attributes[1].format     = VK_FORMAT_R32G32B32A32_SFLOAT;
-    result.attributes[1].offset     = offsetof(lna::vertex, color);
-    result.attributes[2].binding    = 0;
-    result.attributes[2].location   = 2;
-    result.attributes[2].format     = VK_FORMAT_R32G32_SFLOAT;
-    result.attributes[2].offset     = offsetof(lna::vertex, uv);
-    return result;
-}
+// lna::vulkan_mesh_vertex_description lna::vulkan_default_mesh_vertex_description()
+// {
+//     lna::vulkan_mesh_vertex_description result;
+//     result.bindings[0].binding      = 0;
+//     result.bindings[0].stride       = sizeof(lna::vertex);
+//     result.bindings[0].inputRate    = VK_VERTEX_INPUT_RATE_VERTEX;
+//     result.attributes[0].binding    = 0;
+//     result.attributes[0].location   = 0;
+//     result.attributes[0].format     = VK_FORMAT_R32G32B32_SFLOAT;
+//     result.attributes[0].offset     = offsetof(lna::vertex, position);
+//     result.attributes[1].binding    = 0;
+//     result.attributes[1].location   = 1;
+//     result.attributes[1].format     = VK_FORMAT_R32G32B32A32_SFLOAT;
+//     result.attributes[1].offset     = offsetof(lna::vertex, color);
+//     result.attributes[2].binding    = 0;
+//     result.attributes[2].location   = 2;
+//     result.attributes[2].format     = VK_FORMAT_R32G32_SFLOAT;
+//     result.attributes[2].offset     = offsetof(lna::vertex, uv);
+//     return result;
+// }

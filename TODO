@@ -1,7 +1,27 @@
 TODO:
+  ☐ remove init function => prefer 0 initialization
   ☐ extract graphics pipeline creation from renderer_backend
     graphics pipeline is linked to graphics object type so it must be created outside
     renderer backend like we have done with ImGui wrapper.
+    ✔ texture backend                                                                      @done(21-03-28 14:41)
+    ☐ mesh backend
+      ✔ modify create function to fully create the mesh (buffer + descriptor + uniform)    @done(21-03-28 14:41)
+      ✔ add function on_swap_chain_cleanup                                                 @done(21-03-28 18:40)
+      ✔ add function on_swap_chain_recreate                                                @done(21-03-28 18:40)
+      ✔ modify release function to not clean all vulkan stuff                              @done(21-03-28 18:40)
+        it will done by calling on_swap_chain_cleanup by renderer backend
+    ☐ imgui backend
+    ☐ split renderer backend draw frame function in two
+    ✔ register on_swapchain_cleanup callback in renderer backend                           @done(21-03-28 18:40)
+    ✔ register on_swapchain_recreate callback in renderer backend                          @done(21-03-28 18:40)
+    ☐ update cleanup in renderer_backend
+      order =>
+      1. release mesh backend
+      2. release imgui backend
+      3. release texture backend
+      4. release renderer backend
+    ☐ clean code
+      remove commented code
   ☐ add renderer_2D struct and functions
     ☐ sprite
     ☐ rect

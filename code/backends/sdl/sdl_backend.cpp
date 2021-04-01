@@ -14,25 +14,16 @@ namespace
 
 namespace lna
 {
-    void window_backend_init(
-        window_backend& window
-        )
-    {
-        window.handle                   = nullptr;
-        window.width                    = 0;
-        window.height                   = 0;
-        window.fullscreen               = false;
-        window.display_index            = 0;
-        window.extension_infos.names    = nullptr;
-        window.extension_infos.count    = 0;
-    }
-
     void window_backend_configure(
         window_backend& window,
         const window_backend_config& config
         )
     {
         LNA_ASSERT(window.handle == nullptr);
+        LNA_ASSERT(window.extension_infos.names == nullptr);
+        LNA_ASSERT(window.extension_infos.count == 0);
+        LNA_ASSERT(window.width == 0);
+        LNA_ASSERT(window.height == 0);
         LNA_ASSERT(config.persistent_mem_pool_ptr);
 
         {
@@ -201,22 +192,6 @@ namespace lna
         return result;
     }
 
-    void gamepad_backend_init(
-        gamepad_backend& gamepad
-        )
-    {
-        gamepad.device                          = nullptr;
-        gamepad.info.device_state               = gamepad_info::state::UNKNOWN;
-        gamepad.info.left_stick_axis_x          = 0.0f;
-        gamepad.info.left_stick_axis_y          = 0.0f;
-        gamepad.info.left_stick_axis_dead_zone  = 0.0f;
-        gamepad.info.left_stick_axis_max_value  = 0.0f;
-        for (size_t i = 0; i < MAX_GAMEPAD_BUTTON_COUNT; ++i)
-        {
-            gamepad.info.buttons[i] = false;
-        }
-    }
-
     void gamepad_backend_open(
         gamepad_backend& gamepad,
         const gamepad_backend_config& config
@@ -312,7 +287,6 @@ namespace lna
         if (gamepad.device)
         {
             SDL_GameControllerClose(gamepad.device);
-            gamepad_backend_init(gamepad);
         }
     }
 }

@@ -2,14 +2,13 @@
 #define _LNA_BACKENDS_VULKAN_VULKAN_IMGUI_HPP_
 
 #include <vulkan/vulkan.h>
-#include "imgui.h"
 #include "maths/vec2.hpp"
-#include "maths/vec4.hpp"
-#include "backends/vulkan/vulkan_texture.hpp"
 
 namespace lna
 {
     struct memory_pool;
+    struct texture_backend;
+    struct texture;
 
     struct vulkan_imgui_push_const_block
     {
@@ -17,13 +16,14 @@ namespace lna
 		vec2                            translate;
 	};
 
-    struct vulkan_imgui_wrapper
+    struct imgui_backend
     {
+        renderer_backend*               renderer_backend_ptr;
         VkBuffer                        vertex_buffer;
         VkDeviceMemory                  vertex_buffer_memory;
         VkBuffer                        index_buffer;
         VkDeviceMemory                  index_buffer_memory;
-        vulkan_texture                  font_texture;
+        texture*                        font_texture_ptr;
         VkPipelineCache                 pipeline_cache;
         VkPipelineLayout                pipeline_layout;
         VkPipeline                      pipeline;
@@ -37,42 +37,39 @@ namespace lna
         void*                           index_data_mapped;
     };
 
-    struct vulkan_imgui_wrapper_config
-    {
-        float                           window_width;
-        float                           window_height;
-        VkDevice                        device;
-        VkPhysicalDevice                physical_device;
-        VkCommandPool                   command_pool;
-        VkQueue                         graphics_queue;
-        VkRenderPass                    render_pass;
-        memory_pool*                    temp_memory_pool_ptr;
-    };
+    // struct vulkan_imgui_wrapper_config
+    // {
+    //     float                           window_width;
+    //     float                           window_height;
+    //     VkDevice                        device;
+    //     VkPhysicalDevice                physical_device;
+    //     VkCommandPool                   command_pool;
+    //     VkQueue                         graphics_queue;
+    //     VkRenderPass                    render_pass;
+    //     memory_pool*                    temp_memory_pool_ptr;
+    //     texture_backend*                texture_backend_ptr;
+    // };
 
-    void vulkan_imgui_wrapper_init(
-        vulkan_imgui_wrapper& imgui_wrapper
-        );
+    // void vulkan_imgui_wrapper_configure(
+    //     vulkan_imgui_wrapper& imgui_wrapper,
+    //     vulkan_imgui_wrapper_config& config
+    //     );
 
-    void vulkan_imgui_wrapper_configure(
-        vulkan_imgui_wrapper& imgui_wrapper,
-        vulkan_imgui_wrapper_config& config
-        );
+    // void vulkan_imgui_wrapper_update(
+    //     vulkan_imgui_wrapper& imgui_wrapper,
+    //     VkDevice device,
+    //     VkPhysicalDevice physical_device
+    //     );
 
-    void vulkan_imgui_wrapper_update(
-        vulkan_imgui_wrapper& imgui_wrapper,
-        VkDevice device,
-        VkPhysicalDevice physical_device
-        );
+    // void vulkan_imgui_wrapper_draw_frame(
+    //     vulkan_imgui_wrapper& imgui_wrapper,
+    //     VkCommandBuffer command_buffer
+    //     );
 
-    void vulkan_imgui_wrapper_draw_frame(
-        vulkan_imgui_wrapper& imgui_wrapper,
-        VkCommandBuffer command_buffer
-        );
-
-    void vulkan_imgui_wrapper_release(
-        vulkan_imgui_wrapper& imgui_wrapper,
-        VkDevice device
-        );
+    // void vulkan_imgui_wrapper_release(
+    //     vulkan_imgui_wrapper& imgui_wrapper,
+    //     VkDevice device
+    //     );
 }
 
 #endif // _LNA_BACKENDS_VULKAN_VULKAN_IMGUI_HPP_

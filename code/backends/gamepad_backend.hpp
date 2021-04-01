@@ -55,10 +55,6 @@ namespace lna
 
     int gamepad_count();
 
-    void gamepad_backend_init(
-        gamepad_backend& gamepad
-        );
-
     void gamepad_backend_open(
         gamepad_backend& gamepad,
         const gamepad_backend_config& config

@@ -8,213 +8,313 @@
 #pragma clang diagnostic pop
 #include "backends/vulkan/vulkan_texture.hpp"
 #include "backends/vulkan/vulkan_helpers.hpp"
+#include "backends/vulkan/vulkan_backend.hpp"
+#include "backends/texture_backend.hpp"
+#include "core/memory_pool.hpp"
 
-void lna::vulkan_texture_configure(
-    lna::vulkan_texture& texture,
-    vulkan_texture_config_info& config
-    )
+namespace
 {
-    LNA_ASSERT(config.command_pool);
-    LNA_ASSERT(config.device);
-    LNA_ASSERT(config.graphics_queue);
-    LNA_ASSERT(config.physical_device);
-
-    //! IMAGE PART
-
-    int             texture_width       = 0;
-    int             texture_height      = 0;
-    int             texture_channels    = 0;
-    unsigned char*  texture_pixels      = nullptr;
-    VkDeviceSize    image_size          = 0;
-
-    if (config.filename)
+    VkFormat lna_format_to_vulkan(lna::texture_config::format f)
     {
-        LNA_ASSERT(config.pixels == 0);
-
-        texture_pixels = stbi_load(
-            config.filename,
-            &texture_width,
-            &texture_height,
-            &texture_channels,
-            STBI_rgb_alpha
-            );
-        
-    }
-    else if (config.pixels)
-    {
-        LNA_ASSERT(config.filename == 0);
-
-        texture_pixels  = config.pixels;
-        texture_width   = config.width;
-        texture_height  = config.height;
-    }
-    else
-    {
-        //! incorrect configuration
-        LNA_ASSERT(0);
-    }
-    image_size = texture_width * texture_height * 4 * sizeof(char);
-    
-    LNA_ASSERT(texture_pixels);
-    LNA_ASSERT(image_size > 0);
-
-    VkBuffer        staging_buffer;
-    VkDeviceMemory  staging_buffer_memory;
-
-    lna::vulkan_helpers::create_buffer(
-        config.device,
-        config.physical_device,
-        image_size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        staging_buffer,
-        staging_buffer_memory
-        );
-
-    void* data;
-    VULKAN_CHECK_RESULT(
-        vkMapMemory(
-            config.device,
-            staging_buffer_memory,
-            0,
-            image_size,
-            0,
-            &data
-            )
-        )
-    std::memcpy(
-        data,
-        texture_pixels,
-        static_cast<size_t>(image_size)
-        );
-    vkUnmapMemory(
-        config.device,
-        staging_buffer_memory
-        );
-
-    if (config.filename)
-    {
-        stbi_image_free(texture_pixels);
+        switch (f)
+        {
+            case lna::texture_config::format::R8G8B8A8_SRGB:
+                return VK_FORMAT_R8G8B8A8_SRGB;
+            case lna::texture_config::format::R8G8B8A8_UNORM:
+                return VK_FORMAT_R8G8B8A8_UNORM;
+            default:
+                return VK_FORMAT_UNDEFINED;
+        }
     }
 
-    lna::vulkan_helpers::create_image(
-        config.device,
-        config.physical_device,
-        static_cast<uint32_t>(texture_width),
-        static_cast<uint32_t>(texture_height),
-        config.format,
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        texture.image,
-        texture.image_memory
-        );
-    lna::vulkan_helpers::transition_image_layout(
-        config.device,
-        config.command_pool,
-        config.graphics_queue,
-        texture.image,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-        );
-    lna::vulkan_helpers::copy_buffer_to_image(
-        config.device,
-        config.command_pool,
-        staging_buffer,
-        config.graphics_queue,
-        texture.image,
-        static_cast<uint32_t>(texture_width),
-        static_cast<uint32_t>(texture_height)
-        );
-    lna::vulkan_helpers::transition_image_layout(
-        config.device,
-        config.command_pool,
-        config.graphics_queue,
-        texture.image,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        );
-    vkDestroyBuffer(
-        config.device,
-        staging_buffer,
-        nullptr
-        );
-    vkFreeMemory(
-        config.device,
-        staging_buffer_memory,
-        nullptr
-        );
+    VkSamplerMipmapMode lna_mipmap_mode_to_vulkan(lna::texture_config::mipmap_mode mipmap)
+    {
+        switch (mipmap)
+        {
+            case lna::texture_config::mipmap_mode::LINEAR:
+                return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            default:
+                return VK_SAMPLER_MIPMAP_MODE_MAX_ENUM;
+        }
+    }
 
-    //! IMAGE VIEW PART
+    VkFilter lna_filter_to_vulkan_filter(lna::texture_config::filter f)
+    {
+        switch (f)
+        {
+            case lna::texture_config::filter::LINEAR:
+                return VK_FILTER_LINEAR;
+            default:
+                return VK_FILTER_MAX_ENUM;
+        }
+    }
 
-    texture.image_view = lna::vulkan_helpers::create_image_view(
-        config.device,
-        texture.image,
-        config.format
-        );
-
-    //! SAMPLER PART
-
-    VkPhysicalDeviceProperties gpu_properties{};
-    vkGetPhysicalDeviceProperties(
-        config.physical_device,
-        &gpu_properties
-        );
-
-    VkSamplerCreateInfo sampler_create_info{};
-    sampler_create_info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_create_info.magFilter               = config.mag_filter;
-    sampler_create_info.minFilter               = config.min_filter;
-    sampler_create_info.addressModeU            = config.address_mode_u;
-    sampler_create_info.addressModeV            = config.address_mode_v;
-    sampler_create_info.addressModeW            = config.address_mode_w;
-    sampler_create_info.anisotropyEnable        = VK_TRUE;
-    sampler_create_info.maxAnisotropy           = gpu_properties.limits.maxSamplerAnisotropy;
-    sampler_create_info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
-    sampler_create_info.unnormalizedCoordinates = VK_FALSE;
-    sampler_create_info.compareEnable           = VK_FALSE;
-    sampler_create_info.compareOp               = VK_COMPARE_OP_ALWAYS;
-    sampler_create_info.mipmapMode              = config.mipmap_mode;
-    sampler_create_info.mipLodBias              = 0.0f;
-    sampler_create_info.minLod                  = 0.0f;
-    sampler_create_info.maxLod                  = 0.0f;
-    VULKAN_CHECK_RESULT(
-        vkCreateSampler(
-            config.device,
-            &sampler_create_info,
-            nullptr,
-            &texture.sampler
-            )
-        )
+    VkSamplerAddressMode lna_sampler_address_mode_to_vulkan(lna::texture_config::sampler_address_mode m)
+    {
+        switch (m)
+        {
+            case lna::texture_config::sampler_address_mode::REPEAT:
+                return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            case lna::texture_config::sampler_address_mode::CLAMP_TO_EDGE:
+                return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            default:
+                return VK_SAMPLER_ADDRESS_MODE_MAX_ENUM;
+        }
+    }
 }
 
-void lna::vulkan_texture_release(
-    lna::vulkan_texture& texture,
-    VkDevice device
-    )
+namespace lna
 {
-    vkDestroySampler(
-        device,
-        texture.sampler,
-        nullptr
-        );
-    vkDestroyImageView(
-        device,
-        texture.image_view,
-        nullptr
-        );
-    vkDestroyImage(
-        device,
-        texture.image,
-        nullptr
-        );
-    vkFreeMemory(
-        device,
-        texture.image_memory,
-        nullptr
-        );
-    texture.image           = nullptr;
-    texture.image_memory    = nullptr;
-    texture.image_view      = nullptr;
-    texture.sampler         = nullptr;
+    void texture_backend_configure(
+        texture_backend& backend,
+        texture_backend_config& config
+        )
+    {
+        LNA_ASSERT(backend.renderer_backend_ptr == nullptr);
+        LNA_ASSERT(backend.textures == nullptr);
+        LNA_ASSERT(backend.cur_texture_count == 0);
+        LNA_ASSERT(backend.max_texture_count == 0);
+        LNA_ASSERT(config.renderer_backend_ptr);
+        LNA_ASSERT(config.persistent_memory_pool_ptr);
+        LNA_ASSERT(config.max_texture_count > 0);
+
+        backend.renderer_backend_ptr    = config.renderer_backend_ptr;
+        backend.max_texture_count       = config.max_texture_count;
+        backend.textures                = (texture*)memory_pool_reserve_memory(
+            *config.persistent_memory_pool_ptr,
+            config.max_texture_count * sizeof(texture)
+            );
+        LNA_ASSERT(backend.textures);
+
+        for (uint32_t i = 0; i < backend.max_texture_count; ++i)
+        {
+            backend.textures[i].image           = VK_NULL_HANDLE;
+            backend.textures[i].image_memory    = VK_NULL_HANDLE;
+            backend.textures[i].image_view      = VK_NULL_HANDLE;
+            backend.textures[i].sampler         = VK_NULL_HANDLE;
+        }
+    }
+
+    texture* texture_backend_new_texture(
+        texture_backend& backend,
+        texture_config& config
+        )
+    {
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->command_pool);
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
+        LNA_ASSERT(backend.renderer_backend_ptr->graphics_queue);
+        LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
+        LNA_ASSERT(backend.textures);
+        LNA_ASSERT(backend.cur_texture_count < backend.max_texture_count);
+        LNA_ASSERT((config.filename || config.pixels) && (config.filename == nullptr || config.pixels == nullptr));
+
+        texture& new_texture = backend.textures[backend.cur_texture_count++];
+
+        LNA_ASSERT(new_texture.image == VK_NULL_HANDLE);
+        LNA_ASSERT(new_texture.image_memory == VK_NULL_HANDLE);
+        LNA_ASSERT(new_texture.image_view == VK_NULL_HANDLE);
+        LNA_ASSERT(new_texture.sampler == VK_NULL_HANDLE);
+
+        //! IMAGE PART
+
+        int             texture_width       = 0;
+        int             texture_height      = 0;
+        int             texture_channels    = 0;
+        unsigned char*  texture_pixels      = nullptr;
+        VkDeviceSize    image_size          = 0;
+
+        if (config.filename)
+        {
+            texture_pixels = stbi_load(
+                config.filename,
+                &texture_width,
+                &texture_height,
+                &texture_channels,
+                STBI_rgb_alpha
+                );
+        }
+        else if (config.pixels)
+        {
+            texture_pixels  = config.pixels;
+            texture_width   = config.width;
+            texture_height  = config.height;
+        }
+        image_size = texture_width * texture_height * 4 * sizeof(char);
+    
+        LNA_ASSERT(texture_pixels);
+        LNA_ASSERT(image_size > 0);
+
+        VkBuffer        staging_buffer;
+        VkDeviceMemory  staging_buffer_memory;
+
+        lna::vulkan_helpers::create_buffer(
+            backend.renderer_backend_ptr->device,
+            backend.renderer_backend_ptr->physical_device,
+            image_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            staging_buffer,
+            staging_buffer_memory
+            );
+
+        void* data;
+        VULKAN_CHECK_RESULT(
+            vkMapMemory(
+                backend.renderer_backend_ptr->device,
+                staging_buffer_memory,
+                0,
+                image_size,
+                0,
+                &data
+                )
+            )
+        std::memcpy(
+            data,
+            texture_pixels,
+            static_cast<size_t>(image_size)
+            );
+        vkUnmapMemory(
+            backend.renderer_backend_ptr->device,
+            staging_buffer_memory
+            );
+
+        if (config.filename)
+        {
+            stbi_image_free(texture_pixels);
+        }
+
+        lna::vulkan_helpers::create_image(
+            backend.renderer_backend_ptr->device,
+            backend.renderer_backend_ptr->physical_device,
+            static_cast<uint32_t>(texture_width),
+            static_cast<uint32_t>(texture_height),
+            lna_format_to_vulkan(config.fmt),
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            new_texture.image,
+            new_texture.image_memory
+            );
+        lna::vulkan_helpers::transition_image_layout(
+            backend.renderer_backend_ptr->device,
+            backend.renderer_backend_ptr->command_pool,
+            backend.renderer_backend_ptr->graphics_queue,
+            new_texture.image,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+            );
+        lna::vulkan_helpers::copy_buffer_to_image(
+            backend.renderer_backend_ptr->device,
+            backend.renderer_backend_ptr->command_pool,
+            staging_buffer,
+            backend.renderer_backend_ptr->graphics_queue,
+            new_texture.image,
+            static_cast<uint32_t>(texture_width),
+            static_cast<uint32_t>(texture_height)
+            );
+        lna::vulkan_helpers::transition_image_layout(
+            backend.renderer_backend_ptr->device,
+            backend.renderer_backend_ptr->command_pool,
+            backend.renderer_backend_ptr->graphics_queue,
+            new_texture.image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            );
+        vkDestroyBuffer(
+            backend.renderer_backend_ptr->device,
+            staging_buffer,
+            nullptr
+            );
+        vkFreeMemory(
+            backend.renderer_backend_ptr->device,
+            staging_buffer_memory,
+            nullptr
+            );
+
+        //! IMAGE VIEW PART
+
+        new_texture.image_view = lna::vulkan_helpers::create_image_view(
+            backend.renderer_backend_ptr->device,
+            new_texture.image,
+            lna_format_to_vulkan(config.fmt)
+            );
+
+        //! SAMPLER PART
+
+        VkPhysicalDeviceProperties gpu_properties{};
+        vkGetPhysicalDeviceProperties(
+            backend.renderer_backend_ptr->physical_device,
+            &gpu_properties
+            );
+
+        VkSamplerCreateInfo sampler_create_info{};
+        sampler_create_info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        sampler_create_info.magFilter               = lna_filter_to_vulkan_filter(config.mag);
+        sampler_create_info.minFilter               = lna_filter_to_vulkan_filter(config.min);
+        sampler_create_info.addressModeU            = lna_sampler_address_mode_to_vulkan(config.u);
+        sampler_create_info.addressModeV            = lna_sampler_address_mode_to_vulkan(config.v);
+        sampler_create_info.addressModeW            = lna_sampler_address_mode_to_vulkan(config.w);
+        sampler_create_info.anisotropyEnable        = VK_TRUE;
+        sampler_create_info.maxAnisotropy           = gpu_properties.limits.maxSamplerAnisotropy;
+        sampler_create_info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+        sampler_create_info.unnormalizedCoordinates = VK_FALSE;
+        sampler_create_info.compareEnable           = VK_FALSE;
+        sampler_create_info.compareOp               = VK_COMPARE_OP_ALWAYS;
+        sampler_create_info.mipmapMode              = lna_mipmap_mode_to_vulkan(config.mipmap);
+        sampler_create_info.mipLodBias              = 0.0f;
+        sampler_create_info.minLod                  = 0.0f;
+        sampler_create_info.maxLod                  = 0.0f;
+        VULKAN_CHECK_RESULT(
+            vkCreateSampler(
+                backend.renderer_backend_ptr->device,
+                &sampler_create_info,
+                nullptr,
+                &new_texture.sampler
+                )
+            )
+
+        return &new_texture;
+    }
+
+    void texture_backend_release(
+        texture_backend& backend
+        )
+    {
+        if (backend.textures)
+        {
+            for (uint32_t i = 0; i < backend.max_texture_count; ++i)
+            {
+                texture&    texture_to_del = backend.textures[i];
+                VkDevice    device  = backend.renderer_backend_ptr->device;
+
+                LNA_ASSERT(device);
+
+                vkDestroySampler(
+                    device,
+                    texture_to_del.sampler,
+                    nullptr
+                    );
+                vkDestroyImageView(
+                    device,
+                    texture_to_del.image_view,
+                    nullptr
+                    );
+                vkDestroyImage(
+                    device,
+                    texture_to_del.image,
+                    nullptr
+                    );
+                vkFreeMemory(
+                    device,
+                    texture_to_del.image_memory,
+                    nullptr
+                    );
+                texture_to_del.image           = nullptr;
+                texture_to_del.image_memory    = nullptr;
+                texture_to_del.image_view      = nullptr;
+                texture_to_del.sampler         = nullptr;
+            }
+        }
+    }
 }
