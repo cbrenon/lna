@@ -13,6 +13,7 @@ namespace lna
     struct mesh;
     struct texture;
     struct memory_pool;
+    struct mat4;
 
     struct mesh_backend_config
     {
@@ -34,8 +35,10 @@ namespace lna
         const uint16_t*     indices;
         uint32_t            vertex_count;
         uint32_t            index_count;
-        vec3                position;
         texture*            texture_ptr;
+        mat4*               model_mat_ptr;
+        mat4*               view_mat_ptr;
+        mat4*               projection_mat_ptr;
     };
 
     void mesh_backend_configure(
@@ -47,7 +50,7 @@ namespace lna
         mesh_backend& backend,
         mesh_config& config
         );
-
+        
     void mesh_backend_release(
         mesh_backend& backend
         );

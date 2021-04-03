@@ -1248,11 +1248,11 @@ namespace
         {
             if (
                 renderer.swap_chain_cleanup_callbacks[i]
-                && renderer.swap_chain_callback_owners[i]
+                && renderer.callback_owners[i]
                 )
             {
                 renderer.swap_chain_cleanup_callbacks[i](
-                    renderer.swap_chain_callback_owners[i]
+                    renderer.callback_owners[i]
                     );
             }
         }
@@ -1338,11 +1338,11 @@ namespace
         {
             if (
                 renderer.swap_chain_recreate_callbacks[i]
-                && renderer.swap_chain_callback_owners[i]
+                && renderer.callback_owners[i]
                 )
             {
                 renderer.swap_chain_recreate_callbacks[i](
-                    renderer.swap_chain_callback_owners[i]
+                    renderer.callback_owners[i]
                     );
             }
         }
@@ -1380,10 +1380,11 @@ namespace
 namespace lna
 {
     void vulkan_renderer_backend_register_swap_chain_callbacks(
-        renderer_backend& backend,
-        vulkan_on_swap_chain_cleanup on_clean_up,
-        vulkan_on_swap_chain_recreate on_recreate,
-        void* owner
+        renderer_backend&               backend,
+        vulkan_on_swap_chain_cleanup    on_clean_up,
+        vulkan_on_swap_chain_recreate   on_recreate,
+        vulkan_on_draw                  on_draw,
+        void*                           owner
         )
     {
         for (uint32_t i = 0; i < renderer_backend::MAX_SWAP_CHAIN_CALLBACKS; ++i)
@@ -1391,12 +1392,14 @@ namespace lna
             if (
                 backend.swap_chain_cleanup_callbacks[i] == nullptr
                 && backend.swap_chain_recreate_callbacks[i] == nullptr
-                && backend.swap_chain_callback_owners[i] == nullptr
+                && backend.callback_owners[i] == nullptr
+                && backend.draw_callbacks[i] == nullptr
                 )
             {
                 backend.swap_chain_cleanup_callbacks[i]     = on_clean_up;
                 backend.swap_chain_recreate_callbacks[i]    = on_recreate;
-                backend.swap_chain_callback_owners[i]       = owner;
+                backend.draw_callbacks[i]                   = on_draw;
+                backend.callback_owners[i]                  = owner;
                 return;
             }
         }
@@ -1433,11 +1436,13 @@ namespace lna
         {
             renderer.swap_chain_cleanup_callbacks[i]    = nullptr;
             renderer.swap_chain_recreate_callbacks[i]   = nullptr;
-            renderer.swap_chain_callback_owners[i]      = nullptr;
+            renderer.draw_callbacks[i]                  = nullptr;
+            renderer.callback_owners[i]                 = nullptr;
         }
 
         //! BACKEND ------------------------------------------------------------
         renderer.curr_frame = 0;
+        renderer.graphics_family = (uint32_t)-1;
         if (!vulkan_create_instance(renderer, config)) //! BACKEND
         {
             return false;
@@ -1783,6 +1788,17 @@ namespace lna
                 &scissor_rect
                 );
 
+            for (uint32_t j = 0; j < renderer_backend::MAX_SWAP_CHAIN_CALLBACKS; ++j)
+            {
+                if (
+                    renderer.draw_callbacks[j]
+                    && renderer.callback_owners[j]
+                    )
+                {
+                    renderer.draw_callbacks[j](renderer.callback_owners[j], i);
+                }
+            }
+
             //! MESH GRAPHICS OBJECT ------------------------------------------- 
             // vkCmdBindPipeline(
             //     renderer.command_buffers[i],
@@ -2020,8 +2036,6 @@ namespace lna
             renderer.instance,
             nullptr
             );
-
-        renderer_backend_init(renderer);
     }
 
     uint32_t renderer_memory_pool_count()

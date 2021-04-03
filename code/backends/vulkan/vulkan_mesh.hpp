@@ -8,6 +8,7 @@ namespace lna
     struct memory_pool;
     struct vertex;
     struct texture;
+    struct mat4;
 
     struct mesh
     {
@@ -22,6 +23,9 @@ namespace lna
         VkDescriptorSet*            descriptor_sets;
         uint32_t                    swap_chain_image_count;
         texture*                    texture_ptr;
+        mat4*                       model_mat_ptr;
+        mat4*                       view_mat_ptr;
+        mat4*                       projection_mat_ptr;
     };
 
     struct mesh_backend

@@ -489,6 +489,92 @@ namespace
         // }
 
     }
+
+    void vulkan_mesh_on_draw(
+        void* owner,
+        uint32_t command_buffer_image_index
+        )
+    {
+        LNA_ASSERT(owner);
+
+        lna::mesh_backend* backend = (lna::mesh_backend*)owner;
+
+        LNA_ASSERT(backend->renderer_backend_ptr);
+        LNA_ASSERT(command_buffer_image_index < backend->renderer_backend_ptr->swap_chain_image_count);
+        LNA_ASSERT(backend->renderer_backend_ptr->device);
+
+         vkCmdBindPipeline(
+                backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                backend->pipeline
+                );
+        for (uint32_t m = 0; m < backend->cur_mesh_count; ++m)
+        {
+            LNA_ASSERT(backend->meshes[m].model_mat_ptr);
+            LNA_ASSERT(backend->meshes[m].view_mat_ptr);
+            LNA_ASSERT(backend->meshes[m].projection_mat_ptr);
+
+            lna::vulkan_uniform_buffer_object ubo{};
+            ubo.model       = *backend->meshes[m].model_mat_ptr;
+            ubo.view        = *backend->meshes[m].view_mat_ptr;
+            ubo.projection  = *backend->meshes[m].projection_mat_ptr;
+
+            void* data;
+            VULKAN_CHECK_RESULT(
+                vkMapMemory(
+                    backend->renderer_backend_ptr->device,
+                    backend->meshes[m].uniform_buffers_memory[command_buffer_image_index],
+                    0,
+                    sizeof(ubo),
+                    0,
+                    &data
+                    )
+                )
+            memcpy(
+                data,
+                &ubo,
+                sizeof(ubo)
+                );
+            vkUnmapMemory(
+                backend->renderer_backend_ptr->device,
+                backend->meshes[m].uniform_buffers_memory[command_buffer_image_index]
+                );
+
+            vkCmdBindDescriptorSets(
+                backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                backend->pipeline_layout,
+                0,
+                1,
+                &backend->meshes[m].descriptor_sets[command_buffer_image_index],
+                0,
+                nullptr
+                );
+            VkBuffer        vertex_buffers[]    = { backend->meshes[m].vertex_buffer };
+            VkDeviceSize    offsets[]           = { 0 };
+            vkCmdBindVertexBuffers(
+                backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                0,
+                1,
+                vertex_buffers,
+                offsets
+                );
+            vkCmdBindIndexBuffer(
+                backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                backend->meshes[m].index_buffer,
+                0,
+                VK_INDEX_TYPE_UINT16
+                );
+            vkCmdDrawIndexed(
+                backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                backend->meshes[m].index_count,
+                1,
+                0,
+                0,
+                0
+                );
+        }
+    }
 }
 
 namespace lna
@@ -508,9 +594,10 @@ namespace lna
         LNA_ASSERT(config.max_mesh_count > 0 );
 
         vulkan_renderer_backend_register_swap_chain_callbacks(
-            *backend.renderer_backend_ptr,
+            *config.renderer_backend_ptr,
             vulkan_mesh_on_swap_chain_cleanup,
             vulkan_mesh_on_swap_chain_recreate,
+            vulkan_mesh_on_draw,
             &backend
             );
 
@@ -535,6 +622,8 @@ namespace lna
             backend.meshes[i].descriptor_sets           = nullptr;
             backend.meshes[i].swap_chain_image_count    = 0;
             backend.meshes[i].texture_ptr               = nullptr;
+            backend.meshes[i].view_mat_ptr              = nullptr;
+            backend.meshes[i].projection_mat_ptr        = nullptr;
         }
 
         //! DESCRIPTOR SET LAYOUT
@@ -596,6 +685,10 @@ namespace lna
         LNA_ASSERT(config.indices);
         LNA_ASSERT(config.vertex_count > 0);
         LNA_ASSERT(config.index_count > 0);
+        LNA_ASSERT(config.texture_ptr);
+        LNA_ASSERT(config.model_mat_ptr);
+        LNA_ASSERT(config.view_mat_ptr);
+        LNA_ASSERT(config.projection_mat_ptr);
 
         mesh& new_mesh = backend.meshes[backend.cur_mesh_count++];
 
@@ -610,6 +703,14 @@ namespace lna
         LNA_ASSERT(new_mesh.descriptor_sets == nullptr);
         LNA_ASSERT(new_mesh.swap_chain_image_count == 0);
         LNA_ASSERT(new_mesh.texture_ptr == nullptr);
+        LNA_ASSERT(new_mesh.model_mat_ptr == nullptr);
+        LNA_ASSERT(new_mesh.view_mat_ptr == nullptr);
+        LNA_ASSERT(new_mesh.projection_mat_ptr == nullptr);
+
+        new_mesh.model_mat_ptr      = config.model_mat_ptr;
+        new_mesh.view_mat_ptr       = config.view_mat_ptr;
+        new_mesh.projection_mat_ptr = config.projection_mat_ptr;
+        new_mesh.texture_ptr        = config.texture_ptr;
 
         //! VERTEX BUFFER PART
 

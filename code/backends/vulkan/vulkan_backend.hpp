@@ -2,7 +2,9 @@
 #define _LAN_BACKENDS_VULKAN_VULKAN_BACKEND_HPP_
 
 #include <vulkan/vulkan.h>
-//#include "backends/vulkan/vulkan_imgui.hpp"
+#include "backends/vulkan/vulkan_texture.hpp"
+#include "backends/vulkan/vulkan_mesh.hpp"
+#include "backends/vulkan/vulkan_imgui.hpp"
 
 namespace lna
 {
@@ -33,8 +35,9 @@ namespace lna
 
     struct renderer_backend;
 
-    typedef void (*vulkan_on_swap_chain_cleanup) (void* owner);
-    typedef void (*vulkan_on_swap_chain_recreate)(void* owner);
+    typedef void (*vulkan_on_swap_chain_cleanup)    (void* owner);
+    typedef void (*vulkan_on_swap_chain_recreate)   (void* owner);
+    typedef void (*vulkan_on_draw)                  (void* owner, uint32_t command_buffer_image_index);
 
     struct renderer_backend
     {
@@ -88,9 +91,11 @@ namespace lna
             MAX_SWAP_CHAIN_CALLBACKS = 10,
         };
 
+        // TODO: for the moment we use the callback system to manage graphics objet type by backend struct to progress but later we will need to review and change the architecture to avoid function pointer.
         vulkan_on_swap_chain_cleanup    swap_chain_cleanup_callbacks[MAX_SWAP_CHAIN_CALLBACKS];
         vulkan_on_swap_chain_recreate   swap_chain_recreate_callbacks[MAX_SWAP_CHAIN_CALLBACKS];
-        void*                           swap_chain_callback_owners[MAX_SWAP_CHAIN_CALLBACKS];
+        vulkan_on_draw                  draw_callbacks[MAX_SWAP_CHAIN_CALLBACKS];
+        void*                           callback_owners[MAX_SWAP_CHAIN_CALLBACKS];
 
         //vulkan_imgui_wrapper            imgui_wrapper;      // TODO: remove from vulkan_backend
     };
@@ -103,10 +108,11 @@ namespace lna
     };
 
     void vulkan_renderer_backend_register_swap_chain_callbacks(
-        renderer_backend& backend,
-        vulkan_on_swap_chain_cleanup on_clean_up,
-        vulkan_on_swap_chain_recreate on_recreate,
-        void* owner
+        renderer_backend&               backend,
+        vulkan_on_swap_chain_cleanup    on_clean_up,
+        vulkan_on_swap_chain_recreate   on_recreate,
+        vulkan_on_draw                  on_draw,
+        void*                           owner
         );
 }
 

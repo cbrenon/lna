@@ -20,14 +20,6 @@ namespace lna
         imgui_backend_config& config
         );
 
-    void imgui_backend_update(
-        imgui_backend& backend
-        );
-
-    void imgui_backend_draw_frame(
-        imgui_backend& backend
-        );
-
     void imgui_backend_release(
         imgui_backend& backend
         );

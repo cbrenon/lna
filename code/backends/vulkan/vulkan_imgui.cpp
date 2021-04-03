@@ -9,6 +9,331 @@
 #include "core/memory_pool.hpp"
 #include "imgui.h"
 
+namespace
+{
+    void imgui_backend_update(
+        lna::imgui_backend& backend
+        )
+    {
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->device);
+        LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
+
+        VkDevice            device              = backend.renderer_backend_ptr->device;
+        VkPhysicalDevice    physical_device     = backend.renderer_backend_ptr->physical_device;
+        ImDrawData*         im_draw_data        = ImGui::GetDrawData();
+        VkDeviceSize        vertex_buffer_size  = im_draw_data->TotalVtxCount * sizeof(ImDrawVert);
+        VkDeviceSize        index_buffer_size   = im_draw_data->TotalIdxCount * sizeof (ImDrawIdx);
+
+        if ((vertex_buffer_size == 0) || (index_buffer_size == 0))
+        {
+            return;
+        }
+
+        if ((backend.vertex_buffer == VK_NULL_HANDLE) || (backend.vertex_count != im_draw_data->TotalVtxCount))
+        {
+            if (backend.vertex_data_mapped)
+            {
+                vkUnmapMemory(device, backend.vertex_buffer_memory);
+                backend.vertex_data_mapped = nullptr;
+            }
+            if (backend.vertex_buffer)
+            {
+                vkDestroyBuffer(device, backend.vertex_buffer, nullptr);
+                backend.vertex_buffer = nullptr;
+            }
+            if (backend.vertex_buffer_memory)
+            {
+                vkFreeMemory(device, backend.vertex_buffer_memory, nullptr);
+                backend.vertex_buffer_memory = nullptr;
+            }
+            VkBufferCreateInfo buffer_create_info{};
+            buffer_create_info.sType    = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            buffer_create_info.usage    = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            buffer_create_info.size     = vertex_buffer_size;
+            VULKAN_CHECK_RESULT(
+                vkCreateBuffer(
+                    device,
+                    &buffer_create_info,
+                    nullptr,
+                    &backend.vertex_buffer
+                )
+            )
+            VkMemoryRequirements    memory_requirements;
+            vkGetBufferMemoryRequirements(
+                device,
+                backend.vertex_buffer,
+                &memory_requirements
+                );
+            VkMemoryAllocateInfo    memory_allocate_info{};
+            memory_allocate_info.sType              = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            memory_allocate_info.allocationSize     = memory_requirements.size;
+            memory_allocate_info.memoryTypeIndex    = lna::vulkan_helpers::find_memory_type(
+                physical_device,
+                memory_requirements.memoryTypeBits,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                );
+            VULKAN_CHECK_RESULT(
+                vkAllocateMemory(
+                    device,
+                    &memory_allocate_info,
+                    nullptr,
+                    &backend.vertex_buffer_memory
+                    )
+                )
+            VULKAN_CHECK_RESULT(
+                vkBindBufferMemory(
+                    device,
+                    backend.vertex_buffer,
+                    backend.vertex_buffer_memory,
+                    0
+                    )
+            )
+            backend.vertex_count = im_draw_data->TotalVtxCount;
+            VULKAN_CHECK_RESULT(
+                vkMapMemory(
+                    device,
+                    backend.vertex_buffer_memory,
+                    0,
+                    VK_WHOLE_SIZE,
+                    0,
+                    &backend.vertex_data_mapped
+                    )
+                )
+        }
+        if ((backend.index_buffer == VK_NULL_HANDLE) || (backend.index_count < im_draw_data->TotalIdxCount))
+        {
+            if (backend.index_data_mapped)
+            {
+                vkUnmapMemory(device, backend.index_buffer_memory);
+                backend.index_data_mapped = nullptr;
+            }
+            if (backend.index_buffer)
+            {
+                vkDestroyBuffer(device, backend.index_buffer, nullptr);
+                backend.index_buffer = nullptr;
+            }
+            if (backend.index_buffer_memory)
+            {
+                vkFreeMemory(device, backend.index_buffer_memory, nullptr);
+                backend.index_buffer_memory = nullptr;
+            }
+            VkBufferCreateInfo buffer_create_info{};
+            buffer_create_info.sType    = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            buffer_create_info.usage    = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+            buffer_create_info.size     = index_buffer_size;
+            VULKAN_CHECK_RESULT(
+                vkCreateBuffer(
+                    device,
+                    &buffer_create_info,
+                    nullptr,
+                    &backend.index_buffer
+                )
+            )
+            VkMemoryRequirements    memory_requirements;
+            vkGetBufferMemoryRequirements(
+                device,
+                backend.index_buffer,
+                &memory_requirements
+                );
+            VkMemoryAllocateInfo    memory_allocate_info{};
+            memory_allocate_info.sType              = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            memory_allocate_info.allocationSize     = memory_requirements.size;
+            memory_allocate_info.memoryTypeIndex    = lna::vulkan_helpers::find_memory_type(
+                physical_device,
+                memory_requirements.memoryTypeBits,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                );
+            VULKAN_CHECK_RESULT(
+                vkAllocateMemory(
+                    device,
+                    &memory_allocate_info,
+                    nullptr,
+                    &backend.index_buffer_memory
+                    )
+                )
+            VULKAN_CHECK_RESULT(
+                vkBindBufferMemory(
+                    device,
+                    backend.index_buffer,
+                    backend.index_buffer_memory,
+                    0
+                    )
+            )
+            backend.index_count = im_draw_data->TotalIdxCount;
+            VULKAN_CHECK_RESULT(
+                vkMapMemory(
+                    device,
+                    backend.index_buffer_memory,
+                    0,
+                    VK_WHOLE_SIZE,
+                    0,
+                    &backend.index_data_mapped
+                    )
+                )
+        }
+
+        ImDrawVert* vertex_dst  = (ImDrawVert*)backend.vertex_data_mapped;
+        ImDrawIdx*  index_dst   = (ImDrawIdx*)backend.index_data_mapped;
+        for (int i = 0; i < im_draw_data->CmdListsCount; ++i)
+        {
+            const ImDrawList* cmd_list = im_draw_data->CmdLists[i];
+            std::memcpy(
+                vertex_dst,
+                cmd_list->VtxBuffer.Data,
+                cmd_list->VtxBuffer.Size * sizeof(ImDrawVert)
+                );
+            std::memcpy(
+                index_dst,
+                cmd_list->IdxBuffer.Data,
+                cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx)
+                );
+            vertex_dst += cmd_list->VtxBuffer.Size;
+            index_dst += cmd_list->IdxBuffer.Size;
+        }
+
+        {
+            VkMappedMemoryRange mapped_memory_range{};
+            mapped_memory_range.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+            mapped_memory_range.memory  = backend.vertex_buffer_memory;
+            mapped_memory_range.offset  = 0;
+            mapped_memory_range.size    = vertex_buffer_size;
+            VULKAN_CHECK_RESULT(
+                vkFlushMappedMemoryRanges(
+                    device,
+                    1,
+                    &mapped_memory_range
+                )   
+            )
+        }
+        {
+            VkMappedMemoryRange mapped_memory_range{};
+            mapped_memory_range.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+            mapped_memory_range.memory  = backend.index_buffer_memory;
+            mapped_memory_range.offset  = 0;
+            mapped_memory_range.size    = index_buffer_size;
+            VULKAN_CHECK_RESULT(
+                vkFlushMappedMemoryRanges(
+                    device,
+                    1,
+                    &mapped_memory_range
+                )   
+            )
+        }
+    }
+
+    void vulkan_imgui_on_draw(
+        void* owner,
+        uint32_t command_buffer_image_index
+        )
+    {
+        LNA_ASSERT(owner);
+
+        lna::imgui_backend* backend = (lna::imgui_backend*)owner;
+
+        LNA_ASSERT(backend->renderer_backend_ptr);
+
+        // TODO: see if I need to extract this call and move it elsewhere.
+        imgui_backend_update(
+            *backend
+            );
+
+        ImGuiIO& io = ImGui::GetIO();
+
+        vkCmdBindDescriptorSets(
+            backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            backend->pipeline_layout,
+            0,
+            1,
+            &backend->descriptor_set,
+            0,
+            nullptr
+            );
+        vkCmdBindPipeline(
+            backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            backend->pipeline
+            );
+
+        VkViewport viewport;
+        viewport.width      = io.DisplaySize.x;
+		viewport.height     = io.DisplaySize.y;
+		viewport.minDepth   = 0.0f;
+		viewport.maxDepth   = 1.0f;
+        vkCmdSetViewport(
+            backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+            0,
+            1,
+            &viewport
+            );
+
+        backend->push_const_block.scale.x = 2.0f / io.DisplaySize.x;
+        backend->push_const_block.scale.y = 2.0f / io.DisplaySize.y;
+        backend->push_const_block.translate.x = -1.0f;
+        backend->push_const_block.translate.y = -1.0f;
+
+        vkCmdPushConstants(
+            backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+            backend->pipeline_layout,
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(lna::vulkan_imgui_push_const_block),
+            &backend->push_const_block
+            );
+
+        ImDrawData* im_draw_data    = ImGui::GetDrawData();
+        int         vertex_offset   = 0;
+        int         index_offset    = 0;
+        if (im_draw_data->CmdListsCount > 0)
+        {
+            VkDeviceSize offsets[] = { 0 };
+            vkCmdBindVertexBuffers(
+                backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                0,
+                1,
+                &backend->vertex_buffer,
+                offsets
+                );
+            vkCmdBindIndexBuffer(
+                backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                backend->index_buffer,
+                0,
+                VK_INDEX_TYPE_UINT16
+                );
+            for (int32_t i = 0; i < im_draw_data->CmdListsCount; ++i)
+            {
+                const ImDrawList* cmd_list = im_draw_data->CmdLists[i];
+                for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; ++j)
+                {
+                    const ImDrawCmd* cmd = &cmd_list->CmdBuffer[j];
+                    VkRect2D scissor_rect;
+                    scissor_rect.offset.x       = std::max((int32_t)(cmd->ClipRect.x), 0);
+                    scissor_rect.offset.y       = std::max((int32_t)(cmd->ClipRect.y), 0);
+                    scissor_rect.extent.width   = (uint32_t)(cmd->ClipRect.z - cmd->ClipRect.x);
+                    scissor_rect.extent.height  = (uint32_t)(cmd->ClipRect.w - cmd->ClipRect.y);
+                    vkCmdSetScissor(
+                        backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                        0,
+                        1,
+                        &scissor_rect
+                        );
+                    vkCmdDrawIndexed(
+                        backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
+                        cmd->ElemCount,
+                        1,
+                        index_offset,
+                        vertex_offset,
+                        0
+                        );
+                    index_offset += cmd->ElemCount;
+                }
+                vertex_offset += cmd_list->VtxBuffer.Size;
+            }
+        }
+    }
+}
+
 namespace lna
 {
     void imgui_backend_configure(
@@ -40,6 +365,16 @@ namespace lna
         LNA_ASSERT(config.renderer_backend_ptr->render_pass);
         LNA_ASSERT(config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]);
         LNA_ASSERT(config.texture_backend_ptr);
+
+        vulkan_renderer_backend_register_swap_chain_callbacks(
+            *config.renderer_backend_ptr,
+            nullptr,
+            nullptr,
+            vulkan_imgui_on_draw,
+            &backend
+            );
+
+        backend.renderer_backend_ptr = config.renderer_backend_ptr;
 
         //! STYLE
 
@@ -328,318 +663,6 @@ namespace lna
 
         vkDestroyShaderModule(config.renderer_backend_ptr->device, fragment_shader_module, nullptr);
         vkDestroyShaderModule(config.renderer_backend_ptr->device, vertex_shader_module, nullptr);
-    }
-
-    void imgui_backend_update(
-        imgui_backend& backend
-        )
-    {
-        LNA_ASSERT(backend.renderer_backend_ptr);
-        LNA_ASSERT(backend.renderer_backend_ptr->device);
-        LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
-
-        VkDevice            device              = backend.renderer_backend_ptr->device;
-        VkPhysicalDevice    physical_device     = backend.renderer_backend_ptr->physical_device;
-        ImDrawData*         im_draw_data        = ImGui::GetDrawData();
-        VkDeviceSize        vertex_buffer_size  = im_draw_data->TotalVtxCount * sizeof(ImDrawVert);
-        VkDeviceSize        index_buffer_size   = im_draw_data->TotalIdxCount * sizeof (ImDrawIdx);
-
-        if ((vertex_buffer_size == 0) || (index_buffer_size == 0))
-        {
-            return;
-        }
-
-        if ((backend.vertex_buffer == VK_NULL_HANDLE) || (backend.vertex_count != im_draw_data->TotalVtxCount))
-        {
-            if (backend.vertex_data_mapped)
-            {
-                vkUnmapMemory(device, backend.vertex_buffer_memory);
-                backend.vertex_data_mapped = nullptr;
-            }
-            if (backend.vertex_buffer)
-            {
-                vkDestroyBuffer(device, backend.vertex_buffer, nullptr);
-                backend.vertex_buffer = nullptr;
-            }
-            if (backend.vertex_buffer_memory)
-            {
-                vkFreeMemory(device, backend.vertex_buffer_memory, nullptr);
-                backend.vertex_buffer_memory = nullptr;
-            }
-            VkBufferCreateInfo buffer_create_info{};
-            buffer_create_info.sType    = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            buffer_create_info.usage    = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-            buffer_create_info.size     = vertex_buffer_size;
-            VULKAN_CHECK_RESULT(
-                vkCreateBuffer(
-                    device,
-                    &buffer_create_info,
-                    nullptr,
-                    &backend.vertex_buffer
-                )
-            )
-            VkMemoryRequirements    memory_requirements;
-            vkGetBufferMemoryRequirements(
-                device,
-                backend.vertex_buffer,
-                &memory_requirements
-                );
-            VkMemoryAllocateInfo    memory_allocate_info{};
-            memory_allocate_info.sType              = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            memory_allocate_info.allocationSize     = memory_requirements.size;
-            memory_allocate_info.memoryTypeIndex    = vulkan_helpers::find_memory_type(
-                physical_device,
-                memory_requirements.memoryTypeBits,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                );
-            VULKAN_CHECK_RESULT(
-                vkAllocateMemory(
-                    device,
-                    &memory_allocate_info,
-                    nullptr,
-                    &backend.vertex_buffer_memory
-                    )
-                )
-            VULKAN_CHECK_RESULT(
-                vkBindBufferMemory(
-                    device,
-                    backend.vertex_buffer,
-                    backend.vertex_buffer_memory,
-                    0
-                    )
-            )
-            backend.vertex_count = im_draw_data->TotalVtxCount;
-            VULKAN_CHECK_RESULT(
-                vkMapMemory(
-                    device,
-                    backend.vertex_buffer_memory,
-                    0,
-                    VK_WHOLE_SIZE,
-                    0,
-                    &backend.vertex_data_mapped
-                    )
-                )
-        }
-        if ((backend.index_buffer == VK_NULL_HANDLE) || (backend.index_count < im_draw_data->TotalIdxCount))
-        {
-            if (backend.index_data_mapped)
-            {
-                vkUnmapMemory(device, backend.index_buffer_memory);
-                backend.index_data_mapped = nullptr;
-            }
-            if (backend.index_buffer)
-            {
-                vkDestroyBuffer(device, backend.index_buffer, nullptr);
-                backend.index_buffer = nullptr;
-            }
-            if (backend.index_buffer_memory)
-            {
-                vkFreeMemory(device, backend.index_buffer_memory, nullptr);
-                backend.index_buffer_memory = nullptr;
-            }
-            VkBufferCreateInfo buffer_create_info{};
-            buffer_create_info.sType    = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            buffer_create_info.usage    = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-            buffer_create_info.size     = index_buffer_size;
-            VULKAN_CHECK_RESULT(
-                vkCreateBuffer(
-                    device,
-                    &buffer_create_info,
-                    nullptr,
-                    &backend.index_buffer
-                )
-            )
-            VkMemoryRequirements    memory_requirements;
-            vkGetBufferMemoryRequirements(
-                device,
-                backend.index_buffer,
-                &memory_requirements
-                );
-            VkMemoryAllocateInfo    memory_allocate_info{};
-            memory_allocate_info.sType              = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            memory_allocate_info.allocationSize     = memory_requirements.size;
-            memory_allocate_info.memoryTypeIndex    = vulkan_helpers::find_memory_type(
-                physical_device,
-                memory_requirements.memoryTypeBits,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                );
-            VULKAN_CHECK_RESULT(
-                vkAllocateMemory(
-                    device,
-                    &memory_allocate_info,
-                    nullptr,
-                    &backend.index_buffer_memory
-                    )
-                )
-            VULKAN_CHECK_RESULT(
-                vkBindBufferMemory(
-                    device,
-                    backend.index_buffer,
-                    backend.index_buffer_memory,
-                    0
-                    )
-            )
-            backend.index_count = im_draw_data->TotalIdxCount;
-            VULKAN_CHECK_RESULT(
-                vkMapMemory(
-                    device,
-                    backend.index_buffer_memory,
-                    0,
-                    VK_WHOLE_SIZE,
-                    0,
-                    &backend.index_data_mapped
-                    )
-                )
-        }
-
-        ImDrawVert* vertex_dst  = (ImDrawVert*)backend.vertex_data_mapped;
-        ImDrawIdx*  index_dst   = (ImDrawIdx*)backend.index_data_mapped;
-        for (int i = 0; i < im_draw_data->CmdListsCount; ++i)
-        {
-            const ImDrawList* cmd_list = im_draw_data->CmdLists[i];
-            std::memcpy(
-                vertex_dst,
-                cmd_list->VtxBuffer.Data,
-                cmd_list->VtxBuffer.Size * sizeof(ImDrawVert)
-                );
-            std::memcpy(
-                index_dst,
-                cmd_list->IdxBuffer.Data,
-                cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx)
-                );
-            vertex_dst += cmd_list->VtxBuffer.Size;
-            index_dst += cmd_list->IdxBuffer.Size;
-        }
-
-        {
-            VkMappedMemoryRange mapped_memory_range{};
-            mapped_memory_range.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            mapped_memory_range.memory  = backend.vertex_buffer_memory;
-            mapped_memory_range.offset  = 0;
-            mapped_memory_range.size    = vertex_buffer_size;
-            VULKAN_CHECK_RESULT(
-                vkFlushMappedMemoryRanges(
-                    device,
-                    1,
-                    &mapped_memory_range
-                )   
-            )
-        }
-        {
-            VkMappedMemoryRange mapped_memory_range{};
-            mapped_memory_range.sType   = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            mapped_memory_range.memory  = backend.index_buffer_memory;
-            mapped_memory_range.offset  = 0;
-            mapped_memory_range.size    = index_buffer_size;
-            VULKAN_CHECK_RESULT(
-                vkFlushMappedMemoryRanges(
-                    device,
-                    1,
-                    &mapped_memory_range
-                )   
-            )
-        }
-    }
-
-    void imgui_backend_draw_frame(
-        imgui_backend& backend
-        )
-    {
-        LNA_ASSERT(backend.renderer_backend_ptr);
-
-        ImGuiIO& io = ImGui::GetIO();
-
-        vkCmdBindDescriptorSets(
-            command_buffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            backend.pipeline_layout,
-            0,
-            1,
-            &backend.descriptor_set,
-            0,
-            nullptr
-            );
-        vkCmdBindPipeline(
-            command_buffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            backend.pipeline
-            );
-
-        VkViewport viewport;
-        viewport.width      = io.DisplaySize.x;
-		viewport.height     = io.DisplaySize.y;
-		viewport.minDepth   = 0.0f;
-		viewport.maxDepth   = 1.0f;
-        vkCmdSetViewport(
-            command_buffer,
-            0,
-            1,
-            &viewport
-            );
-
-        backend.push_const_block.scale.x = 2.0f / io.DisplaySize.x;
-        backend.push_const_block.scale.y = 2.0f / io.DisplaySize.y;
-        backend.push_const_block.translate.x = -1.0f;
-        backend.push_const_block.translate.y = -1.0f;
-
-        vkCmdPushConstants(
-            command_buffer,
-            backend.pipeline_layout,
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(vulkan_imgui_push_const_block),
-            &backend.push_const_block
-            );
-
-        ImDrawData* im_draw_data    = ImGui::GetDrawData();
-        int         vertex_offset   = 0;
-        int         index_offset    = 0;
-        if (im_draw_data->CmdListsCount > 0)
-        {
-            VkDeviceSize offsets[] = { 0 };
-            vkCmdBindVertexBuffers(
-                command_buffer,
-                0,
-                1,
-                &backend.vertex_buffer,
-                offsets
-                );
-            vkCmdBindIndexBuffer(
-                command_buffer,
-                backend.index_buffer,
-                0,
-                VK_INDEX_TYPE_UINT16
-                );
-            for (int32_t i = 0; i < im_draw_data->CmdListsCount; ++i)
-            {
-                const ImDrawList* cmd_list = im_draw_data->CmdLists[i];
-                for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; ++j)
-                {
-                    const ImDrawCmd* cmd = &cmd_list->CmdBuffer[j];
-                    VkRect2D scissor_rect;
-                    scissor_rect.offset.x = std::max((int32_t)(cmd->ClipRect.x), 0);
-                    scissor_rect.offset.y = std::max((int32_t)(cmd->ClipRect.y), 0);
-                    scissor_rect.extent.width   = (uint32_t)(cmd->ClipRect.z - cmd->ClipRect.x);
-                    scissor_rect.extent.height  = (uint32_t)(cmd->ClipRect.w - cmd->ClipRect.y);
-                    vkCmdSetScissor(
-                        command_buffer,
-                        0,
-                        1,
-                        &scissor_rect
-                        );
-                    vkCmdDrawIndexed(
-                        command_buffer,
-                        cmd->ElemCount,
-                        1,
-                        index_offset,
-                        vertex_offset,
-                        0
-                        );
-                    index_offset += cmd->ElemCount;
-                }
-                vertex_offset += cmd_list->VtxBuffer.Size;
-            }
-        }
     }
 
     void imgui_backend_release(

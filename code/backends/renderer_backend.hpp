@@ -65,13 +65,7 @@ namespace lna
     //     renderer_backend& renderer,
     //     const mesh_config& config
     //     );
-
-    // TODO: split this function in two to be able to call multiple draw function following graphics object type:
-    //! for example:
-    //! renderer_backend_begin_draw_frame(...);
-    //! mesh_backend_draw_frame(...);
-    //! vulkan_imgui_wrapper_draw_frame(...);
-    //! renderer_backend_end_draw_frame(...); 
+ 
     void renderer_backend_draw_frame(
         renderer_backend& renderer,
         bool framebuffer_resized,

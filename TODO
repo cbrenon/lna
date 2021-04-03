@@ -22,13 +22,7 @@ TODO:
       4. release renderer backend
     ☐ clean code
       remove commented code
-  ☐ add renderer_2D struct and functions
-    ☐ sprite
-    ☐ rect
-    ☐ line
-    ☐ circle
-    ☐ cross
-    ☐ text
+  ☐ add depth buffering for 3D geometry
   ☐ add sound system
 
 Archive:
