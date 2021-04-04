@@ -36,40 +36,6 @@ namespace lna
         void*                           vertex_data_mapped;
         void*                           index_data_mapped;
     };
-
-    // struct vulkan_imgui_wrapper_config
-    // {
-    //     float                           window_width;
-    //     float                           window_height;
-    //     VkDevice                        device;
-    //     VkPhysicalDevice                physical_device;
-    //     VkCommandPool                   command_pool;
-    //     VkQueue                         graphics_queue;
-    //     VkRenderPass                    render_pass;
-    //     memory_pool*                    temp_memory_pool_ptr;
-    //     texture_backend*                texture_backend_ptr;
-    // };
-
-    // void vulkan_imgui_wrapper_configure(
-    //     vulkan_imgui_wrapper& imgui_wrapper,
-    //     vulkan_imgui_wrapper_config& config
-    //     );
-
-    // void vulkan_imgui_wrapper_update(
-    //     vulkan_imgui_wrapper& imgui_wrapper,
-    //     VkDevice device,
-    //     VkPhysicalDevice physical_device
-    //     );
-
-    // void vulkan_imgui_wrapper_draw_frame(
-    //     vulkan_imgui_wrapper& imgui_wrapper,
-    //     VkCommandBuffer command_buffer
-    //     );
-
-    // void vulkan_imgui_wrapper_release(
-    //     vulkan_imgui_wrapper& imgui_wrapper,
-    //     VkDevice device
-    //     );
 }
 
 #endif // _LNA_BACKENDS_VULKAN_VULKAN_IMGUI_HPP_

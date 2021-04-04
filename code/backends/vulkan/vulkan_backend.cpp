@@ -788,7 +788,8 @@ namespace
             renderer.swap_chain_image_views[i] = lna::vulkan_helpers::create_image_view(
                 renderer.device,
                 renderer.swap_chain_images[i],
-                renderer.swap_chain_image_format
+                renderer.swap_chain_image_format,
+                VK_IMAGE_ASPECT_COLOR_BIT
                 );
         }
     }
@@ -813,23 +814,44 @@ namespace
         color_attachment_reference.attachment       = 0;
         color_attachment_reference.layout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+        VkAttachmentDescription depth_attachment{};
+        depth_attachment.format                     = lna::vulkan_helpers::find_depth_format(renderer.physical_device);
+        depth_attachment.samples                    = VK_SAMPLE_COUNT_1_BIT;
+        depth_attachment.loadOp                     = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depth_attachment.storeOp                    = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depth_attachment.stencilLoadOp              = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        depth_attachment.stencilStoreOp             = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depth_attachment.initialLayout              = VK_IMAGE_LAYOUT_UNDEFINED;
+        depth_attachment.finalLayout                = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentReference depth_attachment_reference{};
+        depth_attachment_reference.attachment       = 1;
+        depth_attachment_reference.layout           = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
         VkSubpassDescription subpass_description{};
         subpass_description.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass_description.colorAttachmentCount    = 1;
         subpass_description.pColorAttachments       = &color_attachment_reference;
+        subpass_description.pDepthStencilAttachment = &depth_attachment_reference;
 
         VkSubpassDependency subpass_dependancy{};
         subpass_dependancy.srcSubpass               = VK_SUBPASS_EXTERNAL;
-        subpass_dependancy.srcStageMask             = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        subpass_dependancy.srcStageMask             = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         subpass_dependancy.srcAccessMask            = 0;
         subpass_dependancy.dstSubpass               = 0;
-        subpass_dependancy.dstStageMask             = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        subpass_dependancy.dstAccessMask            = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        subpass_dependancy.dstStageMask             = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        subpass_dependancy.dstAccessMask            = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        VkAttachmentDescription attachments[] =
+        {
+            color_attachment,
+            depth_attachment
+        };
 
         VkRenderPassCreateInfo render_pass_create_info{};
         render_pass_create_info.sType               = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        render_pass_create_info.attachmentCount     = 1;
-        render_pass_create_info.pAttachments        = &color_attachment;
+        render_pass_create_info.attachmentCount     = static_cast<uint32_t>(sizeof(attachments) / sizeof(attachments[0]));
+        render_pass_create_info.pAttachments        = attachments;
         render_pass_create_info.subpassCount        = 1;
         render_pass_create_info.pSubpasses          = &subpass_description;
         render_pass_create_info.dependencyCount     = 1;
@@ -845,213 +867,6 @@ namespace
             )
     }
 
-    // void vulkan_create_descriptor_set_layout(
-    //     lna::renderer_backend& renderer
-    //     )
-    // {
-    //     LNA_ASSERT(renderer.device);
-
-    //     VkDescriptorSetLayoutBinding ubo_layout_binding{};
-    //     ubo_layout_binding.binding                  = 0;
-    //     ubo_layout_binding.descriptorCount          = 1;
-    //     ubo_layout_binding.descriptorType           = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    //     ubo_layout_binding.stageFlags               = VK_SHADER_STAGE_VERTEX_BIT;
-    //     ubo_layout_binding.pImmutableSamplers       = nullptr;
-
-    //     VkDescriptorSetLayoutBinding sampler_layout_binding{};
-    //     sampler_layout_binding.binding              = 1;
-    //     sampler_layout_binding.descriptorCount      = 1;
-    //     sampler_layout_binding.descriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    //     sampler_layout_binding.stageFlags           = VK_SHADER_STAGE_FRAGMENT_BIT;
-    //     sampler_layout_binding.pImmutableSamplers   = nullptr;
-
-    //     VkDescriptorSetLayoutBinding bindings[2];
-    //     bindings[0] = ubo_layout_binding;
-    //     bindings[1] = sampler_layout_binding;
-
-    //     VkDescriptorSetLayoutCreateInfo layout_create_info{};
-    //     layout_create_info.sType                    = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    //     layout_create_info.bindingCount             = static_cast<uint32_t>(sizeof(bindings) / sizeof(bindings[0]));
-    //     layout_create_info.pBindings                = bindings;
-
-    //     VULKAN_CHECK_RESULT(
-    //         vkCreateDescriptorSetLayout(
-    //             renderer.device,
-    //             &layout_create_info,
-    //             nullptr,
-    //             &renderer.mesh_system.descriptor_set_layout
-    //             )
-    //         )
-    // }
-
-    // void vulkan_create_graphics_pipeline(
-    //     lna::renderer_backend& renderer
-    //     )
-    // {
-    //     LNA_ASSERT(renderer.device);
-    //     LNA_ASSERT(renderer.render_pass);
-
-    //     VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
-    //         renderer.device,
-    //         "shaders/default_vert.spv",
-    //         *renderer.memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
-    //         );
-    //     VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
-    //         renderer.device,
-    //         "shaders/default_frag.spv",
-    //         *renderer.memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
-    //         );
-    //     VkPipelineShaderStageCreateInfo shader_stage_create_infos[2]{};
-    //     shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    //     shader_stage_create_infos[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-    //     shader_stage_create_infos[0].module = vertex_shader_module;
-    //     shader_stage_create_infos[0].pName  = "main";
-    //     shader_stage_create_infos[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    //     shader_stage_create_infos[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-    //     shader_stage_create_infos[1].module = fragment_shader_module;
-    //     shader_stage_create_infos[1].pName  = "main";
-
-    //     auto vertex_description = lna::vulkan_default_mesh_vertex_description();
-
-    //     VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info{};
-    //     vertex_input_state_create_info.sType                            = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    //     vertex_input_state_create_info.vertexBindingDescriptionCount    = lna::vulkan_mesh_vertex_description::MAX_BINDING;
-    //     vertex_input_state_create_info.pVertexBindingDescriptions       = vertex_description.bindings;
-    //     vertex_input_state_create_info.vertexAttributeDescriptionCount  = lna::vulkan_mesh_vertex_description::MAX_ATTRIBUTES;
-    //     vertex_input_state_create_info.pVertexAttributeDescriptions     = vertex_description.attributes;
-
-    //     VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{};
-    //     input_assembly_state_create_info.sType                          = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    //     input_assembly_state_create_info.topology                       = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    //     input_assembly_state_create_info.primitiveRestartEnable         = VK_FALSE;
-
-    //     VkViewport viewport{};
-    //     viewport.x          = 0.0f;
-    //     viewport.y          = 0.0f;
-    //     viewport.width      = static_cast<float>(renderer.swap_chain_extent.width);
-    //     viewport.height     = static_cast<float>(renderer.swap_chain_extent.height);
-    //     viewport.minDepth   = 0.0f;
-    //     viewport.maxDepth   = 1.0f;
-
-    //     VkRect2D scissor{};
-    //     scissor.offset      = { 0, 0 };
-    //     scissor.extent      = renderer.swap_chain_extent;
-
-    //     VkPipelineViewportStateCreateInfo viewport_state_create_info{};
-    //     viewport_state_create_info.sType            = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    //     viewport_state_create_info.viewportCount    = 1;
-    //     viewport_state_create_info.pViewports       = &viewport;
-    //     viewport_state_create_info.scissorCount     = 1;
-    //     viewport_state_create_info.pScissors        = &scissor;
-
-    //     VkPipelineRasterizationStateCreateInfo rasterization_state_create_info{};
-    //     rasterization_state_create_info.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    //     rasterization_state_create_info.depthClampEnable        = VK_FALSE;
-    //     rasterization_state_create_info.rasterizerDiscardEnable = VK_FALSE;
-    //     rasterization_state_create_info.polygonMode             = VK_POLYGON_MODE_FILL;
-    //     rasterization_state_create_info.lineWidth               = 1.0f;
-    //     rasterization_state_create_info.cullMode                = VK_CULL_MODE_BACK_BIT;
-    //     rasterization_state_create_info.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    //     rasterization_state_create_info.depthBiasEnable         = VK_FALSE;
-    //     rasterization_state_create_info.depthBiasConstantFactor = 0.0f;
-    //     rasterization_state_create_info.depthBiasClamp          = 0.0f;
-    //     rasterization_state_create_info.depthBiasSlopeFactor    = 0.0f;
-
-    //     VkPipelineMultisampleStateCreateInfo multisample_state_create_info{};
-    //     multisample_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    //     multisample_state_create_info.sampleShadingEnable   = VK_FALSE;
-    //     multisample_state_create_info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
-    //     multisample_state_create_info.minSampleShading      = 1.0f;
-    //     multisample_state_create_info.pSampleMask           = nullptr;
-    //     multisample_state_create_info.alphaToCoverageEnable = VK_FALSE;
-    //     multisample_state_create_info.alphaToOneEnable      = VK_FALSE;
-
-    //     VkPipelineColorBlendAttachmentState color_blend_attachment_state{};
-    //     color_blend_attachment_state.colorWriteMask =
-    //           VK_COLOR_COMPONENT_R_BIT
-    //         | VK_COLOR_COMPONENT_G_BIT
-    //         | VK_COLOR_COMPONENT_B_BIT
-    //         | VK_COLOR_COMPONENT_A_BIT
-    //         ;
-    //     color_blend_attachment_state.blendEnable            = VK_FALSE;
-    //     color_blend_attachment_state.srcColorBlendFactor    = VK_BLEND_FACTOR_ONE;
-    //     color_blend_attachment_state.dstColorBlendFactor    = VK_BLEND_FACTOR_ZERO;
-    //     color_blend_attachment_state.colorBlendOp           = VK_BLEND_OP_ADD;
-    //     color_blend_attachment_state.srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE;
-    //     color_blend_attachment_state.dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO;
-    //     color_blend_attachment_state.alphaBlendOp           = VK_BLEND_OP_ADD;
-
-    //     VkPipelineColorBlendStateCreateInfo color_blender_state_create_info{};
-    //     color_blender_state_create_info.sType               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    //     color_blender_state_create_info.logicOpEnable       = VK_FALSE;
-    //     color_blender_state_create_info.logicOp             = VK_LOGIC_OP_COPY;
-    //     color_blender_state_create_info.attachmentCount     = 1;
-    //     color_blender_state_create_info.pAttachments        = &color_blend_attachment_state;
-    //     color_blender_state_create_info.blendConstants[0]   = 0.0f;
-    //     color_blender_state_create_info.blendConstants[1]   = 0.0f;
-    //     color_blender_state_create_info.blendConstants[2]   = 0.0f;
-    //     color_blender_state_create_info.blendConstants[3]   = 0.0f;
-
-    //     VkDynamicState dynamic_states[] =
-    //     {
-    //         VK_DYNAMIC_STATE_VIEWPORT,
-    //         VK_DYNAMIC_STATE_LINE_WIDTH
-    //     };
-
-    //     VkPipelineDynamicStateCreateInfo dynamic_state_create_info{};
-    //     dynamic_state_create_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    //     dynamic_state_create_info.dynamicStateCount = 2;
-    //     dynamic_state_create_info.pDynamicStates    = dynamic_states;
-
-    //     VkPipelineLayoutCreateInfo  layout_create_info{};
-    //     layout_create_info.sType                    = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    //     layout_create_info.setLayoutCount           = 1;
-    //     layout_create_info.pSetLayouts              = &renderer.mesh_system.descriptor_set_layout;
-    //     layout_create_info.pushConstantRangeCount   = 0;
-    //     layout_create_info.pPushConstantRanges      = nullptr;
-
-    //     VULKAN_CHECK_RESULT(
-    //         vkCreatePipelineLayout(
-    //             renderer.device,
-    //             &layout_create_info,
-    //             nullptr,
-    //             &renderer.pipeline_layout
-    //             )
-    //         )
-
-    //     VkGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
-    //     graphics_pipeline_create_info.sType                 = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    //     graphics_pipeline_create_info.stageCount            = 2;
-    //     graphics_pipeline_create_info.pStages               = shader_stage_create_infos;
-    //     graphics_pipeline_create_info.pVertexInputState     = &vertex_input_state_create_info;
-    //     graphics_pipeline_create_info.pInputAssemblyState   = &input_assembly_state_create_info;
-    //     graphics_pipeline_create_info.pViewportState        = &viewport_state_create_info;
-    //     graphics_pipeline_create_info.pRasterizationState   = &rasterization_state_create_info;
-    //     graphics_pipeline_create_info.pMultisampleState     = &multisample_state_create_info;
-    //     graphics_pipeline_create_info.pDepthStencilState    = nullptr;
-    //     graphics_pipeline_create_info.pColorBlendState      = &color_blender_state_create_info;
-    //     graphics_pipeline_create_info.pDynamicState         = nullptr;
-    //     graphics_pipeline_create_info.layout                = renderer.pipeline_layout;
-    //     graphics_pipeline_create_info.renderPass            = renderer.render_pass;
-    //     graphics_pipeline_create_info.subpass               = 0;
-    //     graphics_pipeline_create_info.basePipelineHandle    = VK_NULL_HANDLE;
-    //     graphics_pipeline_create_info.basePipelineIndex     = -1;
-
-    //     VULKAN_CHECK_RESULT(
-    //         vkCreateGraphicsPipelines(
-    //             renderer.device,
-    //             VK_NULL_HANDLE,
-    //             1,
-    //             &graphics_pipeline_create_info,
-    //             nullptr,
-    //             &renderer.graphics_pipeline
-    //             )
-    //         )
-
-    //     vkDestroyShaderModule(renderer.device, fragment_shader_module, nullptr);
-    //     vkDestroyShaderModule(renderer.device, vertex_shader_module, nullptr);
-    // }
-
     void vulkan_create_framebuffers(
         lna::renderer_backend& renderer
         )
@@ -1066,13 +881,14 @@ namespace
         {
             VkImageView attachments[] =
             {
-                renderer.swap_chain_image_views[i]
+                renderer.swap_chain_image_views[i],
+                renderer.depth_image_view
             };
 
             VkFramebufferCreateInfo framebuffer_create_info{};
             framebuffer_create_info.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebuffer_create_info.renderPass      = renderer.render_pass;
-            framebuffer_create_info.attachmentCount = 1;
+            framebuffer_create_info.attachmentCount = static_cast<uint32_t>(sizeof(attachments) / sizeof(attachments[0]));
             framebuffer_create_info.pAttachments    = attachments;
             framebuffer_create_info.width           = renderer.swap_chain_extent.width;
             framebuffer_create_info.height          = renderer.swap_chain_extent.height;
@@ -1114,6 +930,33 @@ namespace
                 &renderer.command_pool
                 )
             )
+    }
+
+    void vulkan_create_depth_resources(
+        lna::renderer_backend& renderer
+        )
+    {
+        VkFormat depth_format = lna::vulkan_helpers::find_depth_format(renderer.physical_device);
+        LNA_ASSERT(depth_format != VK_FORMAT_UNDEFINED);
+
+        lna::vulkan_helpers::create_image(
+            renderer.device,
+            renderer.physical_device,
+            renderer.swap_chain_extent.width,
+            renderer.swap_chain_extent.height,
+            depth_format,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            renderer.depth_image,
+            renderer.depth_image_memory
+            );
+        renderer.depth_image_view = lna::vulkan_helpers::create_image_view(
+            renderer.device,
+            renderer.depth_image,
+            depth_format,
+            VK_IMAGE_ASPECT_DEPTH_BIT
+            );
     }
 
     void vulkan_create_command_buffers(
@@ -1193,41 +1036,15 @@ namespace
         }
     }
 
-    // void vulkan_create_descriptor_pool(
-    //     lna::renderer_backend& renderer
-    //     )
-    // {
-    //     LNA_ASSERT(renderer.device);
-    //     LNA_ASSERT(renderer.mesh_system.descriptor_pool == nullptr);
-    //     LNA_ASSERT(renderer.mesh_system.max_mesh_count > 0); //! mesh_system must have been previously configured
-
-    //     VkDescriptorPoolSize pool_sizes[2] {};
-    //     pool_sizes[0].type              = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    //     pool_sizes[0].descriptorCount   = renderer.swap_chain_image_count;
-    //     pool_sizes[1].type              = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    //     pool_sizes[1].descriptorCount   = renderer.swap_chain_image_count;
-
-    //     VkDescriptorPoolCreateInfo pool_create_info{};
-    //     pool_create_info.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    //     pool_create_info.poolSizeCount  = static_cast<uint32_t>(sizeof(pool_sizes) / sizeof(pool_sizes[0]));
-    //     pool_create_info.pPoolSizes     = pool_sizes;
-    //     pool_create_info.maxSets        = renderer.swap_chain_image_count * renderer.mesh_system.max_mesh_count;
-
-    //     VULKAN_CHECK_RESULT(
-    //         vkCreateDescriptorPool(
-    //             renderer.device,
-    //             &pool_create_info,
-    //             nullptr,
-    //             &renderer.mesh_system.descriptor_pool
-    //             )
-    //         )
-    // }
-
     void vulkan_cleanup_swap_chain(
         lna::renderer_backend& renderer
         )
     {
         LNA_ASSERT(renderer.device);
+
+        vkDestroyImageView(renderer.device, renderer.depth_image_view, nullptr);
+        vkDestroyImage(renderer.device, renderer.depth_image, nullptr);
+        vkFreeMemory(renderer.device, renderer.depth_image_memory, nullptr);
 
         for (uint32_t i = 0; i < renderer.swap_chain_image_count; ++i)
         {
@@ -1256,32 +1073,6 @@ namespace
                     );
             }
         }
-
-        // vkDestroyPipeline(
-        //     renderer.device,
-        //     renderer.graphics_pipeline,
-        //     nullptr
-        //     );
-        // vkDestroyPipelineLayout(
-        //     renderer.device,
-        //     renderer.pipeline_layout,
-        //     nullptr
-        //     );
-        // for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
-        // {
-        //     lna::vulkan_mesh_clean_uniform_buffer(
-        //         renderer.mesh_system.meshes[i],
-        //         renderer.device
-        //         );
-        //     lna::vulkan_mesh_clean_descriptor_sets(
-        //         renderer.mesh_system.meshes[i]
-        //         );
-        // }
-        // vkDestroyDescriptorPool(
-        //     renderer.device,
-        //     renderer.mesh_system.descriptor_pool,
-        //     nullptr
-        //     );
 
         vkDestroyRenderPass(
             renderer.device,
@@ -1325,14 +1116,13 @@ namespace
                 )
             )
 
-        //! BACKEND ------------------------------------------------------------
         vulkan_cleanup_swap_chain(renderer);
         vulkan_create_swap_chain(renderer, framebuffer_width, framebuffer_height);
         vulkan_create_image_views(renderer);
         vulkan_create_render_pass(renderer);
+        vulkan_create_depth_resources(renderer);
         vulkan_create_framebuffers(renderer);
         vulkan_create_command_buffers(renderer);
-        //! BACKEND ------------------------------------------------------------
 
         for (uint32_t i = 0; i < lna::renderer_backend::MAX_SWAP_CHAIN_CALLBACKS; ++i)
         {
@@ -1346,34 +1136,6 @@ namespace
                     );
             }
         }
-
-        //! MESH GRAPHICS OBJECT -----------------------------------------------
-        // vulkan_create_graphics_pipeline(renderer);
-        // vulkan_create_descriptor_pool(renderer);
-        // for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
-        // {
-        //     lna::vulkan_mesh_create_uniform_buffer_info uniform_buffer_info{};
-        //     uniform_buffer_info.device                      = renderer.device;
-        //     uniform_buffer_info.physical_device             = renderer.physical_device;
-        //     uniform_buffer_info.swap_chain_image_count      = renderer.swap_chain_image_count;
-        //     uniform_buffer_info.swap_chain_memory_pool_ptr  = renderer.memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
-        //     lna::vulkan_mesh_create_uniform_buffer(
-        //         renderer.mesh_system.meshes[i],
-        //         uniform_buffer_info
-        //         );
-        //     lna::vulkan_mesh_create_descriptor_sets_info descriptor_sets_info{};
-        //     descriptor_sets_info.device                     = renderer.device;
-        //     descriptor_sets_info.physical_device            = renderer.physical_device;
-        //     descriptor_sets_info.descriptor_pool            = renderer.mesh_system.descriptor_pool;
-        //     descriptor_sets_info.descriptor_set_layout      = renderer.mesh_system.descriptor_set_layout;
-        //     descriptor_sets_info.swap_chain_memory_pool_ptr = renderer.memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
-        //     descriptor_sets_info.temp_memory_pool_ptr       = renderer.memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL];
-        //     lna::vulkan_mesh_create_descriptor_sets(
-        //         renderer.mesh_system.meshes[i],
-        //         descriptor_sets_info
-        //         );
-        // }
-        //! MESH GRAPHICS OBJECT -----------------------------------------------
     }
 }
 
@@ -1440,10 +1202,9 @@ namespace lna
             renderer.callback_owners[i]                 = nullptr;
         }
 
-        //! BACKEND ------------------------------------------------------------
         renderer.curr_frame = 0;
         renderer.graphics_family = (uint32_t)-1;
-        if (!vulkan_create_instance(renderer, config)) //! BACKEND
+        if (!vulkan_create_instance(renderer, config))
         {
             return false;
         }
@@ -1461,198 +1222,22 @@ namespace lna
         }
         if (config.enable_validation_layers)
         {
-            vulkan_setup_debug_messenger(renderer); //! BACKEND
+            vulkan_setup_debug_messenger(renderer);
         }
-        vulkan_create_surface(renderer, config); //! BACKEND
-        vulkan_pick_physical_device(renderer); //! BACKEND
-        vulkan_create_logical_device(renderer, config); //! BACKEND
-        vulkan_create_swap_chain(renderer, lna::window_backend_width(*config.window_ptr), lna::window_backend_height(*config.window_ptr)); //! BACKEND
-        vulkan_create_image_views(renderer); //! BACKEND
-        vulkan_create_render_pass(renderer); //! BACKEND
-        vulkan_create_framebuffers(renderer); //! BACKEND
-        vulkan_create_command_pool(renderer); //! BACKEND
-        vulkan_create_command_buffers(renderer); //! BACKEND
-        vulkan_create_sync_objects(renderer); //! BACKEND
-        //! BACKEND ------------------------------------------------------------
-
-        // renderer.texture_system.max_texture_count = config.max_texture_count;
-        // renderer.texture_system.textures = renderer.texture_system.max_texture_count > 0 ?
-        //     (vulkan_texture*)memory_pool_reserve_memory(
-        //         *renderer.memory_pools[renderer_backend::PERSISTENT_LIFETIME_MEMORY_POOL],
-        //         renderer.texture_system.max_texture_count * sizeof(vulkan_texture)
-        //         ) : nullptr;
-        // for (uint32_t i = 0; i < renderer.texture_system.max_texture_count; ++i)
-        // {
-        //     renderer.texture_system.textures[i].image           = nullptr;
-        //     renderer.texture_system.textures[i].image_memory    = nullptr;
-        //     renderer.texture_system.textures[i].image_view      = nullptr;
-        //     renderer.texture_system.textures[i].sampler         = nullptr;
-        // }
-
-        //! MESH GRAPHICS OBJECT -----------------------------------------------
-        // vulkan_create_descriptor_set_layout(renderer); //! GRAPHICS OBJECT
-        // vulkan_create_graphics_pipeline(renderer); //! GRAPHICS OBJECT
-        // vulkan_create_descriptor_pool(renderer); //! GRAPHICS OBJECT
-        // renderer.mesh_system.max_mesh_count = config.max_mesh_count;
-        // renderer.mesh_system.meshes = renderer.mesh_system.max_mesh_count > 0 ?
-        //     (vulkan_mesh*)memory_pool_reserve_memory(
-        //         *renderer.memory_pools[renderer_backend::PERSISTENT_LIFETIME_MEMORY_POOL],
-        //         renderer.mesh_system.max_mesh_count * sizeof(vulkan_mesh)
-        //         ) : nullptr;
-        // renderer.mesh_system.mesh_positions = renderer.mesh_system.max_mesh_count > 0 ?
-        //     (vec3*)memory_pool_reserve_memory(
-        //         *renderer.memory_pools[renderer_backend::PERSISTENT_LIFETIME_MEMORY_POOL],
-        //         renderer.mesh_system.max_mesh_count * sizeof(vec3)
-        //         ) : nullptr;
-        // for (uint32_t i = 0; i < renderer.mesh_system.max_mesh_count; ++i)
-        // {
-        //     renderer.mesh_system.meshes[i].vertex_buffer            = nullptr;
-        //     renderer.mesh_system.meshes[i].vertex_buffer_memory     = nullptr;
-        //     renderer.mesh_system.meshes[i].index_buffer             = nullptr;
-        //     renderer.mesh_system.meshes[i].index_buffer_memory      = nullptr;
-        //     renderer.mesh_system.meshes[i].vertex_count             = 0;
-        //     renderer.mesh_system.meshes[i].index_count              = 0;
-        //     renderer.mesh_system.meshes[i].uniform_buffers          = nullptr;
-        //     renderer.mesh_system.meshes[i].uniform_buffers_memory   = nullptr;
-        //     renderer.mesh_system.meshes[i].descriptor_sets          = nullptr;
-        //     renderer.mesh_system.meshes[i].swap_chain_image_count   = 0;
-        //     renderer.mesh_system.mesh_positions[i]                  = { 0.0f, 0.0f, 0.0f };
-        // }
-        //! MESH GRAPHICS OBJECT -----------------------------------------------
-
-        //! IMGUI GRAPHICS OBJECT ----------------------------------------------
-        // lna::vulkan_imgui_wrapper_config imgui_wrapper_config{};
-        // imgui_wrapper_config.window_width           = static_cast<float>(lna::window_backend_width(*config.window_ptr));
-        // imgui_wrapper_config.window_height          = static_cast<float>(lna::window_backend_height(*config.window_ptr));
-        // imgui_wrapper_config.device                 = renderer.device;
-        // imgui_wrapper_config.physical_device        = renderer.physical_device;
-        // imgui_wrapper_config.command_pool           = renderer.command_pool;
-        // imgui_wrapper_config.graphics_queue         = renderer.graphics_queue;
-        // imgui_wrapper_config.render_pass            = renderer.render_pass;
-        // imgui_wrapper_config.temp_memory_pool_ptr   = renderer.memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL];
-        // lna::vulkan_imgui_wrapper_configure(
-        //     renderer.imgui_wrapper,
-        //     imgui_wrapper_config
-        //     );
-        //! IMGUI GRAPHICS OBJECT ----------------------------------------------
-
-        //! TEMP ---------------------------------------------------------------
-        // TODO: (TEMP CODE) to remove when we will have a "camera system" and a "graphics object system"
-        // const vec3  eye     = { 0.0f, 0.0f, 2.0f };
-        // const vec3  target  = { 0.0f, 0.0f, 0.0f };
-        // const vec3  up      = { 0.0f, -1.0f, 0.0f };
-        // const float fov     = 45.0f;
-        // const float aspect  = static_cast<float>(renderer.swap_chain_extent.width) / static_cast<float>(renderer.swap_chain_extent.height);
-        // const float near    = 1.0f;
-        // const float far     = 10.0f;
-        // lna::mat4_loot_at(
-        //     renderer.mesh_system.view,
-        //     eye,
-        //     target,
-        //     up
-        //     );
-        // lna::mat4_perspective(
-        //     renderer.mesh_system.projection,
-        //     fov,
-        //     aspect,
-        //     near,
-        //     far
-        //     );
-        //! TEMP ---------------------------------------------------------------
+        vulkan_create_surface(renderer, config);
+        vulkan_pick_physical_device(renderer);
+        vulkan_create_logical_device(renderer, config);
+        vulkan_create_swap_chain(renderer, lna::window_backend_width(*config.window_ptr), lna::window_backend_height(*config.window_ptr));
+        vulkan_create_image_views(renderer);
+        vulkan_create_render_pass(renderer);
+        vulkan_create_command_pool(renderer);
+        vulkan_create_depth_resources(renderer);
+        vulkan_create_framebuffers(renderer);
+        vulkan_create_command_buffers(renderer);
+        vulkan_create_sync_objects(renderer);
 
         return true;
     }
-
-    // texture_handle renderer_backend_new_texture(
-    //     renderer_backend& renderer,
-    //     const texture_config& config
-    //     )
-    // {
-    //     LNA_ASSERT(renderer.texture_system.textures);
-    //     LNA_ASSERT(renderer.texture_system.cur_texture_count < renderer.texture_system.max_texture_count);
-
-    //     texture_handle new_texture_handle = renderer.texture_system.cur_texture_count;
-    //     ++renderer.texture_system.cur_texture_count;
-
-    //     vulkan_texture_config_info texture_info{};
-    //     texture_info.command_pool       = renderer.command_pool;
-    //     texture_info.device             = renderer.device;
-    //     texture_info.physical_device    = renderer.physical_device;
-    //     texture_info.graphics_queue     = renderer.graphics_queue;
-    //     texture_info.filename           = config.filename;
-    //     texture_info.pixels             = nullptr;
-    //     texture_info.format             = VK_FORMAT_R8G8B8A8_SRGB;
-    //     texture_info.mag_filter         = VK_FILTER_LINEAR;
-    //     texture_info.min_filter         = VK_FILTER_LINEAR;
-    //     texture_info.mipmap_mode        = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    //     texture_info.address_mode_u     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    //     texture_info.address_mode_v     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    //     texture_info.address_mode_w     = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    //     vulkan_texture_configure(
-    //         renderer.texture_system.textures[new_texture_handle],
-    //         texture_info
-    //         );
-
-    //     return new_texture_handle;
-    // }
-
-    // mesh_handle renderer_backend_new_mesh(
-    //     renderer_backend& renderer,
-    //     const mesh_config& config
-    //     )
-    // {
-    //     LNA_ASSERT(renderer.mesh_system.meshes);
-    //     LNA_ASSERT(renderer.mesh_system.cur_mesh_count < renderer.mesh_system.max_mesh_count);
-    //     //LNA_ASSERT(renderer.texture_system.textures);
-    //     LNA_ASSERT(config.texture_handle != INVALID_TEXTURE_BACKEND_HANDLE);
-    //     LNA_ASSERT(renderer.texture_backend_ptr);
-    //     //LNA_ASSERT(config.texture < renderer.texture_system.cur_texture_count);
-
-
-    //     mesh_handle new_mesh_handle = renderer.mesh_system.cur_mesh_count;
-    //     ++renderer.mesh_system.cur_mesh_count;
-
-    //     renderer.mesh_system.mesh_positions[new_mesh_handle] = config.position;
-
-    //     vulkan_mesh& mesh = renderer.mesh_system.meshes[new_mesh_handle];
-    //     mesh.texture_ptr = &renderer.texture_system.textures[config.texture];
-
-    //     vulkan_mesh_create_vertex_and_index_info vertex_and_index_info{};
-    //     vertex_and_index_info.device = renderer.device;
-    //     vertex_and_index_info.physical_device   = renderer.physical_device;
-    //     vertex_and_index_info.command_pool      = renderer.command_pool;
-    //     vertex_and_index_info.graphics_queue    = renderer.graphics_queue;
-    //     vertex_and_index_info.vertices          = config.vertices;
-    //     vertex_and_index_info.vertex_count      = config.vertex_count;
-    //     vertex_and_index_info.indices           = config.indices;
-    //     vertex_and_index_info.index_count       = config.index_count;
-    //     vulkan_mesh_create_vertex_and_index_buffer(
-    //         mesh,
-    //         vertex_and_index_info
-    //         );
-    //     vulkan_mesh_create_uniform_buffer_info uniform_buffer_info{};
-    //     uniform_buffer_info.device                      = renderer.device;
-    //     uniform_buffer_info.physical_device             = renderer.physical_device;
-    //     uniform_buffer_info.swap_chain_image_count      = renderer.swap_chain_image_count;
-    //     uniform_buffer_info.swap_chain_memory_pool_ptr  = renderer.memory_pools[renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
-    //     vulkan_mesh_create_uniform_buffer(
-    //         mesh,
-    //         uniform_buffer_info
-    //         );
-    //     vulkan_mesh_create_descriptor_sets_info descriptor_sets_info{};
-    //     descriptor_sets_info.device                     = renderer.device;
-    //     descriptor_sets_info.physical_device            = renderer.physical_device;
-    //     descriptor_sets_info.descriptor_pool            = renderer.mesh_system.descriptor_pool;
-    //     descriptor_sets_info.descriptor_set_layout      = renderer.mesh_system.descriptor_set_layout;
-    //     descriptor_sets_info.swap_chain_memory_pool_ptr = renderer.memory_pools[renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL];
-    //     descriptor_sets_info.temp_memory_pool_ptr       = renderer.memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL];
-    //     vulkan_mesh_create_descriptor_sets(
-    //         mesh,
-    //         descriptor_sets_info
-    //         );
-
-    //     return new_mesh_handle;
-    // }
 
     void renderer_backend_draw_frame(
         renderer_backend& renderer,
@@ -1754,9 +1339,13 @@ namespace lna
             render_pass_begin_info.framebuffer          = renderer.swap_chain_framebuffers[i];
             render_pass_begin_info.renderArea.offset    = { 0, 0 };
             render_pass_begin_info.renderArea.extent    = renderer.swap_chain_extent;
-            VkClearValue clear_color = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
-            render_pass_begin_info.clearValueCount      = 1;
-            render_pass_begin_info.pClearValues         = &clear_color;
+
+            VkClearValue clear_values[2]{};
+            clear_values[0].color           = {{ 0.0f, 0.0f, 0.0f, 1.0f }};
+            clear_values[1].depthStencil    = { 1.0f, 0 };
+
+            render_pass_begin_info.clearValueCount      = 2;
+            render_pass_begin_info.pClearValues         = clear_values;
 
             vkCmdBeginRenderPass(
                 renderer.command_buffers[i],
@@ -1798,79 +1387,6 @@ namespace lna
                     renderer.draw_callbacks[j](renderer.callback_owners[j], i);
                 }
             }
-
-            //! MESH GRAPHICS OBJECT ------------------------------------------- 
-            // vkCmdBindPipeline(
-            //     renderer.command_buffers[i],
-            //     VK_PIPELINE_BIND_POINT_GRAPHICS,
-            //     renderer.graphics_pipeline
-            //     );
-            // for (uint32_t m = 0; m < renderer.mesh_system.cur_mesh_count; ++m)
-            // {
-            //     mat4 model;
-            //     mat4_translation(
-            //         model,
-            //         renderer.mesh_system.mesh_positions[m].x,
-            //         renderer.mesh_system.mesh_positions[m].y,
-            //         renderer.mesh_system.mesh_positions[m].z
-            //         );
-            //     vulkan_mesh_update_uniform_buffer_info update_uniform_buffer_info{};
-            //     update_uniform_buffer_info.device                   = renderer.device;
-            //     update_uniform_buffer_info.image_index              = i;
-            //     update_uniform_buffer_info.model_matrix_ptr         = &model;
-            //     update_uniform_buffer_info.view_matrix_ptr          = &renderer.mesh_system.view;
-            //     update_uniform_buffer_info.projection_matrix_ptr    = &renderer.mesh_system.projection;
-            //     vulkan_mesh_upate_uniform_buffer(
-            //         renderer.mesh_system.meshes[m],
-            //         update_uniform_buffer_info
-            //         );
-            //     vkCmdBindDescriptorSets(
-            //         renderer.command_buffers[i],
-            //         VK_PIPELINE_BIND_POINT_GRAPHICS,
-            //         renderer.pipeline_layout,
-            //         0,
-            //         1,
-            //         &renderer.mesh_system.meshes[m].descriptor_sets[i],
-            //         0,
-            //         nullptr
-            //         );
-            //     VkBuffer        vertex_buffers[]    = { renderer.mesh_system.meshes[m].vertex_buffer };
-            //     VkDeviceSize    offsets[]           = { 0 };
-            //     vkCmdBindVertexBuffers(
-            //         renderer.command_buffers[i],
-            //         0,
-            //         1,
-            //         vertex_buffers,
-            //         offsets
-            //         );
-            //     vkCmdBindIndexBuffer(
-            //         renderer.command_buffers[i],
-            //         renderer.mesh_system.meshes[m].index_buffer,
-            //         0,
-            //         VK_INDEX_TYPE_UINT16
-            //         );
-            //     vkCmdDrawIndexed(
-            //         renderer.command_buffers[i],
-            //         renderer.mesh_system.meshes[m].index_count,
-            //         1,
-            //         0,
-            //         0,
-            //         0
-            //         );
-            // }
-            //! MESH GRAPHICS OBJECT -------------------------------------------
-
-            //! IMGUI GRAPHICS OBJECT ------------------------------------------
-            // vulkan_imgui_wrapper_update(
-            //    renderer.imgui_wrapper,
-            //    renderer.device,
-            //    renderer.physical_device
-            //    );
-            // vulkan_imgui_wrapper_draw_frame(
-            //     renderer.imgui_wrapper,
-            //     renderer.command_buffers[i]
-            //     );
-            //! IMGUI GRAPHICS OBJECT ------------------------------------------
 
             vkCmdEndRenderPass(
                 renderer.command_buffers[i]
@@ -1965,32 +1481,6 @@ namespace lna
             )
 
         vulkan_cleanup_swap_chain(renderer);
-
-        // vulkan_imgui_wrapper_release(
-        //     renderer.imgui_wrapper,
-        //     renderer.device
-        //     );
-
-        // for (uint32_t i = 0; i < renderer.texture_system.cur_texture_count; ++i)
-        // {
-        //     vulkan_texture_release(
-        //         renderer.texture_system.textures[i],
-        //         renderer.device
-        //         );
-        // }
-        
-        // vkDestroyDescriptorSetLayout(
-        //     renderer.device,
-        //     renderer.mesh_system.descriptor_set_layout,
-        //     nullptr
-        //     );
-        // for (uint32_t i = 0; i < renderer.mesh_system.cur_mesh_count; ++i)
-        // {
-        //     vulkan_mesh_release(
-        //         renderer.mesh_system.meshes[i],
-        //         renderer.device
-        //         );
-        // }
 
         for (size_t i = 0; i < VULKAN_MAX_FRAMES_IN_FLIGHT; ++i)
         {

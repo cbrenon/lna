@@ -57,7 +57,8 @@ namespace lna
         VkImageView create_image_view(
             VkDevice device,
             VkImage image,
-            VkFormat format
+            VkFormat format,
+            VkImageAspectFlags aspect_flags
             );
 
         VkCommandBuffer begin_single_time_commands(
@@ -104,6 +105,22 @@ namespace lna
             VkDevice device,
             const char* filename,
             memory_pool& pool
+            );
+
+        VkFormat find_supported_format(
+            VkPhysicalDevice physical_device,
+            VkFormat* candidate_formats,
+            uint32_t candidate_format_count,
+            VkImageTiling tiling,
+            VkFormatFeatureFlags features
+            );
+
+        VkFormat find_depth_format(
+            VkPhysicalDevice physical_device
+            );
+
+        bool has_stencil_component(
+            VkFormat format
             );
     }
 }

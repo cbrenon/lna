@@ -10,11 +10,6 @@ namespace lna
     struct window_backend;
     struct renderer_backend;
 
-    //typedef uint32_t texture_handle; // TODO: remove
-    //typedef uint32_t mesh_handle; // TODO: remove
-    //constexpr uint32_t INVALID_TEXTURE_HANDLE   = (uint32_t)-1; // TODO: remove
-    //constexpr uint32_t INVALID_MESH_HANDLE      = (uint32_t)-1; // TODO: remove
-
     struct renderer_backend_config
     {
         const char*             application_name;
@@ -26,22 +21,10 @@ namespace lna
         uint8_t                 engine_minor_ver;
         uint8_t                 engine_patch_ver;
         bool                    enable_validation_layers;
-        //uint32_t                max_texture_count;  // TODO: remove
-        //uint32_t                max_mesh_count;     // TODO: remove
         window_backend*         window_ptr;
         memory_pool_manager*    mem_pool_manager_ptr;
         texture_backend*        texture_backend_ptr;
     };
-
-    // struct mesh_config // TODO: remove
-    // {
-    //     const vertex*           vertices;
-    //     const uint16_t*         indices;
-    //     uint32_t                vertex_count;
-    //     uint32_t                index_count;
-    //     vec3                    position;
-    //     texture_backend_handle  texture_handle;
-    // };
 
     uint32_t renderer_memory_pool_count();
 
@@ -53,18 +36,6 @@ namespace lna
         renderer_backend& renderer,
         const renderer_backend_config& config
         );
-
-    // TODO: for this one we will pass by a texture_manager instead of renderer
-    // texture_handle renderer_backend_new_texture(
-    //     renderer_backend& renderer,
-    //     const texture_config& config
-    //     );
-
-    // TODO: for this one we will pass by a mesh_manager instead of renderer
-    // mesh_handle renderer_backend_new_mesh(
-    //     renderer_backend& renderer,
-    //     const mesh_config& config
-    //     );
  
     void renderer_backend_draw_frame(
         renderer_backend& renderer,

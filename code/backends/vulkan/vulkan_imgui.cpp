@@ -416,27 +416,6 @@ namespace lna
             font_texture_config
             );
 
-        // vulkan_texture_config_info texture_config_info{};
-        // texture_config_info.device          = config.device;
-        // texture_config_info.physical_device = config.physical_device;
-        // texture_config_info.filename        = nullptr;
-        // texture_config_info.pixels          = font_data;
-        // texture_config_info.width           = static_cast<uint32_t>(texture_width);
-        // texture_config_info.height          = static_cast<uint32_t>(texture_height);
-        // texture_config_info.graphics_queue  = config.graphics_queue;
-        // texture_config_info.command_pool    = config.command_pool;
-        // texture_config_info.format          = VK_FORMAT_R8G8B8A8_UNORM;
-        // texture_config_info.mag_filter      = VK_FILTER_LINEAR;
-        // texture_config_info.min_filter      = VK_FILTER_LINEAR;
-        // texture_config_info.mipmap_mode     = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        // texture_config_info.address_mode_u  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        // texture_config_info.address_mode_v  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        // texture_config_info.address_mode_w  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        // vulkan_texture_configure(
-        //     imgui_wrapper.font_texture,
-        //     texture_config_info
-        //     );
-
         //! DESCRIPTORS
 
         VkDescriptorPoolSize descriptor_pool_sizes[1]{};
@@ -679,13 +658,10 @@ namespace lna
         if (backend.index_buffer)         vkDestroyBuffer(backend.renderer_backend_ptr->device, backend.index_buffer, nullptr);
         if (backend.index_buffer_memory)  vkFreeMemory(backend.renderer_backend_ptr->device, backend.index_buffer_memory, nullptr);
 
-        //vulkan_texture_release(imgui_wrapper.font_texture, device);
         vkDestroyPipelineCache(backend.renderer_backend_ptr->device, backend.pipeline_cache, nullptr);
         vkDestroyPipeline(backend.renderer_backend_ptr->device, backend.pipeline, nullptr);
         vkDestroyPipelineLayout(backend.renderer_backend_ptr->device, backend.pipeline_layout, nullptr);
         vkDestroyDescriptorPool(backend.renderer_backend_ptr->device, backend.descriptor_pool, nullptr);
         vkDestroyDescriptorSetLayout(backend.renderer_backend_ptr->device, backend.descriptor_set_layout, nullptr);
-
-        //vulkan_imgui_wrapper_init(imgui_wrapper);
     }
 }

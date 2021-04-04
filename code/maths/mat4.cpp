@@ -123,10 +123,12 @@ void lna::mat4_loot_at(
     m.values[1][0] = x_vec.y;
     m.values[2][0] = x_vec.z;
     m.values[3][0] = -lna::vec3_dot_product(x_vec, eye);
+
     m.values[0][1] = y_vec.x;
     m.values[1][1] = y_vec.y;
     m.values[2][1] = y_vec.z;
     m.values[3][1] = -lna::vec3_dot_product(y_vec, eye);
+
     m.values[0][2] = -z_vec.x;
     m.values[1][2] = -z_vec.y;
     m.values[2][2] = -z_vec.z;
@@ -141,11 +143,15 @@ void lna::mat4_perspective(
     float far_plane
     )
 {
+    //! The created perspective matrix is Right handed, zero to one depth range
+
     lna::mat4_identity(m);
-    float f = tanf(lna::degree_to_radian(degree_fov) / 2.0f);
+
+    const float f = tanf(lna::degree_to_radian(degree_fov) * 0.5f);
+
     m.values[0][0] = 1.0f / (f * aspect_ratio);
-    m.values[1][1] = -1.0f / (f); //! we use Vulkan by default where Y is inverted
-    m.values[2][2] = -(far_plane + near_plane) / (far_plane - near_plane);
+    m.values[1][1] = -1.0f / (f);
+    m.values[2][2] = far_plane / (near_plane - far_plane);
     m.values[2][3] = -1.0f;
-    m.values[3][2] = -(2.0f * far_plane * near_plane) / (far_plane - near_plane);
+    m.values[3][2] = -(far_plane * near_plane) / (far_plane - near_plane);
 }

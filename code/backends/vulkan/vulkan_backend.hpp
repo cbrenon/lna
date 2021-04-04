@@ -11,28 +11,6 @@ namespace lna
     constexpr uint32_t VULKAN_MAX_FRAMES_IN_FLIGHT = 2;
 
     struct memory_pool;
-
-    // TODO: to remove when vulkan_texture_backend is implemented
-    // struct vulkan_texture_system
-    // {
-    //     vulkan_texture*                 textures;
-    //     uint32_t                        cur_texture_count;
-    //     uint32_t                        max_texture_count;
-    // };
-
-    // TODO: to remove when vulkan_mesh_backend is implemented
-    // struct vulkan_mesh_system
-    // {
-    //     vulkan_mesh*                    meshes;
-    //     vec3*                           mesh_positions;
-    //     uint32_t                        cur_mesh_count;
-    //     uint32_t                        max_mesh_count;
-    //     VkDescriptorSetLayout           descriptor_set_layout;
-    //     VkDescriptorPool                descriptor_pool;
-    //     mat4                            projection;
-    //     mat4                            view;
-    // };
-
     struct renderer_backend;
 
     typedef void (*vulkan_on_swap_chain_cleanup)    (void* owner);
@@ -55,16 +33,12 @@ namespace lna
         VkRenderPass                    render_pass;
         VkCommandPool                   command_pool;
         size_t                          curr_frame;
-
-        //VkPipeline                      graphics_pipeline;  // TODO: to remove when vulkan_mesh_backend is implemented
-        //VkPipelineLayout                pipeline_layout;    // TODO: to remove when vulkan_mesh_backend is implemented
-
-        //vulkan_texture_system           texture_system;     // TODO: to remove when vulkan_texture_backend is implemented
-        //vulkan_mesh_system              mesh_system;        // TODO: to remove when vulkan_mesh_backend is implemented
-
         VkSemaphore                     image_available_semaphores[VULKAN_MAX_FRAMES_IN_FLIGHT];
         VkSemaphore                     render_finished_semaphores[VULKAN_MAX_FRAMES_IN_FLIGHT];
         VkFence                         in_flight_fences[VULKAN_MAX_FRAMES_IN_FLIGHT];
+        VkImage                         depth_image;
+        VkDeviceMemory                  depth_image_memory;
+        VkImageView                     depth_image_view;
 
         //! PERSISTENT MEMORY POOL
         VkFence*                        images_in_flight_fences;
@@ -96,8 +70,6 @@ namespace lna
         vulkan_on_swap_chain_recreate   swap_chain_recreate_callbacks[MAX_SWAP_CHAIN_CALLBACKS];
         vulkan_on_draw                  draw_callbacks[MAX_SWAP_CHAIN_CALLBACKS];
         void*                           callback_owners[MAX_SWAP_CHAIN_CALLBACKS];
-
-        //vulkan_imgui_wrapper            imgui_wrapper;      // TODO: remove from vulkan_backend
     };
 
     constexpr size_t MEMORY_POOL_SIZES[renderer_backend::MEMORY_POOL_COUNT] =

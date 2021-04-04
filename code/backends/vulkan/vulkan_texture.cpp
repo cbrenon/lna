@@ -237,7 +237,8 @@ namespace lna
         new_texture.image_view = lna::vulkan_helpers::create_image_view(
             backend.renderer_backend_ptr->device,
             new_texture.image,
-            lna_format_to_vulkan(config.fmt)
+            lna_format_to_vulkan(config.fmt),
+            VK_IMAGE_ASPECT_COLOR_BIT
             );
 
         //! SAMPLER PART

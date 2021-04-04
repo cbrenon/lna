@@ -2,6 +2,7 @@
 #include "core/assert.hpp"
 #include "core/memory_pool.hpp"
 #include "core/file.hpp"
+#include "core/log.hpp"
 
 const char* lna::vulkan_helpers::error_string(VkResult error_code)
     {
@@ -205,7 +206,8 @@ void lna::vulkan_helpers::create_image(
 VkImageView lna::vulkan_helpers::create_image_view(
     VkDevice device,
     VkImage image,
-    VkFormat format
+    VkFormat format,
+    VkImageAspectFlags aspect_flags
     )
 {
     LNA_ASSERT(device);
@@ -216,7 +218,7 @@ VkImageView lna::vulkan_helpers::create_image_view(
     view_create_info.image                              = image;
     view_create_info.viewType                           = VK_IMAGE_VIEW_TYPE_2D;
     view_create_info.format                             = format;
-    view_create_info.subresourceRange.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
+    view_create_info.subresourceRange.aspectMask        = aspect_flags;
     view_create_info.subresourceRange.baseMipLevel      = 0;
     view_create_info.subresourceRange.levelCount        = 1;
     view_create_info.subresourceRange.baseArrayLayer    = 0;
@@ -557,4 +559,69 @@ VkShaderModule lna::vulkan_helpers::load_shader(
         )
 
     return shader_module;
+}
+
+VkFormat lna::vulkan_helpers::find_supported_format(
+    VkPhysicalDevice physical_device,
+    VkFormat* candidate_formats,
+    uint32_t candidate_format_count,
+    VkImageTiling tiling,
+    VkFormatFeatureFlags features
+    )
+{
+    LNA_ASSERT(physical_device);
+
+    for (uint32_t i = 0; i < candidate_format_count; ++i)
+    {
+        VkFormatProperties format_properties;
+        vkGetPhysicalDeviceFormatProperties(
+            physical_device,
+            candidate_formats[i],
+            &format_properties
+            );
+        if (
+            tiling == VK_IMAGE_TILING_LINEAR
+            && (format_properties.linearTilingFeatures & features) == features
+            )
+        {
+            return candidate_formats[i];
+        }
+        else if (
+            tiling == VK_IMAGE_TILING_OPTIMAL
+            && (format_properties.optimalTilingFeatures & features) == features
+        )
+        {
+            return candidate_formats[i];
+        }
+    }
+    lna::log::error("cannot find supported format"); LNA_ASSERT(0);
+    return VK_FORMAT_UNDEFINED;
+}
+
+VkFormat lna::vulkan_helpers::find_depth_format(
+    VkPhysicalDevice physical_device
+    )
+{
+    VkFormat formats[] =
+    {
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+    };
+    return lna::vulkan_helpers::find_supported_format(
+        physical_device,
+        formats,
+        static_cast<uint32_t>(sizeof(formats) / sizeof(formats[0])),
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        );
+}
+
+bool lna::vulkan_helpers::has_stencil_component(
+    VkFormat format
+    )
+{
+    return
+            format == VK_FORMAT_D32_SFLOAT_S8_UINT
+        ||  format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
