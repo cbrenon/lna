@@ -8,6 +8,7 @@ namespace lna
 {
     struct timer_backend
     {
+        std::chrono::time_point<std::chrono::system_clock> start_time;
         std::chrono::time_point<std::chrono::system_clock> last_frame_time;
     };
 }

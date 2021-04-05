@@ -9,7 +9,11 @@ namespace lna
         timer_backend& timer
         );
 
-    double timer_backend_dtime_in_ms(
+    double timer_backend_dtime_in_s(
+        timer_backend& timer
+        );
+
+    double timer_backend_elapsed_time_in_s(
         timer_backend& timer
         );
 }

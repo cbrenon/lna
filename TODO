@@ -1,5 +1,8 @@
 ROAD TO 3D GRAPHICS:
-  ☐ add depth buffering for 3D geometry
+  ✔ add depth buffering for 3D geometry                                                    @done(21-04-04 02:45)
+  ✔ display cuboid instead of flat sprite object                                           @done(21-04-04 22:09)
+  ☐ helper function in graphics folder to create cuboid
+  ☐ add cuboid random generator to simulate a city
 
 MISC:
   ☐ fix all TODO in code
