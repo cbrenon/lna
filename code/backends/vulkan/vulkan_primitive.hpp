@@ -1,5 +1,5 @@
-#ifndef _LNA_BACKENDS_VULKAN_VULKAN_MESH_HPP_
-#define _LNA_BACKENDS_VULKAN_VULKAN_MESH_HPP_
+#ifndef _LNA_BACKENDS_VULKAN_VULKAN_PRIMITIVE_HPP_
+#define _LNA_BACKENDS_VULKAN_VULKAN_PRIMITIVE_HPP_
 
 #include <vulkan/vulkan.h>
 
@@ -7,11 +7,9 @@ namespace lna
 {
     struct renderer_backend;
     struct memory_pool;
-    struct mesh_vertex;
-    struct texture;
     struct mat4;
 
-    struct mesh
+    struct primitive
     {
         VkBuffer                    vertex_buffer;
         VkDeviceMemory              vertex_buffer_memory;
@@ -23,24 +21,22 @@ namespace lna
         VkDeviceMemory*             uniform_buffers_memory;
         VkDescriptorSet*            descriptor_sets;
         uint32_t                    swap_chain_image_count;
-        texture*                    texture_ptr;
         mat4*                       model_mat_ptr;
         mat4*                       view_mat_ptr;
         mat4*                       projection_mat_ptr;
     };
 
-    struct mesh_backend
+    struct primitive_backend
     {
         renderer_backend*           renderer_backend_ptr;
         VkDescriptorSetLayout       descriptor_set_layout;
         VkDescriptorPool            descriptor_pool;
         VkPipelineLayout            pipeline_layout;
         VkPipeline                  pipeline;
-        mesh*                       meshes;
-        uint32_t                    cur_mesh_count;
-        uint32_t                    max_mesh_count;
-        VkPolygonMode               polygon_mode;
+        primitive*                  primitives;
+        uint32_t                    cur_primitive_count;
+        uint32_t                    max_primitive_count;
     };
 }
 
-#endif // _LNA_BACKENDS_VULKAN_VULKAN_MESH_HPP_
+#endif // _LNA_BACKENDS_VULKAN_VULKAN_PRIMITIVE_HPP_

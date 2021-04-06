@@ -15,14 +15,22 @@ namespace lna
     struct memory_pool;
     struct mat4;
 
+    enum class mesh_polygon_mode
+    {
+        UNKNOWN,
+        FILL,
+        LINE,
+    };
+
     struct mesh_backend_config
     {
         uint32_t            max_mesh_count;
         renderer_backend*   renderer_backend_ptr;
         memory_pool*        persistent_memory_pool_ptr;
+        mesh_polygon_mode   polygon_mode;
     };
 
-    struct vertex
+    struct mesh_vertex
     {
         vec3                position;
         vec4                color;
@@ -31,7 +39,7 @@ namespace lna
 
     struct mesh_config
     {
-        const vertex*       vertices;
+        const mesh_vertex*       vertices;
         const uint16_t*     indices;
         uint32_t            vertex_count;
         uint32_t            index_count;

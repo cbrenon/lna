@@ -1,17 +1,29 @@
-ROAD TO 3D GRAPHICS:
-  ✔ add depth buffering for 3D geometry                                                    @done(21-04-04 02:45)
-  ✔ display cuboid instead of flat sprite object                                           @done(21-04-04 22:09)
-  ☐ helper function in graphics folder to create cuboid
-  ☐ add cuboid random generator to simulate a city
 
 MISC:
+  ✔ primitive backend                                                                      @done(21-04-05 19:34)
+  ☐ use class function instead of raw function
+    code begins to be less readable using class/struct and class/struct functions will generate a more
+    readable code for me.
+  ☐ add basic shading for mesh backend
+    ☐ add more vertex to cuboid => x3
+      the reason is that each vertex is shared by 3 faces, so 3 different normals for
+      one vertex. It will be usefull too, when we will manage correct texture mapping
+    ☐ check for regression
+    ☐ add normal to mesh vertex struct
+    ☐ add normal to mesh vertex vulkan description
+    ☐ add normal to default vertex shader
+    ☐ check for regression
+    ☐ add basic shading light structure
+    ☐ add light to default vertex shader
+    ☐ check for regression
+    ☐ process light in fragment shader
+    ☐ validate
   ☐ fix all TODO in code
-
-DEBUG:
-
-IMPROVEMENTS:
+  ☐ be able to manage mesh without texture
 
 Archive:
+  ✔ add depth buffering for 3D geometry                                                    @done(21-04-04 02:45) @project(ROAD TO 3D GRAPHICS)
+  ✔ display cuboid instead of flat sprite object                                           @done(21-04-04 22:09) @project(ROAD TO 3D GRAPHICS)
   ✔ remove init function => prefer 0 initialization                                        @done(21-04-03 18:52) @project(TODO)
   ✔ extract graphics pipeline creation from renderer_backend                               @done(21-04-03 18:59) @project(TODO)
     graphics pipeline is linked to graphics object type so it must be created outside
