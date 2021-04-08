@@ -1,20 +1,5 @@
 
 MISC:
-  ✔ primitive backend                                                                      @done(21-04-05 19:34)
-  ☐ add basic shading for mesh backend
-    ✔ add more vertex to cuboid => x3                                                      @done(21-04-07 22:11)
-      the reason is that each vertex is shared by 3 faces, so 3 different normals for
-      one vertex. It will be usefull too, when we will manage correct texture mapping
-    ✔ check for regression                                                                 @done(21-04-07 22:11)
-    ✔ add normal to mesh vertex struct                                                     @done(21-04-07 22:13)
-    ✔ add normal to mesh vertex vulkan description                                         @done(21-04-07 22:19)
-    ✔ add normal to default vertex shader                                                  @done(21-04-07 22:23)
-    ✔ check for regression                                                                 @done(21-04-07 22:24)
-    ☐ add basic shading light structure
-    ☐ add light to default vertex shader
-    ☐ check for regression
-    ☐ process light in fragment shader
-    ☐ validate
   ☐ rename vulkan_backend to vulkan_renderer
     ☐ files
     ☐ struct
@@ -23,6 +8,21 @@ MISC:
   ☐ fix all TODO in code
 
 Archive:
+  ✔ primitive backend                                                                      @done(21-04-05 19:34) @project(MISC)
+  ✔ add basic shading for mesh backend                                                     @done(21-04-08 00:20) @project(MISC)
+  ✔ add more vertex to cuboid => x3                                                        @done(21-04-07 22:11) @project(MISC)
+    the reason is that each vertex is shared by 3 faces, so 3 different normals for
+    one vertex. It will be usefull too, when we will manage correct texture mapping
+  ✔ check for regression                                                                   @done(21-04-07 22:11) @project(MISC)
+  ✔ add normal to mesh vertex struct                                                       @done(21-04-07 22:13) @project(MISC)
+  ✔ add normal to mesh vertex vulkan description                                           @done(21-04-07 22:19) @project(MISC)
+  ✔ add normal to default vertex shader                                                    @done(21-04-07 22:23) @project(MISC)
+  ✔ check for regression                                                                   @done(21-04-07 22:24) @project(MISC)
+  ✔ add basic shading light structure                                                      @done(21-04-08 00:19) @project(MISC)
+  ✔ add light to default vertex shader                                                     @done(21-04-08 00:19) @project(MISC)
+  ✔ check for regression                                                                   @done(21-04-08 00:19) @project(MISC)
+  ✔ process light in fragment shader                                                       @done(21-04-08 00:19) @project(MISC)
+  ✔ validate                                                                               @done(21-04-08 00:19) @project(MISC)
   ✔ add depth buffering for 3D geometry                                                    @done(21-04-04 02:45) @project(ROAD TO 3D GRAPHICS)
   ✔ display cuboid instead of flat sprite object                                           @done(21-04-04 22:09) @project(ROAD TO 3D GRAPHICS)
   ✔ remove init function => prefer 0 initialization                                        @done(21-04-03 18:52) @project(TODO)
