@@ -35,11 +35,12 @@ namespace lna
         vec3                position;
         vec4                color;
         vec2                uv;
+        vec3                normal;
     };
 
     struct mesh_config
     {
-        const mesh_vertex*       vertices;
+        const mesh_vertex*  vertices;
         const uint16_t*     indices;
         uint32_t            vertex_count;
         uint32_t            index_count;

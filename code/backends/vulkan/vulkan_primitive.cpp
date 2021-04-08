@@ -56,19 +56,18 @@ namespace
         LNA_ASSERT(backend.renderer_backend_ptr);
         LNA_ASSERT(backend.renderer_backend_ptr->device);
         LNA_ASSERT(backend.renderer_backend_ptr->render_pass);
-        LNA_ASSERT(backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]);
         LNA_ASSERT(backend.pipeline_layout == VK_NULL_HANDLE);
         LNA_ASSERT(backend.pipeline == VK_NULL_HANDLE);
 
         VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
             backend.renderer_backend_ptr->device,
             "shaders/debug_primitive_vert.spv",
-            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
             backend.renderer_backend_ptr->device,
             "shaders/debug_primitive_frag.spv",
-            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkPipelineShaderStageCreateInfo shader_stage_create_infos[2]{};
         shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -275,17 +274,18 @@ namespace
         LNA_ASSERT(backend.renderer_backend_ptr->device);
         LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
         LNA_ASSERT(backend.renderer_backend_ptr->swap_chain_image_count > 0);
-        LNA_ASSERT(backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]);
 
         VkDeviceSize uniform_buffer_size    = sizeof(lna::vulkan_primitive_uniform_buffer_object);
         primitive.swap_chain_image_count         = backend.renderer_backend_ptr->swap_chain_image_count;
-        primitive.uniform_buffers                = (VkBuffer*)lna::memory_pool_reserve_memory(
-            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-            primitive.swap_chain_image_count * sizeof(VkBuffer)
+        primitive.uniform_buffers                = LNA_ALLOC(
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+            VkBuffer,
+            primitive.swap_chain_image_count
             );
-        primitive.uniform_buffers_memory         = (VkDeviceMemory*)lna::memory_pool_reserve_memory(
-            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-            primitive.swap_chain_image_count * sizeof(VkDeviceMemory)
+        primitive.uniform_buffers_memory         = LNA_ALLOC(
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+            VkDeviceMemory,
+            primitive.swap_chain_image_count
             );
 
         LNA_ASSERT(primitive.uniform_buffers);
@@ -317,12 +317,11 @@ namespace
         LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
         LNA_ASSERT(backend.descriptor_pool);
         LNA_ASSERT(backend.descriptor_set_layout);
-        LNA_ASSERT(backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]);
-        LNA_ASSERT(backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]);
 
-        VkDescriptorSetLayout* layouts = (VkDescriptorSetLayout*)lna::memory_pool_reserve_memory(
-            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL],
-            primitive.swap_chain_image_count * sizeof(VkDescriptorSetLayout)
+        VkDescriptorSetLayout* layouts = LNA_ALLOC(
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL],
+            VkDescriptorSetLayout,
+            primitive.swap_chain_image_count
             );
         LNA_ASSERT(layouts);
         for (uint32_t i = 0; i < primitive.swap_chain_image_count; ++i)
@@ -336,9 +335,10 @@ namespace
         allocate_info.descriptorSetCount    = primitive.swap_chain_image_count;
         allocate_info.pSetLayouts           = layouts;
 
-        primitive.descriptor_sets = (VkDescriptorSet*)lna::memory_pool_reserve_memory(
-            *backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-            primitive.swap_chain_image_count * sizeof(VkDescriptorSet)
+        primitive.descriptor_sets = LNA_ALLOC(
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
+            VkDescriptorSet,
+            primitive.swap_chain_image_count
             );
         LNA_ASSERT(primitive.descriptor_sets);
 
@@ -565,9 +565,10 @@ namespace lna
 
         backend.renderer_backend_ptr    = config.renderer_backend_ptr;
         backend.max_primitive_count     = config.max_primitive_count;
-        backend.primitives              = (primitive*)memory_pool_reserve_memory(
+        backend.primitives              = LNA_ALLOC(
             *config.persistent_memory_pool_ptr,
-            config.max_primitive_count * sizeof(primitive)
+            primitive,
+            config.max_primitive_count
             );
         LNA_ASSERT(backend.primitives);
         

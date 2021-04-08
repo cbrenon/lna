@@ -9,21 +9,22 @@ namespace lna
     struct memory_pool_manager;
     struct window_backend;
     struct renderer_backend;
+    struct default_allocator;
 
     struct renderer_backend_config
     {
-        const char*             application_name;
-        uint8_t                 application_major_ver;
-        uint8_t                 application_minor_ver;
-        uint8_t                 application_patch_ver;
-        const char*             engine_name;
-        uint8_t                 engine_major_ver;
-        uint8_t                 engine_minor_ver;
-        uint8_t                 engine_patch_ver;
-        bool                    enable_validation_layers;
-        window_backend*         window_ptr;
-        memory_pool_manager*    mem_pool_manager_ptr;
-        texture_backend*        texture_backend_ptr;
+        const char*         application_name;
+        uint8_t             application_major_ver;
+        uint8_t             application_minor_ver;
+        uint8_t             application_patch_ver;
+        const char*         engine_name;
+        uint8_t             engine_major_ver;
+        uint8_t             engine_minor_ver;
+        uint8_t             engine_patch_ver;
+        bool                enable_validation_layers;
+        window_backend*     window_ptr;
+        texture_backend*    texture_backend_ptr;
+        default_allocator*  allocator_ptr;
     };
 
     uint32_t renderer_memory_pool_count();

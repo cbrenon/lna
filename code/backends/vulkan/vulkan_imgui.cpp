@@ -363,7 +363,6 @@ namespace lna
         LNA_ASSERT(config.renderer_backend_ptr->command_pool);
         LNA_ASSERT(config.renderer_backend_ptr->graphics_queue);
         LNA_ASSERT(config.renderer_backend_ptr->render_pass);
-        LNA_ASSERT(config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]);
         LNA_ASSERT(config.texture_backend_ptr);
 
         vulkan_renderer_backend_register_swap_chain_callbacks(
@@ -613,12 +612,12 @@ namespace lna
         VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
             config.renderer_backend_ptr->device,
             "shaders/imgui_vert.spv",
-            *config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
             config.renderer_backend_ptr->device,
             "shaders/imgui_frag.spv",
-            *config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
             );
         shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shader_stage_create_infos[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;

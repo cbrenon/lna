@@ -19,9 +19,10 @@ namespace lna
         LNA_ASSERT(fd.is_open());
 
         f.content_size  = static_cast<uint32_t>(fd.tellg());
-        f.content       = (char*)memory_pool_reserve_memory(
+        f.content       = LNA_ALLOC(
             mem_pool,
-            f.content_size * sizeof(char)
+            char,
+            f.content_size
             );
         LNA_ASSERT(f.content);
 

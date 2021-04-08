@@ -62,9 +62,10 @@ namespace lna
             LNA_ASSERT(result == SDL_TRUE);
 
             window.extension_infos.count    = config.enable_validation_layers ? extension_count + 1 : extension_count;
-            window.extension_infos.names    = (const char **)memory_pool_reserve_memory(
+            window.extension_infos.names    = LNA_ALLOC(
                 *config.persistent_mem_pool_ptr,
-                window.extension_infos.count * sizeof(const char*)
+                const char*,
+                window.extension_infos.count
                 );
             LNA_ASSERT(window.extension_infos.names);
 

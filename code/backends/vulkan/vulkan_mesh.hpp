@@ -19,8 +19,10 @@ namespace lna
         VkDeviceMemory              index_buffer_memory;
         uint32_t                    vertex_count;
         uint32_t                    index_count;
-        VkBuffer*                   uniform_buffers;
-        VkDeviceMemory*             uniform_buffers_memory;
+        VkBuffer*                   mvp_uniform_buffers;
+        VkDeviceMemory*             mvp_uniform_buffers_memory;
+        VkBuffer*                   light_uniform_buffers;
+        VkDeviceMemory*             light_uniform_buffers_memory;
         VkDescriptorSet*            descriptor_sets;
         uint32_t                    swap_chain_image_count;
         texture*                    texture_ptr;

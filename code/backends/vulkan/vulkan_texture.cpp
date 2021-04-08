@@ -80,9 +80,10 @@ namespace lna
 
         backend.renderer_backend_ptr    = config.renderer_backend_ptr;
         backend.max_texture_count       = config.max_texture_count;
-        backend.textures                = (texture*)memory_pool_reserve_memory(
+        backend.textures                = LNA_ALLOC(
             *config.persistent_memory_pool_ptr,
-            config.max_texture_count * sizeof(texture)
+            texture,
+            config.max_texture_count
             );
         LNA_ASSERT(backend.textures);
 

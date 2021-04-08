@@ -5,6 +5,7 @@
 #include "backends/vulkan/vulkan_texture.hpp"
 #include "backends/vulkan/vulkan_mesh.hpp"
 #include "backends/vulkan/vulkan_imgui.hpp"
+#include "core/memory_pool.hpp"
 
 namespace lna
 {
@@ -58,7 +59,7 @@ namespace lna
             MEMORY_POOL_COUNT,
         };
 
-        memory_pool*                    memory_pools[MEMORY_POOL_COUNT];
+        memory_pool                     memory_pools[MEMORY_POOL_COUNT];
 
         enum
         {

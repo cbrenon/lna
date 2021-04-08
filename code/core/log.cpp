@@ -5,7 +5,7 @@
 
 void lna::log::message(const char* text, ...)
 {
-    if (lna::log::_level & lna::log::level::MESSAGE)
+    if (lna::log::_filter & lna::log::filter::SHOW_NONE)
     {
         va_list args;
         printf("lna> ");
@@ -18,7 +18,7 @@ void lna::log::message(const char* text, ...)
 
 void lna::log::warning(const char* text, ...)
 {
-    if (lna::log::_level & lna::log::level::WARNING)
+    if (lna::log::_filter & lna::log::filter::SHOW_WARNING)
     {
         va_list args;
         printf("lna> WARNING: ");
@@ -31,7 +31,7 @@ void lna::log::warning(const char* text, ...)
 
 void lna::log::error(const char* text, ...)
 {
-    if (lna::log::_level & lna::log::level::ERROR)
+    if (lna::log::_filter & lna::log::filter::SHOW_ERROR)
     {
         va_list args;
         printf("lna> ERROR: ");
