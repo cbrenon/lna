@@ -41,3 +41,16 @@ void lna::log::error(const char* text, ...)
         printf("\n");
     }
 }
+
+void lna::log::debug(const char* text, ...)
+{
+    if (lna::log::_filter & lna::log::filter::SHOW_ERROR)
+    {
+        va_list args;
+        printf("lna> DEBUG: ");
+        va_start(args, text);
+        vprintf(text, args);
+        va_end(args);
+        printf("\n");
+    }
+}

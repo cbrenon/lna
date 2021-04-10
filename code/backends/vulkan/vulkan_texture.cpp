@@ -33,6 +33,8 @@ namespace
         {
             case lna::texture_config::mipmap_mode::LINEAR:
                 return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            case lna::texture_config::mipmap_mode::NEAREST:
+                return VK_SAMPLER_MIPMAP_MODE_NEAREST;
             default:
                 return VK_SAMPLER_MIPMAP_MODE_MAX_ENUM;
         }
@@ -44,6 +46,8 @@ namespace
         {
             case lna::texture_config::filter::LINEAR:
                 return VK_FILTER_LINEAR;
+            case lna::texture_config::filter::NEAREST:
+                return VK_FILTER_NEAREST;
             default:
                 return VK_FILTER_MAX_ENUM;
         }
@@ -57,6 +61,8 @@ namespace
                 return VK_SAMPLER_ADDRESS_MODE_REPEAT;
             case lna::texture_config::sampler_address_mode::CLAMP_TO_EDGE:
                 return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            case lna::texture_config::sampler_address_mode::CLAMP_TO_BORDER:
+                return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
             default:
                 return VK_SAMPLER_ADDRESS_MODE_MAX_ENUM;
         }
@@ -80,12 +86,7 @@ namespace lna
 
         backend.renderer_backend_ptr    = config.renderer_backend_ptr;
         backend.max_texture_count       = config.max_texture_count;
-        backend.textures                = LNA_ALLOC(
-            *config.persistent_memory_pool_ptr,
-            texture,
-            config.max_texture_count
-            );
-        LNA_ASSERT(backend.textures);
+        backend.textures                = config.persistent_memory_pool_ptr->alloc<texture>(config.max_texture_count);
 
         for (uint32_t i = 0; i < backend.max_texture_count; ++i)
         {

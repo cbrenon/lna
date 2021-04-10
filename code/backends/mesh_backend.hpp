@@ -8,11 +8,11 @@
 
 namespace lna
 {
+    class memory_pool;
     struct renderer_backend;
     struct mesh_backend;
     struct mesh;
     struct texture;
-    struct memory_pool;
     struct mat4;
 
     enum class mesh_polygon_mode

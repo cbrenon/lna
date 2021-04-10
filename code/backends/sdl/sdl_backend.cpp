@@ -8,7 +8,11 @@ namespace
 {
     const uint16_t SDL_KEYBOARD_MAPPING[] =
     {
-        SDL_SCANCODE_ESCAPE, // KEY_ESC
+        SDL_SCANCODE_ESCAPE,
+        SDL_SCANCODE_W,
+        SDL_SCANCODE_S,
+        SDL_SCANCODE_A,
+        SDL_SCANCODE_D,
     };
 }
 
@@ -62,12 +66,7 @@ namespace lna
             LNA_ASSERT(result == SDL_TRUE);
 
             window.extension_infos.count    = config.enable_validation_layers ? extension_count + 1 : extension_count;
-            window.extension_infos.names    = LNA_ALLOC(
-                *config.persistent_mem_pool_ptr,
-                const char*,
-                window.extension_infos.count
-                );
-            LNA_ASSERT(window.extension_infos.names);
+            window.extension_infos.names    = config.persistent_mem_pool_ptr->alloc<const char*>(window.extension_infos.count);
 
             result = SDL_Vulkan_GetInstanceExtensions(
                 window.handle,
@@ -176,6 +175,7 @@ namespace lna
         key k
         )
     {
+        LNA_ASSERT(static_cast<size_t>(k) < (sizeof(SDL_KEYBOARD_MAPPING) / sizeof(SDL_KEYBOARD_MAPPING[0])));
         return input.curr_frame_keyboard_state[SDL_KEYBOARD_MAPPING[static_cast<size_t>(k)]] == 1;
     }
 

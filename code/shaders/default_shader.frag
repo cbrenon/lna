@@ -31,7 +31,7 @@ void main()
     vec3 diffuse            = diff * light_info.light_color;
 
     float specular_strength = 0.5;
-    float spec              = pow(max(dot(view_direction, reflect_direction), 0.0), 32);
+    float spec              = pow(max(dot(view_direction, reflect_direction), 0.0), 128);
     vec3 specular           = specular_strength * spec * light_info.light_color;
 
     vec3 object_color       = frag_color.xyz * texture(texture_sampler, frag_uv).xyz;

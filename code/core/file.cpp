@@ -5,31 +5,25 @@
 
 namespace lna
 {
-    void file_debug_load(
-        file& f,
+    void file::debug_load(
         const char* filename,
         bool binary,
         memory_pool& mem_pool
         )
     {
-        LNA_ASSERT(f.content == nullptr);
-        LNA_ASSERT(f.content_size == 0);
+        LNA_ASSERT(_content == nullptr);
+        LNA_ASSERT(_content_size == 0);
 
         std::ifstream fd(filename, binary ? std::ios::ate | std::ios::binary : std::ios::ate);
         LNA_ASSERT(fd.is_open());
 
-        f.content_size  = static_cast<uint32_t>(fd.tellg());
-        f.content       = LNA_ALLOC(
-            mem_pool,
-            char,
-            f.content_size
-            );
-        LNA_ASSERT(f.content);
+        _content_size  = static_cast<uint32_t>(fd.tellg());
+        _content       = mem_pool.alloc<char>(_content_size);
 
         fd.seekg(0);
         fd.read(
-            f.content,
-            f.content_size
+            _content,
+            _content_size
             );
         fd.close();
     }

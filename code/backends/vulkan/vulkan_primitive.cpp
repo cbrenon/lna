@@ -142,12 +142,12 @@ namespace
             | VK_COLOR_COMPONENT_A_BIT
             ;
         color_blend_attachment_state.blendEnable            = VK_FALSE;
-        // color_blend_attachment_state.srcColorBlendFactor    = VK_BLEND_FACTOR_ONE;
-        // color_blend_attachment_state.dstColorBlendFactor    = VK_BLEND_FACTOR_ZERO;
-        // color_blend_attachment_state.colorBlendOp           = VK_BLEND_OP_ADD;
-        // color_blend_attachment_state.srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE;
-        // color_blend_attachment_state.dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO;
-        // color_blend_attachment_state.alphaBlendOp           = VK_BLEND_OP_ADD;
+        color_blend_attachment_state.srcColorBlendFactor    = VK_BLEND_FACTOR_ONE;
+        color_blend_attachment_state.dstColorBlendFactor    = VK_BLEND_FACTOR_ZERO;
+        color_blend_attachment_state.colorBlendOp           = VK_BLEND_OP_ADD;
+        color_blend_attachment_state.srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE;
+        color_blend_attachment_state.dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO;
+        color_blend_attachment_state.alphaBlendOp           = VK_BLEND_OP_ADD;
 
         VkPipelineColorBlendStateCreateInfo color_blender_state_create_info{};
         color_blender_state_create_info.sType               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -277,19 +277,8 @@ namespace
 
         VkDeviceSize uniform_buffer_size    = sizeof(lna::vulkan_primitive_uniform_buffer_object);
         primitive.swap_chain_image_count         = backend.renderer_backend_ptr->swap_chain_image_count;
-        primitive.uniform_buffers                = LNA_ALLOC(
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-            VkBuffer,
-            primitive.swap_chain_image_count
-            );
-        primitive.uniform_buffers_memory         = LNA_ALLOC(
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-            VkDeviceMemory,
-            primitive.swap_chain_image_count
-            );
-
-        LNA_ASSERT(primitive.uniform_buffers);
-        LNA_ASSERT(primitive.uniform_buffers_memory);
+        primitive.uniform_buffers                = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkBuffer>(primitive.swap_chain_image_count);
+        primitive.uniform_buffers_memory         = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkDeviceMemory>(primitive.swap_chain_image_count);
 
         for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_image_count; ++i)
         {
@@ -318,12 +307,8 @@ namespace
         LNA_ASSERT(backend.descriptor_pool);
         LNA_ASSERT(backend.descriptor_set_layout);
 
-        VkDescriptorSetLayout* layouts = LNA_ALLOC(
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL],
-            VkDescriptorSetLayout,
-            primitive.swap_chain_image_count
-            );
-        LNA_ASSERT(layouts);
+        VkDescriptorSetLayout* layouts = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSetLayout>(primitive.swap_chain_image_count);
+
         for (uint32_t i = 0; i < primitive.swap_chain_image_count; ++i)
         {
             layouts[i] = backend.descriptor_set_layout;
@@ -335,12 +320,7 @@ namespace
         allocate_info.descriptorSetCount    = primitive.swap_chain_image_count;
         allocate_info.pSetLayouts           = layouts;
 
-        primitive.descriptor_sets = LNA_ALLOC(
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-            VkDescriptorSet,
-            primitive.swap_chain_image_count
-            );
-        LNA_ASSERT(primitive.descriptor_sets);
+        primitive.descriptor_sets = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSet>(primitive.swap_chain_image_count);
 
         VULKAN_CHECK_RESULT(
             vkAllocateDescriptorSets(
@@ -565,12 +545,7 @@ namespace lna
 
         backend.renderer_backend_ptr    = config.renderer_backend_ptr;
         backend.max_primitive_count     = config.max_primitive_count;
-        backend.primitives              = LNA_ALLOC(
-            *config.persistent_memory_pool_ptr,
-            primitive,
-            config.max_primitive_count
-            );
-        LNA_ASSERT(backend.primitives);
+        backend.primitives              = config.persistent_memory_pool_ptr->alloc<primitive>(config.max_primitive_count);
         
         for (uint32_t i = 0; i < backend.max_primitive_count; ++i)
         {
@@ -669,7 +644,7 @@ namespace lna
         //! VERTEX BUFFER PART
 
         {
-            lna::primitive_vertex vertices[] = // TODO: for the moment we only manage line
+            lna::primitive_vertex vertices[] = // TODO: for the moment we only manage line (by default) and raw vertices / indices
             {
                 {
                     { config.pos_a.x, config.pos_a.y, config.pos_a.z },
@@ -680,9 +655,9 @@ namespace lna
                     config.color,
                 },
             };
-            const uint32_t vertex_count = 2; // TODO: for the moment we only manage line
+            auto vertex_count = config.vertices ? config.vertex_count : 2; // TODO: for the moment we only manage line (by default) and raw vertices / indices
+            new_primitive.vertex_count = vertex_count;
 
-            new_primitive.vertex_count   = vertex_count;
             auto vertex_buffer_size = sizeof(vertices[0]) * new_primitive.vertex_count;
             VkBuffer        staging_buffer;
             VkDeviceMemory  staging_buffer_memory;
@@ -708,7 +683,7 @@ namespace lna
                 )
 	        std::memcpy(
                 vertices_data,
-                vertices,
+                config.vertices ? config.vertices : vertices,
                 vertex_buffer_size
                 );
 	        vkUnmapMemory(
@@ -747,13 +722,13 @@ namespace lna
         //! INDEX BUFFER PART
 
         {
-            uint16_t indices[] = // TODO: for the moment we only manage line
+            uint16_t indices[] = // TODO: for the moment we only manage line (by default) and raw vertices / indices
             {
                 0, 1
             };
-            uint32_t index_count = 2; // TODO: for the moment we only manage line
+            auto index_count = config.indices ? config.index_count : 2; // TODO: for the moment we only manage line (by default) and raw vertices / indices
+            new_primitive.index_count = index_count;
 
-            new_primitive.index_count   = index_count;
             auto index_buffer_size = sizeof(indices[0]) * new_primitive.index_count;
             VkBuffer        staging_buffer;
             VkDeviceMemory  staging_buffer_memory;
@@ -779,7 +754,7 @@ namespace lna
                 )
             std::memcpy(
                 indices_data,
-                indices,
+                config.indices ? config.indices : indices,
                 index_buffer_size
                 );
             vkUnmapMemory(

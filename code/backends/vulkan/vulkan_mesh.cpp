@@ -62,7 +62,7 @@ namespace
         result.attributes[2].location   = 2;
         result.attributes[2].format     = VK_FORMAT_R32G32_SFLOAT;
         result.attributes[2].offset     = offsetof(lna::mesh_vertex, uv);
-        
+
         result.attributes[3].binding    = 0;
         result.attributes[3].location   = 3;
         result.attributes[3].format     = VK_FORMAT_R32G32B32_SFLOAT;
@@ -306,19 +306,8 @@ namespace
 
         {
             VkDeviceSize uniform_buffer_size    = sizeof(lna::vulkan_mesh_uniform_mvp);
-            mesh.mvp_uniform_buffers                = LNA_ALLOC(
-                backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-                VkBuffer,
-                mesh.swap_chain_image_count
-                );
-            mesh.mvp_uniform_buffers_memory         = LNA_ALLOC(
-                backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-                VkDeviceMemory,
-                mesh.swap_chain_image_count
-                );
-
-            LNA_ASSERT(mesh.mvp_uniform_buffers);
-            LNA_ASSERT(mesh.mvp_uniform_buffers_memory);
+            mesh.mvp_uniform_buffers            = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkBuffer>(mesh.swap_chain_image_count);
+            mesh.mvp_uniform_buffers_memory     = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkDeviceMemory>(mesh.swap_chain_image_count);
 
             for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_image_count; ++i)
             {
@@ -336,19 +325,8 @@ namespace
 
         {
             VkDeviceSize uniform_buffer_size    = sizeof(lna::vulkan_mesh_uniform_light_info);
-            mesh.light_uniform_buffers          = LNA_ALLOC(
-                backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-                VkBuffer,
-                mesh.swap_chain_image_count
-                );
-            mesh.light_uniform_buffers_memory   = LNA_ALLOC(
-                backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-                VkDeviceMemory,
-                mesh.swap_chain_image_count
-                );
-    
-            LNA_ASSERT(mesh.light_uniform_buffers);
-            LNA_ASSERT(mesh.light_uniform_buffers_memory);
+            mesh.light_uniform_buffers          = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkBuffer>(mesh.swap_chain_image_count);
+            mesh.light_uniform_buffers_memory   = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkDeviceMemory>(mesh.swap_chain_image_count);
     
             for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_image_count; ++i)
             {
@@ -381,12 +359,8 @@ namespace
         LNA_ASSERT(mesh.texture_ptr->image_view);
         LNA_ASSERT(mesh.texture_ptr->sampler);
 
-        VkDescriptorSetLayout* layouts = LNA_ALLOC(
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL],
-            VkDescriptorSetLayout,
-            mesh.swap_chain_image_count
-            );
-        LNA_ASSERT(layouts);
+        VkDescriptorSetLayout* layouts = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSetLayout>(mesh.swap_chain_image_count);
+
         for (uint32_t i = 0; i < mesh.swap_chain_image_count; ++i)
         {
             layouts[i] = backend.descriptor_set_layout;
@@ -398,12 +372,7 @@ namespace
         allocate_info.descriptorSetCount    = mesh.swap_chain_image_count;
         allocate_info.pSetLayouts           = layouts;
 
-        mesh.descriptor_sets = LNA_ALLOC(
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL],
-            VkDescriptorSet,
-            mesh.swap_chain_image_count
-            );
-        LNA_ASSERT(mesh.descriptor_sets);
+        mesh.descriptor_sets = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSet>(mesh.swap_chain_image_count);
 
         VULKAN_CHECK_RESULT(
             vkAllocateDescriptorSets(
@@ -612,7 +581,7 @@ namespace
             {
                 lna::vulkan_mesh_uniform_light_info light_info{};
                 light_info.light_color      = { 1.0f, 1.0f, 1.0f }; // TODO: remove hard coded value!
-                light_info.light_position   = { 7.0f, 8.0f, 7.0f }; // TODO: remove hard coded value!
+                light_info.light_position   = { 2.0f, 2.0f, 2.0f }; // TODO: remove hard coded value!
                 light_info.view_position    = { 6.0f, 4.0f, 6.0f }; // TODO: remove hard coded value!
                 void* data;
                 VULKAN_CHECK_RESULT(
@@ -712,12 +681,7 @@ namespace lna
 
         backend.renderer_backend_ptr    = config.renderer_backend_ptr;
         backend.max_mesh_count          = config.max_mesh_count;
-        backend.meshes                  = LNA_ALLOC(
-            *config.persistent_memory_pool_ptr,
-            mesh,
-            config.max_mesh_count
-            );
-        LNA_ASSERT(backend.meshes);
+        backend.meshes                  = config.persistent_memory_pool_ptr->alloc<mesh>(config.max_mesh_count);
         
         for (uint32_t i = 0; i < backend.max_mesh_count; ++i)
         {

@@ -6,7 +6,7 @@
 
 namespace lna
 {
-    struct memory_pool;
+    class memory_pool;
     struct texture_backend;
     struct texture;
 

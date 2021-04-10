@@ -11,7 +11,7 @@ namespace lna
 {
     constexpr uint32_t VULKAN_MAX_FRAMES_IN_FLIGHT = 2;
 
-    struct memory_pool;
+    class memory_pool;
     struct renderer_backend;
 
     typedef void (*vulkan_on_swap_chain_cleanup)    (void* owner);

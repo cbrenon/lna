@@ -17,7 +17,7 @@
 
 namespace lna
 {
-    struct memory_pool;
+    class memory_pool;
 
     namespace vulkan_helpers
     {

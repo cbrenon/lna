@@ -7,10 +7,10 @@
 
 namespace lna
 {
+    class memory_pool;
     struct renderer_backend;
     struct primitive_backend;
     struct primitive;
-    struct memory_pool;
     struct mat4;
 
     struct primitive_backend_config
@@ -28,9 +28,17 @@ namespace lna
 
     struct primitive_config
     {
-        vec3                pos_a; // TODO: we will see later if we need to add more primitive types but for the moment we will manage only line type
-        vec3                pos_b; // TODO: we will see later if we need to add more primitive types but for the moment we will manage only line type
+        //! the only type managed for the moment, except of raw data, are lines
+        vec3                pos_a;      // TODO: we will see later if we need to add more primitive types but for the moment we will manage only line type
+        vec3                pos_b;      // TODO: we will see later if we need to add more primitive types but for the moment we will manage only line type
         vec4                color;
+
+        //! use to managed raw data
+        primitive_vertex*   vertices;
+        uint16_t*           indices;
+        uint32_t            vertex_count;
+        uint32_t            index_count;
+
         mat4*               model_mat_ptr;
         mat4*               view_mat_ptr;
         mat4*               projection_mat_ptr;

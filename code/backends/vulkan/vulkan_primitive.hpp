@@ -5,8 +5,8 @@
 
 namespace lna
 {
+    class memory_pool;
     struct renderer_backend;
-    struct memory_pool;
     struct mat4;
 
     struct primitive

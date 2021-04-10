@@ -1,5 +1,7 @@
 
 MISC:
+  ☐ more modern C++ friendly code
+  ☐ debug fly camera
   ☐ rename vulkan_backend to vulkan_renderer
     ☐ files
     ☐ struct

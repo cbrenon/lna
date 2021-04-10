@@ -5,8 +5,13 @@ namespace lna
 {
     enum class key
     {
-        KEY_ESC = 0,
+        KEY_ESC,
+        KEY_W,
+        KEY_S,
+        KEY_A,
+        KEY_D,
         KEY_COUNT,
+        KEY_UNKOWN,
     };
 
     enum class input_event

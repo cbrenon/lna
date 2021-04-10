@@ -6,10 +6,9 @@
 
 namespace lna
 {
-    struct memory_pool_manager;
+    class based_allocator;
     struct window_backend;
     struct renderer_backend;
-    struct default_allocator;
 
     struct renderer_backend_config
     {
@@ -24,7 +23,7 @@ namespace lna
         bool                enable_validation_layers;
         window_backend*     window_ptr;
         texture_backend*    texture_backend_ptr;
-        default_allocator*  allocator_ptr;
+        based_allocator*    allocator_ptr;
     };
 
     uint32_t renderer_memory_pool_count();

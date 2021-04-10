@@ -5,7 +5,7 @@
 
 namespace lna
 {
-    struct memory_pool;
+    class memory_pool;
 
     struct window_backend_config
     {

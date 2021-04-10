@@ -5,9 +5,9 @@
 
 namespace lna
 {
+    class memory_pool;
     struct texture_backend;
     struct renderer_backend;
-    struct memory_pool;
     struct texture;
 
     struct texture_backend_config
@@ -28,17 +28,20 @@ namespace lna
         enum class filter
         {
             LINEAR,
+            NEAREST,
         };
 
         enum class mipmap_mode
         {
             LINEAR,
+            NEAREST,
         };
 
         enum class sampler_address_mode
         {
             REPEAT,
             CLAMP_TO_EDGE,
+            CLAMP_TO_BORDER,
         };
 
         format                  fmt;
