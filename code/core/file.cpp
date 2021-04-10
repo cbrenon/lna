@@ -11,19 +11,18 @@ namespace lna
         memory_pool& mem_pool
         )
     {
-        LNA_ASSERT(_content == nullptr);
-        LNA_ASSERT(_content_size == 0);
+        LNA_ASSERT(_content.ptr() == nullptr);
+        LNA_ASSERT(_content.size() == 0);
 
         std::ifstream fd(filename, binary ? std::ios::ate | std::ios::binary : std::ios::ate);
         LNA_ASSERT(fd.is_open());
 
-        _content_size  = static_cast<uint32_t>(fd.tellg());
-        _content       = mem_pool.alloc<char>(_content_size);
+        _content.init(static_cast<uint32_t>(fd.tellg()), mem_pool);
 
         fd.seekg(0);
         fd.read(
-            _content,
-            _content_size
+            _content.ptr(),
+            _content.size()
             );
         fd.close();
     }

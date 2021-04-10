@@ -5,13 +5,12 @@
 #include "backends/vulkan/vulkan_texture.hpp"
 #include "backends/vulkan/vulkan_mesh.hpp"
 #include "backends/vulkan/vulkan_imgui.hpp"
-#include "core/memory_pool.hpp"
+#include "core/heap_array.hpp"
 
 namespace lna
 {
     constexpr uint32_t VULKAN_MAX_FRAMES_IN_FLIGHT = 2;
 
-    class memory_pool;
     struct renderer_backend;
 
     typedef void (*vulkan_on_swap_chain_cleanup)    (void* owner);
@@ -42,7 +41,7 @@ namespace lna
         VkImageView                     depth_image_view;
 
         //! PERSISTENT MEMORY POOL
-        VkFence*                        images_in_flight_fences;
+        heap_array<VkFence>             images_in_flight_fences {};
 
         //! SWAP CHAIN MEMORY POOL
         VkImage*                        swap_chain_images;

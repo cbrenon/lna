@@ -2,6 +2,7 @@
 #define _LNA_BACKENDS_WINDOW_BACKEND_HPP_
 
 #include <cstdint>
+#include "core/heap_array.hpp"
 
 namespace lna
 {
@@ -17,11 +18,7 @@ namespace lna
         memory_pool*            persistent_mem_pool_ptr;
     };
 
-    struct window_extension_infos
-    {
-        const char**    names;
-        uint32_t        count;
-    };
+    using window_extension_infos = heap_array<const char*>;
 
     struct window_backend;
 

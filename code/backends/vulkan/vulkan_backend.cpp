@@ -474,8 +474,8 @@ namespace
         VkInstanceCreateInfo instance_create_info {};
         instance_create_info.sType                      = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         instance_create_info.pApplicationInfo           = &application_info;
-        instance_create_info.enabledExtensionCount      = extensions.count;
-        instance_create_info.ppEnabledExtensionNames    = extensions.names;
+        instance_create_info.enabledExtensionCount      = extensions.size();
+        instance_create_info.ppEnabledExtensionNames    = extensions.ptr();
 
         if (config.enable_validation_layers)
         {
@@ -966,12 +966,10 @@ namespace
     {
         LNA_ASSERT(renderer.device);
 
-        renderer.images_in_flight_fences = renderer.memory_pools[lna::renderer_backend::PERSISTENT_LIFETIME_MEMORY_POOL].alloc<VkFence>(renderer.swap_chain_image_count);
-
-        for (uint32_t i = 0; i < renderer.swap_chain_image_count; ++i)
-        {
-            renderer.images_in_flight_fences[i] = nullptr;
-        }
+        renderer.images_in_flight_fences.init(
+            renderer.swap_chain_image_count,
+            renderer.memory_pools[lna::renderer_backend::PERSISTENT_LIFETIME_MEMORY_POOL]
+            );
 
         VkSemaphoreCreateInfo semaphore_create_info{};
         semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1157,7 +1155,7 @@ namespace lna
         LNA_ASSERT(renderer.render_pass == nullptr);
         LNA_ASSERT(renderer.command_pool == nullptr);
         LNA_ASSERT(renderer.curr_frame == 0);
-        LNA_ASSERT(renderer.images_in_flight_fences == nullptr);
+        LNA_ASSERT(renderer.images_in_flight_fences.ptr() == nullptr);
         LNA_ASSERT(renderer.swap_chain_images == nullptr);
         LNA_ASSERT(renderer.swap_chain_image_views == nullptr);
         LNA_ASSERT(renderer.swap_chain_framebuffers == nullptr);
@@ -1462,6 +1460,7 @@ namespace lna
                 nullptr
                 );
         }
+
         vkDestroyCommandPool(
             renderer.device,
             renderer.command_pool,

@@ -24,8 +24,8 @@ namespace lna
         )
     {
         LNA_ASSERT(window.handle == nullptr);
-        LNA_ASSERT(window.extension_infos.names == nullptr);
-        LNA_ASSERT(window.extension_infos.count == 0);
+        LNA_ASSERT(window.extension_infos.ptr() == nullptr);
+        LNA_ASSERT(window.extension_infos.size() == 0);
         LNA_ASSERT(window.width == 0);
         LNA_ASSERT(window.height == 0);
         LNA_ASSERT(config.persistent_mem_pool_ptr);
@@ -65,18 +65,20 @@ namespace lna
                 );
             LNA_ASSERT(result == SDL_TRUE);
 
-            window.extension_infos.count    = config.enable_validation_layers ? extension_count + 1 : extension_count;
-            window.extension_infos.names    = config.persistent_mem_pool_ptr->alloc<const char*>(window.extension_infos.count);
+            window.extension_infos.init(
+                config.enable_validation_layers ? extension_count + 1 : extension_count,
+                *config.persistent_mem_pool_ptr
+                );
 
             result = SDL_Vulkan_GetInstanceExtensions(
                 window.handle,
                 &extension_count,
-                window.extension_infos.names
+                window.extension_infos.ptr()
                 );
             LNA_ASSERT(result == SDL_TRUE);
             if (config.enable_validation_layers)
             {
-                window.extension_infos.names[extension_count] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+                window.extension_infos[extension_count] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
             }
         }
     }
