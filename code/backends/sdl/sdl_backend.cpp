@@ -128,6 +128,19 @@ namespace lna
         SDL_Quit();            
     }
 
+    void input_backend_init(
+        input_backend& input
+        )
+    {
+        SDL_GetMouseState(
+            &input.mouse_info.cur_pos_x,
+            &input.mouse_info.cur_pos_y
+            );
+        input.mouse_info.old_pos_x  = input.mouse_info.cur_pos_x;
+        input.mouse_info.old_pos_y  = input.mouse_info.cur_pos_y;
+        input.mouse_info.wheel_y    = 0;
+    }
+
     input_event input_backend_poll_events(
         input_backend& input
         )
@@ -141,6 +154,9 @@ namespace lna
             input.curr_frame_keyboard_state[i] = keystate[i];
         }
         SDL_JoystickEventState(SDL_DISABLE);
+
+        input.mouse_info.wheel_y = 0;
+
         while (SDL_PollEvent(&sdl_event))
         {
             ImGui_ImplSDL2_ProcessEvent(&sdl_event);
@@ -166,10 +182,32 @@ namespace lna
                             break;
                         }
                     }
+                    break;
+                }
+                case SDL_MOUSEWHEEL:
+                {
+                    input.mouse_info.wheel_y = sdl_event.wheel.y;
+                    break;
                 }
             }
         }
+        input.mouse_info.old_pos_x = input.mouse_info.cur_pos_x;
+        input.mouse_info.old_pos_y = input.mouse_info.cur_pos_y;
+        uint32_t mouse_state = SDL_GetMouseState(
+            &input.mouse_info.cur_pos_x,
+            &input.mouse_info.cur_pos_y
+            );
+        input.mouse_info.left_button_pressed    = SDL_BUTTON(SDL_BUTTON_LEFT) & mouse_state;
+        input.mouse_info.middle_button_pressed  = SDL_BUTTON(SDL_BUTTON_MIDDLE) & mouse_state;
+        input.mouse_info.right_button_pressed   = SDL_BUTTON(SDL_BUTTON_RIGHT) & mouse_state;
         return result;
+    }
+
+    const mouse& input_backend_mouse(
+        input_backend& input
+        )
+    {
+        return input.mouse_info;
     }
 
     bool input_backend_is_key_pressed(

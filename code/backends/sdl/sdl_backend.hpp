@@ -27,13 +27,14 @@ namespace lna
 
     struct input_backend
     {
-        Uint8 curr_frame_keyboard_state[SDL_NUM_SCANCODES];
+        Uint8                   curr_frame_keyboard_state[SDL_NUM_SCANCODES];
+        mouse                   mouse_info;
     };
 
     struct gamepad_backend
     {
-        gamepad_info        info;
-        SDL_GameController* device;
+        gamepad_info            info;
+        SDL_GameController*     device;
     };
 }
 

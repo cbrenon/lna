@@ -1,11 +1,11 @@
 
 MISC:
-  ☐ more modern C++ friendly code
-  ☐ debug fly camera
   ☐ be able to manage mesh without texture (default texture?)
   ☐ fix all TODO in code
 
 Archive:
+  ✔ more modern C++ friendly code                                                          @done(21-04-11 18:11) @project(MISC)
+  ✔ debug fly camera                                                                       @done(21-04-11 18:11) @project(MISC)
   ✔ rename vulkan_backend files to vulkan_renderer (only files)                            @done(21-04-11 00:33) @project(MISC)
   ✔ primitive backend                                                                      @done(21-04-05 19:34) @project(MISC)
   ✔ add basic shading for mesh backend                                                     @done(21-04-08 00:20) @project(MISC)
