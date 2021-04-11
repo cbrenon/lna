@@ -2,14 +2,11 @@
 MISC:
   ☐ more modern C++ friendly code
   ☐ debug fly camera
-  ☐ rename vulkan_backend to vulkan_renderer
-    ☐ files
-    ☐ struct
-    ☐ functions
   ☐ be able to manage mesh without texture (default texture?)
   ☐ fix all TODO in code
 
 Archive:
+  ✔ rename vulkan_backend files to vulkan_renderer (only files)                            @done(21-04-11 00:33) @project(MISC)
   ✔ primitive backend                                                                      @done(21-04-05 19:34) @project(MISC)
   ✔ add basic shading for mesh backend                                                     @done(21-04-08 00:20) @project(MISC)
   ✔ add more vertex to cuboid => x3                                                        @done(21-04-07 22:11) @project(MISC)

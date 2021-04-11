@@ -8,7 +8,7 @@
 namespace lna
 {
     class memory_pool;
-    struct renderer_backend;
+    struct backend_renderer;
     struct primitive_backend;
     struct primitive;
     struct mat4;
@@ -16,7 +16,7 @@ namespace lna
     struct primitive_backend_config
     {
         uint32_t            max_primitive_count;
-        renderer_backend*   renderer_backend_ptr;
+        backend_renderer*   renderer_backend_ptr;
         memory_pool*        persistent_memory_pool_ptr;
     };
 

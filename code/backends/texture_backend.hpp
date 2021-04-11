@@ -7,13 +7,13 @@ namespace lna
 {
     class memory_pool;
     struct texture_backend;
-    struct renderer_backend;
+    struct backend_renderer;
     struct texture;
 
     struct texture_backend_config
     {
         uint32_t            max_texture_count;
-        renderer_backend*   renderer_backend_ptr;
+        backend_renderer*   renderer_backend_ptr;
         memory_pool*        persistent_memory_pool_ptr;
     };
 

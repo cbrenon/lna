@@ -9,7 +9,7 @@
 namespace lna
 {
     class memory_pool;
-    struct renderer_backend;
+    struct backend_renderer;
     struct mesh_backend;
     struct mesh;
     struct texture;
@@ -25,7 +25,7 @@ namespace lna
     struct mesh_backend_config
     {
         uint32_t            max_mesh_count;
-        renderer_backend*   renderer_backend_ptr;
+        backend_renderer*   renderer_backend_ptr;
         memory_pool*        persistent_memory_pool_ptr;
         mesh_polygon_mode   polygon_mode;
     };

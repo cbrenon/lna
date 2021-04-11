@@ -18,7 +18,7 @@ namespace lna
 
     struct imgui_backend
     {
-        renderer_backend*               renderer_backend_ptr;
+        backend_renderer*               renderer_backend_ptr;
         VkBuffer                        vertex_buffer;
         VkDeviceMemory                  vertex_buffer_memory;
         VkBuffer                        index_buffer;

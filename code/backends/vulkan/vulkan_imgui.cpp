@@ -4,7 +4,7 @@
 #include "backends/vulkan/vulkan_imgui.hpp"
 #include "backends/vulkan/vulkan_helpers.hpp"
 #include "backends/vulkan/vulkan_texture.hpp"
-#include "backends/vulkan/vulkan_backend.hpp"
+#include "backends/vulkan/vulkan_renderer.hpp"
 #include "core/assert.hpp"
 #include "core/memory_pool.hpp"
 #include "imgui.h"
@@ -612,12 +612,12 @@ namespace lna
         VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
             config.renderer_backend_ptr->device,
             "shaders/imgui_vert.spv",
-            config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            config.renderer_backend_ptr->memory_pools[backend_renderer::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
             config.renderer_backend_ptr->device,
             "shaders/imgui_frag.spv",
-            config.renderer_backend_ptr->memory_pools[renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            config.renderer_backend_ptr->memory_pools[backend_renderer::FRAME_LIFETIME_MEMORY_POOL]
             );
         shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shader_stage_create_infos[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;

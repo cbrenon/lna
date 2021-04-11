@@ -8,7 +8,7 @@ namespace lna
 {
     class based_allocator;
     struct window_backend;
-    struct renderer_backend;
+    struct backend_renderer;
 
     struct renderer_backend_config
     {
@@ -29,23 +29,23 @@ namespace lna
     uint32_t renderer_memory_pool_count();
 
     void renderer_backend_init(
-        renderer_backend& renderer
+        backend_renderer& renderer
         );
 
     bool renderer_backend_configure(
-        renderer_backend& renderer,
+        backend_renderer& renderer,
         const renderer_backend_config& config
         );
  
     void renderer_backend_draw_frame(
-        renderer_backend& renderer,
+        backend_renderer& renderer,
         bool framebuffer_resized,
         uint32_t framebuffer_width,
         uint32_t framebuffer_height
         );
 
     void renderer_backend_release(
-        renderer_backend& renderer
+        backend_renderer& renderer
         );
 }
 

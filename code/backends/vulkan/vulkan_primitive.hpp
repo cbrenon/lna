@@ -7,7 +7,7 @@
 
 namespace lna
 {
-    struct renderer_backend;
+    struct backend_renderer;
     struct mat4;
 
     struct primitive
@@ -28,7 +28,7 @@ namespace lna
 
     struct primitive_backend
     {
-        renderer_backend*               renderer_backend_ptr;
+        backend_renderer*               renderer_backend_ptr;
         VkDescriptorSetLayout           descriptor_set_layout;
         VkDescriptorPool                descriptor_pool;
         VkPipelineLayout                pipeline_layout;

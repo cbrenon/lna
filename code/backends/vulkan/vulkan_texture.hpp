@@ -6,7 +6,7 @@
 
 namespace lna
 {
-    struct renderer_backend;
+    struct backend_renderer;
 
     struct texture
     {
@@ -18,7 +18,7 @@ namespace lna
 
     struct texture_backend
     {
-        renderer_backend*       renderer_backend_ptr;
+        backend_renderer*       renderer_backend_ptr;
         texture*                textures;
         uint32_t                cur_texture_count;
         uint32_t                max_texture_count;

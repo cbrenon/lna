@@ -11,13 +11,13 @@ namespace lna
 {
     constexpr uint32_t VULKAN_MAX_FRAMES_IN_FLIGHT = 2;
 
-    struct renderer_backend;
+    struct backend_renderer;
 
     typedef void (*vulkan_on_swap_chain_cleanup)    (void* owner);
     typedef void (*vulkan_on_swap_chain_recreate)   (void* owner);
     typedef void (*vulkan_on_draw)                  (void* owner, uint32_t command_buffer_image_index);
 
-    struct renderer_backend
+    struct backend_renderer
     {
         VkInstance                      instance;
         VkDebugUtilsMessengerEXT        debug_messenger;
@@ -71,7 +71,7 @@ namespace lna
         void*                           callback_owners[MAX_SWAP_CHAIN_CALLBACKS];
     };
 
-    constexpr size_t MEMORY_POOL_SIZES[renderer_backend::MEMORY_POOL_COUNT] =
+    constexpr size_t MEMORY_POOL_SIZES[backend_renderer::MEMORY_POOL_COUNT] =
     {
         256, // SIZE IN MEGABYTES
         256, // SIZE IN MEGABYTES
@@ -79,7 +79,7 @@ namespace lna
     };
 
     void vulkan_renderer_backend_register_swap_chain_callbacks(
-        renderer_backend&               backend,
+        backend_renderer&               backend,
         vulkan_on_swap_chain_cleanup    on_clean_up,
         vulkan_on_swap_chain_recreate   on_recreate,
         vulkan_on_draw                  on_draw,

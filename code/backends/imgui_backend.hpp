@@ -4,12 +4,12 @@
 namespace lna
 {
     struct imgui_backend;
-    struct renderer_backend;
+    struct backend_renderer;
     struct texture_backend;
 
     struct imgui_backend_config
     {
-        renderer_backend*   renderer_backend_ptr;
+        backend_renderer*   renderer_backend_ptr;
         texture_backend*    texture_backend_ptr;
         float               window_width;
         float               window_height;

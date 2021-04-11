@@ -3,7 +3,7 @@
 #include "backends/vulkan/vulkan_mesh.hpp"
 #include "backends/vulkan/vulkan_helpers.hpp"
 #include "backends/vulkan/vulkan_texture.hpp"
-#include "backends/vulkan/vulkan_backend.hpp"
+#include "backends/vulkan/vulkan_renderer.hpp"
 #include "core/assert.hpp"
 #include "core/memory_pool.hpp"
 #include "core/log.hpp"
@@ -83,12 +83,12 @@ namespace
         VkShaderModule vertex_shader_module = lna::vulkan_helpers::load_shader(
             backend.renderer_backend_ptr->device,
             "shaders/default_vert.spv",
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            backend.renderer_backend_ptr->memory_pools[lna::backend_renderer::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkShaderModule fragment_shader_module = lna::vulkan_helpers::load_shader(
             backend.renderer_backend_ptr->device,
             "shaders/default_frag.spv",
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL]
+            backend.renderer_backend_ptr->memory_pools[lna::backend_renderer::FRAME_LIFETIME_MEMORY_POOL]
             );
         VkPipelineShaderStageCreateInfo shader_stage_create_infos[2]{};
         shader_stage_create_infos[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -306,11 +306,11 @@ namespace
             VkDeviceSize uniform_buffer_size = sizeof(lna::vulkan_mesh_uniform_mvp);
             mesh.mvp_uniform_buffers.init(
                 backend.renderer_backend_ptr->swap_chain_images.size(),
-                backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+                backend.renderer_backend_ptr->memory_pools[lna::backend_renderer::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
                 );
             mesh.mvp_uniform_buffers_memory.init(
                 backend.renderer_backend_ptr->swap_chain_images.size(),
-                backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+                backend.renderer_backend_ptr->memory_pools[lna::backend_renderer::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
                 );
 
             for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_images.size(); ++i)
@@ -331,11 +331,11 @@ namespace
             VkDeviceSize uniform_buffer_size = sizeof(lna::vulkan_mesh_uniform_light_info);
             mesh.light_uniform_buffers.init(
                 backend.renderer_backend_ptr->swap_chain_images.size(),
-                backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+                backend.renderer_backend_ptr->memory_pools[lna::backend_renderer::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
                 );
             mesh.light_uniform_buffers_memory.init(
                 backend.renderer_backend_ptr->swap_chain_images.size(),
-                backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+                backend.renderer_backend_ptr->memory_pools[lna::backend_renderer::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
                 );
     
             for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_images.size(); ++i)
@@ -370,7 +370,7 @@ namespace
         LNA_ASSERT(mesh.texture_ptr->image_view);
         LNA_ASSERT(mesh.texture_ptr->sampler);
 
-        VkDescriptorSetLayout* layouts = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSetLayout>(backend.renderer_backend_ptr->swap_chain_images.size());
+        VkDescriptorSetLayout* layouts = backend.renderer_backend_ptr->memory_pools[lna::backend_renderer::FRAME_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSetLayout>(backend.renderer_backend_ptr->swap_chain_images.size());
 
         for (uint32_t i = 0; i < backend.renderer_backend_ptr->swap_chain_images.size(); ++i)
         {
@@ -385,7 +385,7 @@ namespace
 
         mesh.descriptor_sets.init(
             backend.renderer_backend_ptr->swap_chain_images.size(),
-            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+            backend.renderer_backend_ptr->memory_pools[lna::backend_renderer::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
             );
 
         VULKAN_CHECK_RESULT(
@@ -794,7 +794,7 @@ namespace lna
         LNA_ASSERT(new_mesh.index_buffer_memory == VK_NULL_HANDLE);
         LNA_ASSERT(new_mesh.vertex_count == 0);
         LNA_ASSERT(new_mesh.index_count == 0);
-        LNA_ASSERT(new_mesh.mvp_uniform_buffers.ptr());
+        LNA_ASSERT(new_mesh.mvp_uniform_buffers.ptr() == nullptr);
         LNA_ASSERT(new_mesh.mvp_uniform_buffers_memory.ptr() == nullptr);
         LNA_ASSERT(new_mesh.descriptor_sets.ptr() == nullptr);
         LNA_ASSERT(new_mesh.texture_ptr == nullptr);

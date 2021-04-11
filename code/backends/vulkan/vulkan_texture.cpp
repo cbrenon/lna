@@ -8,7 +8,7 @@
 #pragma clang diagnostic pop
 #include "backends/vulkan/vulkan_texture.hpp"
 #include "backends/vulkan/vulkan_helpers.hpp"
-#include "backends/vulkan/vulkan_backend.hpp"
+#include "backends/vulkan/vulkan_renderer.hpp"
 #include "backends/texture_backend.hpp"
 #include "core/memory_pool.hpp"
 
