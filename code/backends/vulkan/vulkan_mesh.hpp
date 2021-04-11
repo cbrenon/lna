@@ -2,12 +2,12 @@
 #define _LNA_BACKENDS_VULKAN_VULKAN_MESH_HPP_
 
 #include <vulkan/vulkan.h>
+#include "core/heap_array.hpp"
+#include "core/fixed_size_vector.hpp"
 
 namespace lna
 {
-    class memory_pool;
     struct renderer_backend;
-    struct mesh_vertex;
     struct texture;
     struct mat4;
 
@@ -19,12 +19,11 @@ namespace lna
         VkDeviceMemory              index_buffer_memory;
         uint32_t                    vertex_count;
         uint32_t                    index_count;
-        VkBuffer*                   mvp_uniform_buffers;
-        VkDeviceMemory*             mvp_uniform_buffers_memory;
-        VkBuffer*                   light_uniform_buffers;
-        VkDeviceMemory*             light_uniform_buffers_memory;
-        VkDescriptorSet*            descriptor_sets;
-        uint32_t                    swap_chain_image_count;
+        heap_array<VkBuffer>        mvp_uniform_buffers;
+        heap_array<VkDeviceMemory>  mvp_uniform_buffers_memory;
+        heap_array<VkBuffer>        light_uniform_buffers;
+        heap_array<VkDeviceMemory>  light_uniform_buffers_memory;
+        heap_array<VkDescriptorSet> descriptor_sets;
         texture*                    texture_ptr;
         mat4*                       model_mat_ptr;
         mat4*                       view_mat_ptr;
@@ -38,9 +37,7 @@ namespace lna
         VkDescriptorPool            descriptor_pool;
         VkPipelineLayout            pipeline_layout;
         VkPipeline                  pipeline;
-        mesh*                       meshes;
-        uint32_t                    cur_mesh_count;
-        uint32_t                    max_mesh_count;
+        fixed_size_vector<mesh>     meshes;
         VkPolygonMode               polygon_mode;
     };
 }

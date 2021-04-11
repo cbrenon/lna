@@ -24,6 +24,12 @@ namespace lna
                 _element_count  = element_count;
             }
 
+            void release()
+            {
+                _elements       = nullptr;
+                _element_count  = 0;
+            }
+
             inline T& operator[](size_t index)
             {
                 LNA_ASSERT(index < _element_count);

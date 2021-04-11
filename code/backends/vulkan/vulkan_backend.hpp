@@ -44,11 +44,10 @@ namespace lna
         heap_array<VkFence>             images_in_flight_fences {};
 
         //! SWAP CHAIN MEMORY POOL
-        VkImage*                        swap_chain_images;
-        VkImageView*                    swap_chain_image_views;
-        VkFramebuffer*                  swap_chain_framebuffers;
-        VkCommandBuffer*                command_buffers;
-        uint32_t                        swap_chain_image_count;
+        heap_array<VkImage>             swap_chain_images;
+        heap_array<VkImageView>         swap_chain_image_views;
+        heap_array<VkFramebuffer>       swap_chain_framebuffers;
+        heap_array<VkCommandBuffer>     command_buffers;
 
         enum memory_pool_id
         {

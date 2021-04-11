@@ -240,17 +240,17 @@ namespace
         LNA_ASSERT(backend.renderer_backend_ptr);
         LNA_ASSERT(backend.renderer_backend_ptr->device);
         LNA_ASSERT(backend.descriptor_pool == VK_NULL_HANDLE);
-        LNA_ASSERT(backend.max_primitive_count > 0);
+        LNA_ASSERT(backend.primitives.max_size() > 0);
 
         VkDescriptorPoolSize pool_sizes[1] {};
         pool_sizes[0].type              = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        pool_sizes[0].descriptorCount   = backend.renderer_backend_ptr->swap_chain_image_count;
+        pool_sizes[0].descriptorCount   = backend.renderer_backend_ptr->swap_chain_images.size();
 
         VkDescriptorPoolCreateInfo pool_create_info{};
         pool_create_info.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pool_create_info.poolSizeCount  = static_cast<uint32_t>(sizeof(pool_sizes) / sizeof(pool_sizes[0]));
         pool_create_info.pPoolSizes     = pool_sizes;
-        pool_create_info.maxSets        = backend.renderer_backend_ptr->swap_chain_image_count * backend.max_primitive_count;
+        pool_create_info.maxSets        = backend.renderer_backend_ptr->swap_chain_images.size() * backend.primitives.max_size();
 
         VULKAN_CHECK_RESULT(
             vkCreateDescriptorPool(
@@ -267,20 +267,26 @@ namespace
         lna::primitive_backend& backend
         )
     {
-        LNA_ASSERT(primitive.uniform_buffers == nullptr);
-        LNA_ASSERT(primitive.uniform_buffers_memory == nullptr);
-        LNA_ASSERT(primitive.swap_chain_image_count == 0);
+        LNA_ASSERT(primitive.uniform_buffers.ptr() == nullptr);
+        LNA_ASSERT(primitive.uniform_buffers_memory.ptr() == nullptr);
         LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->swap_chain_images.size());
         LNA_ASSERT(backend.renderer_backend_ptr->device);
         LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
-        LNA_ASSERT(backend.renderer_backend_ptr->swap_chain_image_count > 0);
+        LNA_ASSERT(backend.renderer_backend_ptr->swap_chain_images.size() > 0);
 
-        VkDeviceSize uniform_buffer_size    = sizeof(lna::vulkan_primitive_uniform_buffer_object);
-        primitive.swap_chain_image_count         = backend.renderer_backend_ptr->swap_chain_image_count;
-        primitive.uniform_buffers                = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkBuffer>(primitive.swap_chain_image_count);
-        primitive.uniform_buffers_memory         = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkDeviceMemory>(primitive.swap_chain_image_count);
+        VkDeviceSize uniform_buffer_size = sizeof(lna::vulkan_primitive_uniform_buffer_object);
 
-        for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_image_count; ++i)
+        primitive.uniform_buffers.init(
+            backend.renderer_backend_ptr->swap_chain_images.size(),
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+            );
+        primitive.uniform_buffers_memory.init(
+            backend.renderer_backend_ptr->swap_chain_images.size(),
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+            );
+
+        for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_images.size(); ++i)
         {
             lna::vulkan_helpers::create_buffer(
                 backend.renderer_backend_ptr->device,
@@ -299,17 +305,18 @@ namespace
         lna::primitive_backend& backend
         )
     {
-        LNA_ASSERT(primitive.descriptor_sets == nullptr);
-        LNA_ASSERT(primitive.swap_chain_image_count != 0 );
-        LNA_ASSERT(primitive.uniform_buffers_memory);
+        LNA_ASSERT(primitive.descriptor_sets.ptr() == nullptr);
+        LNA_ASSERT(primitive.uniform_buffers_memory.ptr());
+        LNA_ASSERT(backend.renderer_backend_ptr);
+        LNA_ASSERT(backend.renderer_backend_ptr->swap_chain_images.size() > 0);
         LNA_ASSERT(backend.renderer_backend_ptr->device);
         LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
         LNA_ASSERT(backend.descriptor_pool);
         LNA_ASSERT(backend.descriptor_set_layout);
 
-        VkDescriptorSetLayout* layouts = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSetLayout>(primitive.swap_chain_image_count);
+        VkDescriptorSetLayout* layouts = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::FRAME_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSetLayout>(backend.renderer_backend_ptr->swap_chain_images.size());
 
-        for (uint32_t i = 0; i < primitive.swap_chain_image_count; ++i)
+        for (uint32_t i = 0; i < backend.renderer_backend_ptr->swap_chain_images.size(); ++i)
         {
             layouts[i] = backend.descriptor_set_layout;
         }
@@ -317,20 +324,23 @@ namespace
         VkDescriptorSetAllocateInfo allocate_info{};
         allocate_info.sType                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocate_info.descriptorPool        = backend.descriptor_pool;
-        allocate_info.descriptorSetCount    = primitive.swap_chain_image_count;
+        allocate_info.descriptorSetCount    = backend.renderer_backend_ptr->swap_chain_images.size();
         allocate_info.pSetLayouts           = layouts;
 
-        primitive.descriptor_sets = backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL].alloc<VkDescriptorSet>(primitive.swap_chain_image_count);
+        primitive.descriptor_sets.init(
+            backend.renderer_backend_ptr->swap_chain_images.size(),
+            backend.renderer_backend_ptr->memory_pools[lna::renderer_backend::SWAP_CHAIN_LIFETIME_MEMORY_POOL]
+            );
 
         VULKAN_CHECK_RESULT(
             vkAllocateDescriptorSets(
                 backend.renderer_backend_ptr->device,
                 &allocate_info,
-                primitive.descriptor_sets
+                primitive.descriptor_sets.ptr()
                 )
             )
 
-        for (size_t i = 0; i < primitive.swap_chain_image_count; ++i)
+        for (size_t i = 0; i < backend.renderer_backend_ptr->swap_chain_images.size(); ++i)
         {
             VkDescriptorBufferInfo buffer_info{};
             buffer_info.buffer  = primitive.uniform_buffers[i];
@@ -377,31 +387,30 @@ namespace
             nullptr
             );
 
-        for (uint32_t i = 0; i < backend->cur_primitive_count; ++i)
+        for (auto& primitive_iter : backend->primitives)
         {
-            for (size_t j = 0; j < backend->primitives[i].swap_chain_image_count; ++j)
+            for (size_t j = 0; j < backend->renderer_backend_ptr->swap_chain_images.size(); ++j)
             {
                 vkDestroyBuffer(
                     backend->renderer_backend_ptr->device,
-                    backend->primitives[i].uniform_buffers[j],
+                    primitive_iter.uniform_buffers[j],
                     nullptr
                     );
                 vkFreeMemory(
                     backend->renderer_backend_ptr->device,
-                    backend->primitives[i].uniform_buffers_memory[j],
+                    primitive_iter.uniform_buffers_memory[j],
                     nullptr
                     );
             }
-            backend->primitives[i].uniform_buffers          = nullptr;
-            backend->primitives[i].uniform_buffers_memory   = nullptr;
-            backend->primitives[i].swap_chain_image_count   = 0;
+            primitive_iter.uniform_buffers.release();
+            primitive_iter.uniform_buffers_memory.release();
 
-            // NOTE: no need to explicity clean up vulkan descriptor sets objects
-            // because it is done when the vulkan descriptor pool is destroyed.
-            // we just have to reset the array and wait for filling it again.
-            // the memory pool where we reserved memory for descriptor_sets has already
-            // been reset by the vulkan renderer backend.
-            backend->primitives[i].descriptor_sets = nullptr;
+            //! NOTE: no need to explicity clean up vulkan descriptor sets objects
+            //! because it is done when the vulkan descriptor pool is destroyed.
+            //! we just have to reset the array and wait for filling it again.
+            //! the memory pool where we reserved memory for descriptor_sets has already
+            //! been reset by the vulkan renderer backend.
+            primitive_iter.descriptor_sets.release();
         }
         vkDestroyDescriptorPool(
             backend->renderer_backend_ptr->device,
@@ -419,7 +428,7 @@ namespace
         vulkan_primitive_create_graphics_pipeline(*backend);
         vulkan_primitive_create_descriptor_pool(*backend);
 
-        for (uint32_t i = 0; i < backend->cur_primitive_count; ++i)
+        for (uint32_t i = 0; i < backend->primitives.cur_size(); ++i)
         {
             vulkan_primitive_create_uniform_buffer(
                 backend->primitives[i],
@@ -442,7 +451,7 @@ namespace
         lna::primitive_backend* backend = (lna::primitive_backend*)owner;
 
         LNA_ASSERT(backend->renderer_backend_ptr);
-        LNA_ASSERT(command_buffer_image_index < backend->renderer_backend_ptr->swap_chain_image_count);
+        LNA_ASSERT(command_buffer_image_index < backend->renderer_backend_ptr->swap_chain_images.size());
         LNA_ASSERT(backend->renderer_backend_ptr->device);
 
          vkCmdBindPipeline(
@@ -450,22 +459,23 @@ namespace
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 backend->pipeline
                 );
-        for (uint32_t m = 0; m < backend->cur_primitive_count; ++m)
+        
+        for (auto& primitive_iter : backend->primitives)
         {
-            LNA_ASSERT(backend->primitives[m].model_mat_ptr);
-            LNA_ASSERT(backend->primitives[m].view_mat_ptr);
-            LNA_ASSERT(backend->primitives[m].projection_mat_ptr);
+            LNA_ASSERT(primitive_iter.model_mat_ptr);
+            LNA_ASSERT(primitive_iter.view_mat_ptr);
+            LNA_ASSERT(primitive_iter.projection_mat_ptr);
 
             lna::vulkan_primitive_uniform_buffer_object ubo{};
-            ubo.model       = *backend->primitives[m].model_mat_ptr;
-            ubo.view        = *backend->primitives[m].view_mat_ptr;
-            ubo.projection  = *backend->primitives[m].projection_mat_ptr;
+            ubo.model       = *primitive_iter.model_mat_ptr;
+            ubo.view        = *primitive_iter.view_mat_ptr;
+            ubo.projection  = *primitive_iter.projection_mat_ptr;
 
             void* data;
             VULKAN_CHECK_RESULT(
                 vkMapMemory(
                     backend->renderer_backend_ptr->device,
-                    backend->primitives[m].uniform_buffers_memory[command_buffer_image_index],
+                    primitive_iter.uniform_buffers_memory[command_buffer_image_index],
                     0,
                     sizeof(ubo),
                     0,
@@ -479,7 +489,7 @@ namespace
                 );
             vkUnmapMemory(
                 backend->renderer_backend_ptr->device,
-                backend->primitives[m].uniform_buffers_memory[command_buffer_image_index]
+                primitive_iter.uniform_buffers_memory[command_buffer_image_index]
                 );
 
             vkCmdBindDescriptorSets(
@@ -488,11 +498,11 @@ namespace
                 backend->pipeline_layout,
                 0,
                 1,
-                &backend->primitives[m].descriptor_sets[command_buffer_image_index],
+                &primitive_iter.descriptor_sets[command_buffer_image_index],
                 0,
                 nullptr
                 );
-            VkBuffer        vertex_buffers[]    = { backend->primitives[m].vertex_buffer };
+            VkBuffer        vertex_buffers[]    = { primitive_iter.vertex_buffer };
             VkDeviceSize    offsets[]           = { 0 };
             vkCmdBindVertexBuffers(
                 backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
@@ -503,13 +513,13 @@ namespace
                 );
             vkCmdBindIndexBuffer(
                 backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
-                backend->primitives[m].index_buffer,
+                primitive_iter.index_buffer,
                 0,
                 VK_INDEX_TYPE_UINT16
                 );
             vkCmdDrawIndexed(
                 backend->renderer_backend_ptr->command_buffers[command_buffer_image_index],
-                backend->primitives[m].index_count,
+                primitive_iter.index_count,
                 1,
                 0,
                 0,
@@ -528,9 +538,7 @@ namespace lna
     {
         LNA_ASSERT(backend.renderer_backend_ptr == nullptr);
         LNA_ASSERT(backend.descriptor_set_layout == VK_NULL_HANDLE);
-        LNA_ASSERT(backend.primitives == nullptr);
-        LNA_ASSERT(backend.cur_primitive_count == 0);
-        LNA_ASSERT(backend.max_primitive_count == 0);
+        LNA_ASSERT(backend.primitives.ptr() == nullptr);
         LNA_ASSERT(config.renderer_backend_ptr);
         LNA_ASSERT(config.persistent_memory_pool_ptr);
         LNA_ASSERT(config.max_primitive_count > 0 );
@@ -543,25 +551,28 @@ namespace lna
             &backend
             );
 
-        backend.renderer_backend_ptr    = config.renderer_backend_ptr;
-        backend.max_primitive_count     = config.max_primitive_count;
-        backend.primitives              = config.persistent_memory_pool_ptr->alloc<primitive>(config.max_primitive_count);
+        backend.renderer_backend_ptr = config.renderer_backend_ptr;
+
+        backend.primitives.init(
+            config.max_primitive_count,
+            *config.persistent_memory_pool_ptr
+            );
         
-        for (uint32_t i = 0; i < backend.max_primitive_count; ++i)
-        {
-            backend.primitives[i].vertex_buffer             = VK_NULL_HANDLE;
-            backend.primitives[i].vertex_buffer_memory      = VK_NULL_HANDLE;
-            backend.primitives[i].index_buffer              = VK_NULL_HANDLE;
-            backend.primitives[i].index_buffer_memory       = VK_NULL_HANDLE;
-            backend.primitives[i].vertex_count              = 0;
-            backend.primitives[i].index_count               = 0;
-            backend.primitives[i].uniform_buffers           = nullptr;
-            backend.primitives[i].uniform_buffers_memory    = nullptr;
-            backend.primitives[i].descriptor_sets           = nullptr;
-            backend.primitives[i].swap_chain_image_count    = 0;
-            backend.primitives[i].view_mat_ptr              = nullptr;
-            backend.primitives[i].projection_mat_ptr        = nullptr;
-        }
+        // for (uint32_t i = 0; i < backend.max_primitive_count; ++i)
+        // {
+        //     backend.primitives[i].vertex_buffer             = VK_NULL_HANDLE;
+        //     backend.primitives[i].vertex_buffer_memory      = VK_NULL_HANDLE;
+        //     backend.primitives[i].index_buffer              = VK_NULL_HANDLE;
+        //     backend.primitives[i].index_buffer_memory       = VK_NULL_HANDLE;
+        //     backend.primitives[i].vertex_count              = 0;
+        //     backend.primitives[i].index_count               = 0;
+        //     backend.primitives[i].uniform_buffers           = nullptr;
+        //     backend.primitives[i].uniform_buffers_memory    = nullptr;
+        //     backend.primitives[i].descriptor_sets           = nullptr;
+        //     backend.primitives[i].swap_chain_image_count    = 0;
+        //     backend.primitives[i].view_mat_ptr              = nullptr;
+        //     backend.primitives[i].projection_mat_ptr        = nullptr;
+        // }
 
         //! DESCRIPTOR SET LAYOUT
 
@@ -616,12 +627,10 @@ namespace lna
         LNA_ASSERT(backend.renderer_backend_ptr->physical_device);
         LNA_ASSERT(backend.renderer_backend_ptr->command_pool);
         LNA_ASSERT(backend.renderer_backend_ptr->graphics_queue);
-        LNA_ASSERT(backend.primitives);
-        LNA_ASSERT(backend.cur_primitive_count < backend.max_primitive_count);
         LNA_ASSERT(config.view_mat_ptr);
         LNA_ASSERT(config.projection_mat_ptr);
 
-        primitive& new_primitive = backend.primitives[backend.cur_primitive_count++];
+        primitive& new_primitive = backend.primitives.new_element();
 
         LNA_ASSERT(new_primitive.vertex_buffer == VK_NULL_HANDLE);
         LNA_ASSERT(new_primitive.vertex_buffer_memory == VK_NULL_HANDLE);
@@ -629,10 +638,9 @@ namespace lna
         LNA_ASSERT(new_primitive.index_buffer_memory == VK_NULL_HANDLE);
         LNA_ASSERT(new_primitive.vertex_count == 0);
         LNA_ASSERT(new_primitive.index_count == 0);
-        LNA_ASSERT(new_primitive.uniform_buffers == nullptr);
-        LNA_ASSERT(new_primitive.uniform_buffers_memory == nullptr);
-        LNA_ASSERT(new_primitive.descriptor_sets == nullptr);
-        LNA_ASSERT(new_primitive.swap_chain_image_count == 0);
+        LNA_ASSERT(new_primitive.uniform_buffers.ptr() == nullptr);
+        LNA_ASSERT(new_primitive.uniform_buffers_memory.ptr() == nullptr);
+        LNA_ASSERT(new_primitive.descriptor_sets.ptr() == nullptr);
         LNA_ASSERT(new_primitive.model_mat_ptr == nullptr);
         LNA_ASSERT(new_primitive.view_mat_ptr == nullptr);
         LNA_ASSERT(new_primitive.projection_mat_ptr == nullptr);
@@ -822,26 +830,26 @@ namespace lna
                 );
         }
 
-        for (uint32_t i = 0; i < backend.cur_primitive_count; ++i)
+        for (auto& primitive_iter : backend.primitives)
         {
             vkDestroyBuffer(
                 backend.renderer_backend_ptr->device,
-                backend.primitives[i].index_buffer,
+                primitive_iter.index_buffer,
                 nullptr
                 );
             vkFreeMemory(
                 backend.renderer_backend_ptr->device,
-                backend.primitives[i].index_buffer_memory,
+                primitive_iter.index_buffer_memory,
                 nullptr
                 );
             vkDestroyBuffer(
                 backend.renderer_backend_ptr->device,
-                backend.primitives[i].vertex_buffer,
+                primitive_iter.vertex_buffer,
                 nullptr
                 );
             vkFreeMemory(
                 backend.renderer_backend_ptr->device,
-                backend.primitives[i].vertex_buffer_memory,
+                primitive_iter.vertex_buffer_memory,
                 nullptr
                 );
         }
