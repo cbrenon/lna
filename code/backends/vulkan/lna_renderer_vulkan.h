@@ -49,6 +49,7 @@ typedef struct lna_renderer_s
     lna_vulkan_image_view_array_t       swap_chain_image_views;
     lna_vulkan_frame_buffer_array_t     swap_chain_framebuffers;
     lna_vulkan_command_buffer_array_t   command_buffers;
+    uint32_t                            image_index;
 } lna_renderer_t;
 
 #endif

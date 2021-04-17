@@ -1297,7 +1297,7 @@ bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* co
     return true;
 }
 
-void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint32_t window_width, uint32_t window_height)
+void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_width, uint32_t window_height)
 {
     lna_assert(renderer)
     lna_assert(renderer->device)
@@ -1312,14 +1312,13 @@ void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint
             )
         )
 
-    uint32_t image_index;
     VkResult result = vkAcquireNextImageKHR(
         renderer->device,
         renderer->swap_chain,
         UINT64_MAX,
         renderer->image_available_semaphores[renderer->curr_frame],
         VK_NULL_HANDLE,
-        &image_index
+        &renderer->image_index
         );
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
@@ -1335,20 +1334,20 @@ void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint
         lna_assert(0)
     }
 
-    lna_assert(renderer->images_in_flight_fences.element_count > image_index)
-    if (renderer->images_in_flight_fences.elements[image_index] != VK_NULL_HANDLE)
+    lna_assert(renderer->images_in_flight_fences.element_count > renderer->image_index)
+    if (renderer->images_in_flight_fences.elements[renderer->image_index] != VK_NULL_HANDLE)
     {
         VULKAN_CHECK_RESULT(
             vkWaitForFences(
                 renderer->device,
                 1,
-                &renderer->images_in_flight_fences.elements[image_index],
+                &renderer->images_in_flight_fences.elements[renderer->image_index],
                 VK_TRUE,
                 UINT64_MAX
                 )
             )
     }
-    renderer->images_in_flight_fences.elements[image_index] = renderer->in_flight_fences[renderer->curr_frame];
+    renderer->images_in_flight_fences.elements[renderer->image_index] = renderer->in_flight_fences[renderer->curr_frame];
 
     VULKAN_CHECK_RESULT(
         vkResetFences(
@@ -1357,21 +1356,6 @@ void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint
             &renderer->in_flight_fences[renderer->curr_frame]
             )
         )
-
-    const VkSemaphore wait_semaphores[] =
-    {
-        renderer->image_available_semaphores[renderer->curr_frame],
-    };
-
-    const VkPipelineStageFlags wait_stages[] =
-    {
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    };
-
-    const VkSemaphore signal_semaphores[] =
-    {
-        renderer->render_finished_semaphores[renderer->curr_frame],
-    };
 
     const VkClearValue clear_values[2] =
     {
@@ -1409,14 +1393,14 @@ void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint
 
     VULKAN_CHECK_RESULT(
         vkResetCommandBuffer(
-            renderer->command_buffers.elements[image_index],
+            renderer->command_buffers.elements[renderer->image_index],
             VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
             )
         )
 
     VULKAN_CHECK_RESULT(
         vkBeginCommandBuffer(
-            renderer->command_buffers.elements[image_index],
+            renderer->command_buffers.elements[renderer->image_index],
             &command_buffer_begin_info
             )
         )
@@ -1425,7 +1409,7 @@ void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint
     {
         .sType              = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass         = renderer->render_pass,
-        .framebuffer        = renderer->swap_chain_framebuffers.elements[image_index],
+        .framebuffer        = renderer->swap_chain_framebuffers.elements[renderer->image_index],
         .renderArea.offset  = { 0, 0 },
         .renderArea.extent  = renderer->swap_chain_extent,
         .clearValueCount    = clear_value_count,
@@ -1433,45 +1417,51 @@ void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint
     };
 
     vkCmdBeginRenderPass(
-        renderer->command_buffers.elements[image_index],
+        renderer->command_buffers.elements[renderer->image_index],
         &render_pass_begin_info,
         VK_SUBPASS_CONTENTS_INLINE
         );
     vkCmdSetViewport(
-        renderer->command_buffers.elements[image_index],
+        renderer->command_buffers.elements[renderer->image_index],
         0,
         1,
         &viewport
         );
     vkCmdSetScissor(
-        renderer->command_buffers.elements[image_index],
+        renderer->command_buffers.elements[renderer->image_index],
         0,
         1,
         &scissor_rect
         );
+}
 
-        // TODO: uncomment and migrate to C if we stay with callback for draw
-        // for (uint32_t j = 0; j < backend_renderer::MAX_SWAP_CHAIN_CALLBACKS; ++j)
-        // {
-        //     if (
-        //         renderer.draw_callbacks[j]
-        //         && renderer.callback_owners[j]
-        //         )
-        //     {
-        //         renderer.draw_callbacks[j](renderer.callback_owners[j], i);
-        //     }
-        // }
+void lna_renderer_end_draw_frame(lna_renderer_t* renderer, bool window_resized, uint32_t window_width, uint32_t window_height)
+{
+    const VkSemaphore wait_semaphores[] =
+    {
+        renderer->image_available_semaphores[renderer->curr_frame],
+    };
+
+    const VkPipelineStageFlags wait_stages[] =
+    {
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    };
+
+    const VkSemaphore signal_semaphores[] =
+    {
+        renderer->render_finished_semaphores[renderer->curr_frame],
+    };
 
     vkCmdEndRenderPass(
-        renderer->command_buffers.elements[image_index]
+        renderer->command_buffers.elements[renderer->image_index]
         );
     VULKAN_CHECK_RESULT(
         vkEndCommandBuffer(
-            renderer->command_buffers.elements[image_index]
+            renderer->command_buffers.elements[renderer->image_index]
             )
         )
 
-    lna_assert(renderer->command_buffers.element_count > image_index)
+    lna_assert(renderer->command_buffers.element_count > renderer->image_index)
     const VkSubmitInfo submit_info =
     {
         .sType                  = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -1479,7 +1469,7 @@ void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint
         .pWaitSemaphores        = wait_semaphores,
         .pWaitDstStageMask      = wait_stages,
         .commandBufferCount     = 1,
-        .pCommandBuffers        = &renderer->command_buffers.elements[image_index],
+        .pCommandBuffers        = &renderer->command_buffers.elements[renderer->image_index],
         .signalSemaphoreCount   = 1,
         .pSignalSemaphores      = signal_semaphores,
     };
@@ -1505,11 +1495,11 @@ void lna_renderer_draw_frame(lna_renderer_t* renderer, bool window_resized, uint
         .pWaitSemaphores    = signal_semaphores,
         .swapchainCount     = 1,
         .pSwapchains        = swap_chains,
-        .pImageIndices      = &image_index,
+        .pImageIndices      = &renderer->image_index,
         .pResults           = NULL,
     };
 
-    result = vkQueuePresentKHR(
+    VkResult result = vkQueuePresentKHR(
         renderer->present_queue,
         &present_info
         );
