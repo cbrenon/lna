@@ -53,6 +53,9 @@
     lna_assert(array);                                                      \
     lna_assert((array)->elements);                                          \
     lna_assert((array)->cur_element_count < (array)->max_element_count);    \
-    result = &((array)->elements[array->cur_element_count++]) //! we do not add ; to let user add the ; when he uses the macro
+    result = &((array)->elements[(array)->cur_element_count++]) //! we do not add ; to let user add the ; when he uses the macro
+
+#define lna_vector_size(array)          ((array)->cur_element_count)
+#define lna_vector_max_capacity(array)  ((array)->max_element_count)
 
 #endif

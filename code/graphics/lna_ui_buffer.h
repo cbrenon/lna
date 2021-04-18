@@ -5,6 +5,8 @@
 #include "maths/lna_vec2.h"
 #include "maths/lna_vec4.h"
 
+typedef struct lna_memory_pool_s lna_memory_pool_t;
+
 typedef struct lna_ui_vertex_s
 {
     lna_vec2_t  position;
@@ -21,8 +23,6 @@ typedef struct lna_ui_buffer_s
     uint32_t            max_index_count;
     uint32_t            cur_index_count;
 } lna_ui_buffer_t;
-
-typedef struct lna_memory_pool_s lna_memory_pool_t;
 
 typedef struct lna_ui_buffer_config_s
 {

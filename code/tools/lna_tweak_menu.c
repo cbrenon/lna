@@ -7,6 +7,8 @@
 #include "core/lna_assert.h"
 #include "core/lna_string.h"
 #include "backends/lna_input.h"
+#include "graphics/lna_texture_atlas.h"
+#include "graphics/lna_ui_buffer.h"
 
 typedef enum lna_tweak_menu_node_type_e
 {
@@ -79,7 +81,7 @@ typedef struct lna_tweak_menu_navigation_s
 
 typedef struct lna_tweak_menu_graphics_s
 {
-    lna_ui_buffer_t             buffer;
+    lna_ui_buffer_t*            buffer;
     float                       font_size;
     float                       leading;
     float                       spacing;
@@ -196,6 +198,7 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
 
     g_tweak_menu->navigation.edit_mode  = false;
 
+    g_tweak_menu->graphics.buffer                   = config->ui_buffer;
     g_tweak_menu->graphics.font_size                = config->font_size;
     g_tweak_menu->graphics.leading                  = config->leading;
     g_tweak_menu->graphics.spacing                  = config->spacing;
@@ -208,7 +211,7 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
         (float)(config->font_texture_atlas_info->row_count / config->font_texture_atlas_info->height) / (float)config->font_texture_atlas_info->height,
     };
     lna_ui_buffer_init(
-        &g_tweak_menu->graphics.buffer,
+        g_tweak_menu->graphics.buffer,
         &(lna_ui_buffer_config_t)
         {
             .memory_pool = config->memory_pool,
@@ -475,7 +478,7 @@ static const lna_vec4_t LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_COUNT
 static const float LNA_TWEAK_MENU_OUTLINE_SIZE  = 2.0f;
 static const float LNA_TWEAK_MENU_PADDING       = 4.0f;
 
-const lna_ui_buffer_t* lna_tweak_menu_build_ui_buffer(void)
+void lna_tweak_menu_build_ui_buffer(void)
 {
     //? Drawing here is just rebuild the buffer from scratch using the current page node information.
     //? It is done in N part:
@@ -503,10 +506,10 @@ const lna_ui_buffer_t* lna_tweak_menu_build_ui_buffer(void)
     lna_assert(g_tweak_menu)
 
     lna_tweak_menu_node_t*      page        = g_tweak_menu->navigation.cur_page;
-    if (!page) return &g_tweak_menu->graphics.buffer;
+    if (!page) return;
 
     lna_tweak_menu_graphics_t*  graphics    = &g_tweak_menu->graphics;
-    lna_ui_buffer_t*            buffer      = &graphics->buffer;
+    lna_ui_buffer_t*            buffer      = graphics->buffer;
 
     float min_horizontal_empty_space_size = 0.0f;
     min_horizontal_empty_space_size += LNA_TWEAK_MENU_OUTLINE_SIZE * 2.0f;  //? we add border left and right border size
@@ -694,8 +697,6 @@ const lna_ui_buffer_t* lna_tweak_menu_build_ui_buffer(void)
         child_node = child_node->next_sibling;
         node_text_pos.y += (child_node && lna_tweak_menu_node_is_editable(child_node)) ? LNA_TWEAK_MENU_PADDING : 0.0f;
     }
-
-    return &g_tweak_menu->graphics.buffer;
 }
 
 void lna_tweak_menu_release(void)

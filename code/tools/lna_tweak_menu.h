@@ -6,11 +6,11 @@
 #include "maths/lna_vec2.h"
 #include "maths/lna_vec3.h"
 #include "maths/lna_vec4.h"
-#include "graphics/lna_texture_atlas.h"
-#include "graphics/lna_ui_buffer.h"
 
 typedef struct lna_input_s lna_input_t;
 typedef struct lna_memory_pool_s lna_memory_pool_t;
+typedef struct lna_texture_atlas_info_s lna_texture_atlas_info_t;
+typedef struct lna_ui_buffer_s lna_ui_buffer_t;
 
 typedef struct lna_tweak_menu_config_s
 {
@@ -22,12 +22,13 @@ typedef struct lna_tweak_menu_config_s
     float                           leading;
     float                           spacing;
     const lna_texture_atlas_info_t* font_texture_atlas_info;
+    lna_ui_buffer_t*                ui_buffer;
 } lna_tweak_menu_config_t;
 
 //! TWEAK MENU FUNCTIONS
 extern void                     lna_tweak_menu_init                     (const lna_tweak_menu_config_t* config);
 extern void                     lna_tweak_menu_process_input            (const lna_input_t* input);
-extern const lna_ui_buffer_t*   lna_tweak_menu_build_ui_buffer          (void);
+extern void                     lna_tweak_menu_build_ui_buffer          (void);
 extern void                     lna_tweak_menu_release                  (void);
 
 //! BUILD MENU FUNCTIONS
