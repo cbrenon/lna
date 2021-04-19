@@ -7,10 +7,11 @@
 #include "maths/lna_vec3.h"
 #include "maths/lna_vec4.h"
 
-typedef struct lna_input_s lna_input_t;
-typedef struct lna_memory_pool_s lna_memory_pool_t;
+typedef struct lna_input_s              lna_input_t;
+typedef struct lna_memory_pool_s        lna_memory_pool_t;
 typedef struct lna_texture_atlas_info_s lna_texture_atlas_info_t;
-typedef struct lna_ui_buffer_s lna_ui_buffer_t;
+typedef struct lna_ui_system_s          lna_ui_system_t;
+typedef struct lna_texture_s            lna_texture_t;
 
 typedef struct lna_tweak_menu_config_s
 {
@@ -21,8 +22,8 @@ typedef struct lna_tweak_menu_config_s
     float                           font_size;
     float                           leading;
     float                           spacing;
-    const lna_texture_atlas_info_t* font_texture_atlas_info;
-    lna_ui_buffer_t*                ui_buffer;
+    lna_ui_system_t*                ui_system;
+    lna_texture_t*                  font_texture;
 } lna_tweak_menu_config_t;
 
 //! TWEAK MENU FUNCTIONS

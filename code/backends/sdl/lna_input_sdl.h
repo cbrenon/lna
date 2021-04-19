@@ -3,7 +3,6 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
-#define GL3_PROTOTYPES 1
 #include <SDL.h>
 #pragma clang diagnostic pop
 

@@ -7,8 +7,8 @@
 #include "core/lna_assert.h"
 #include "core/lna_string.h"
 #include "backends/lna_input.h"
-#include "graphics/lna_texture_atlas.h"
-#include "graphics/lna_ui_buffer.h"
+#include "backends/lna_ui.h"
+#include "backends/lna_texture.h"
 
 typedef enum lna_tweak_menu_node_type_e
 {
@@ -174,7 +174,8 @@ static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_INDEX_COUNT   = 1500;
 void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
 {
     lna_assert(config)
-    lna_assert(config->font_texture_atlas_info)
+    lna_assert(config->memory_pool)
+    lna_assert(config->ui_system)
     lna_assert(g_tweak_menu == NULL)
 
     g_tweak_menu = lna_memory_alloc(
@@ -198,17 +199,17 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
 
     g_tweak_menu->navigation.edit_mode  = false;
 
-    g_tweak_menu->graphics.buffer                   = config->ui_buffer;
+    //g_tweak_menu->graphics.buffer                   = config->ui_buffer;
     g_tweak_menu->graphics.font_size                = config->font_size;
     g_tweak_menu->graphics.leading                  = config->leading;
     g_tweak_menu->graphics.spacing                  = config->spacing;
-    g_tweak_menu->graphics.font_texture_col_count   = config->font_texture_atlas_info->col_count;
-    g_tweak_menu->graphics.font_texture_row_count   = config->font_texture_atlas_info->row_count;
+    g_tweak_menu->graphics.font_texture_col_count   = lna_texture_atlas_col_count(config->font_texture);
+    g_tweak_menu->graphics.font_texture_row_count   = lna_texture_atlas_row_count(config->font_texture);
     g_tweak_menu->graphics.uv_char_size             = (lna_vec2_t)
     {
         //! we divide by texture width and height again to have normalized uv data
-        (float)(config->font_texture_atlas_info->col_count / config->font_texture_atlas_info->width) / (float)config->font_texture_atlas_info->width,
-        (float)(config->font_texture_atlas_info->row_count / config->font_texture_atlas_info->height) / (float)config->font_texture_atlas_info->height,
+        ((float)(g_tweak_menu->graphics.font_texture_col_count) / (float)lna_texture_width(config->font_texture)) / (float)lna_texture_width(config->font_texture),
+        ((float)(g_tweak_menu->graphics.font_texture_row_count) / (float)lna_texture_height(config->font_texture)) / (float)lna_texture_height(config->font_texture),
     };
     lna_ui_buffer_init(
         g_tweak_menu->graphics.buffer,
