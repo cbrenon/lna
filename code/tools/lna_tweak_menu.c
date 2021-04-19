@@ -574,7 +574,7 @@ void lna_tweak_menu_build_ui_buffer(void)
         window_size.height - window_title_bar_size.height -LNA_TWEAK_MENU_OUTLINE_SIZE * 2.0f,
     };
 
-    lna_ui_buffer_new_rect(
+    lna_ui_buffer_push_rect(
         buffer,
         &(lna_ui_buffer_rect_config_t)
         {
@@ -584,7 +584,7 @@ void lna_tweak_menu_build_ui_buffer(void)
         }
         );
 
-    lna_ui_buffer_new_rect(
+    lna_ui_buffer_push_rect(
         buffer,
         &(lna_ui_buffer_rect_config_t)
         {
@@ -594,7 +594,7 @@ void lna_tweak_menu_build_ui_buffer(void)
         }
         );
 
-    lna_ui_buffer_new_text(
+    lna_ui_buffer_push_text(
         buffer,
         &(lna_ui_buffer_text_config_t)
         {
@@ -610,7 +610,7 @@ void lna_tweak_menu_build_ui_buffer(void)
         }
         );
 
-    lna_ui_buffer_new_rect(
+    lna_ui_buffer_push_rect(
         buffer,
         &(lna_ui_buffer_rect_config_t)
         {
@@ -634,7 +634,7 @@ void lna_tweak_menu_build_ui_buffer(void)
         const lna_vec4_t* text_color = (child_node == nav->cur_page_item) ? 
             &LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT_FOCUSED] : &LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT];
 
-        lna_ui_buffer_new_text(
+        lna_ui_buffer_push_text(
             buffer,
             &(lna_ui_buffer_text_config_t)
             {
@@ -663,7 +663,7 @@ void lna_tweak_menu_build_ui_buffer(void)
                 graphics->font_size + 2.0f * LNA_TWEAK_MENU_PADDING
             };
 
-            lna_ui_buffer_new_rect(
+            lna_ui_buffer_push_rect(
                 buffer,
                 &(lna_ui_buffer_rect_config_t)
                 {
@@ -676,7 +676,7 @@ void lna_tweak_menu_build_ui_buffer(void)
             node_value_pos.x += LNA_TWEAK_MENU_PADDING;
             node_value_pos.y += LNA_TWEAK_MENU_PADDING;
 
-            lna_ui_buffer_new_text(
+            lna_ui_buffer_push_text(
                 buffer,
                 &(lna_ui_buffer_text_config_t)
                 {

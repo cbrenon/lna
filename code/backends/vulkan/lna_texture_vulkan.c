@@ -4,16 +4,16 @@
 #include "core/lna_assert.h"
 #include "core/lna_memory_pool.h"
 
-static VkFormat lna_texture_format_to_vulkan(lna_texture_format_t f)
-{
-    switch (f)
-    {
-        case LNA_TEXTURE_FORMAT_R8G8B8A8_SRGB:
-            return VK_FORMAT_R8G8B8A8_SRGB;
-        case LNA_TEXTURE_FORMAT_R8G8B8A8_UNORM:
-            return VK_FORMAT_R8G8B8A8_UNORM;
-    }
-}
+// static VkFormat lna_texture_format_to_vulkan(lna_texture_format_t f)
+// {
+//     switch (f)
+//     {
+//         case LNA_TEXTURE_FORMAT_R8G8B8A8_SRGB:
+//             return VK_FORMAT_R8G8B8A8_SRGB;
+//         case LNA_TEXTURE_FORMAT_R8G8B8A8_UNORM:
+//             return VK_FORMAT_R8G8B8A8_UNORM;
+//     }
+// }
 
 void lna_texture_system_init(lna_texture_system_t* texture_system, const lna_texture_system_config_t* config)
 {

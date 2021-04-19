@@ -26,7 +26,7 @@ void lna_ui_buffer_init(lna_ui_buffer_t* buffer, const lna_ui_buffer_config_t* c
 static const uint32_t LNA_UI_VERTEX_COUNT_PER_RECT   = 4;
 static const uint32_t LNA_UI_INDEX_COUNT_PER_RECT    = 6;
 
-void lna_ui_buffer_new_rect(lna_ui_buffer_t* buffer, const lna_ui_buffer_rect_config_t* config)
+void lna_ui_buffer_push_rect(lna_ui_buffer_t* buffer, const lna_ui_buffer_rect_config_t* config)
 {
     lna_assert(buffer)
     lna_assert(buffer->vertices)
@@ -65,7 +65,7 @@ void lna_ui_buffer_new_rect(lna_ui_buffer_t* buffer, const lna_ui_buffer_rect_co
     buffer->cur_index_count     += LNA_UI_INDEX_COUNT_PER_RECT;
 }
 
-void lna_ui_buffer_new_text(lna_ui_buffer_t* buffer, const lna_ui_buffer_text_config_t* config)
+void lna_ui_buffer_push_text(lna_ui_buffer_t* buffer, const lna_ui_buffer_text_config_t* config)
 {
     lna_assert(buffer)
     lna_assert(config)
