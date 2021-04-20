@@ -174,8 +174,6 @@ static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_INDEX_COUNT   = 1500;
 void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
 {
     lna_assert(config)
-    lna_assert(config->memory_pool)
-    lna_assert(config->ui_system)
     lna_assert(g_tweak_menu == NULL)
 
     g_tweak_menu = lna_memory_alloc(
@@ -208,16 +206,18 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
     g_tweak_menu->graphics.uv_char_size             = (lna_vec2_t)
     {
         //! we divide by texture width and height again to have normalized uv data
-        ((float)(g_tweak_menu->graphics.font_texture_col_count) / (float)lna_texture_width(config->font_texture)) / (float)lna_texture_width(config->font_texture),
-        ((float)(g_tweak_menu->graphics.font_texture_row_count) / (float)lna_texture_height(config->font_texture)) / (float)lna_texture_height(config->font_texture),
+        ((float)(g_tweak_menu->graphics.font_texture_col_count) / (float)(lna_texture_width(config->font_texture))) / (float)(lna_texture_width(config->font_texture)),
+        ((float)(g_tweak_menu->graphics.font_texture_row_count) / (float)(lna_texture_height(config->font_texture))) / (float)(lna_texture_height(config->font_texture)),
     };
-    lna_ui_buffer_init(
-        g_tweak_menu->graphics.buffer,
+
+    g_tweak_menu->graphics.buffer = lna_ui_system_new_buffer(
+        config->ui_system,
         &(lna_ui_buffer_config_t)
         {
             .memory_pool = config->memory_pool,
             .max_vertex_count = config->max_buffer_vertex_count == 0 ? LNA_TWEAK_MENU_MAX_BUFFER_VERTEX_COUNT : config->max_buffer_vertex_count,
             .max_index_count = config->max_buffer_index_count == 0 ? LNA_TWEAK_MENU_MAX_BUFFER_INDEX_COUNT : config->max_buffer_index_count,
+            .texture = config->font_texture,
         }
         );
 }

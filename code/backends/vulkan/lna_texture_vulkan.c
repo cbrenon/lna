@@ -3,7 +3,7 @@
 #pragma clang diagnostic ignored "-Weverything"
 #pragma warning(push, 0)
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <stb/stb_image.h>
 #pragma warning(pop)
 
 #include "backends/vulkan/lna_texture_vulkan.h"
@@ -312,11 +312,7 @@ void lna_texture_system_release(lna_texture_system_t* texture_system)
     for (uint32_t index = 0; index < lna_vector_size(&texture_system->textures); ++index)
     {
         lna_texture_t* texture = lna_vector_at(&texture_system->textures, index);
-        
-        if (texture->image)
-        {
-            lna_texture_release(texture, texture_system->renderer->device);
-        }
+        lna_texture_release(texture, texture_system->renderer->device);
     }
     lna_vector_release(&texture_system->textures);
     texture_system->renderer = NULL;

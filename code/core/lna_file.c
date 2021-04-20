@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "core/lna_file.h"
 
-void lna_file_debug_load(lna_file_content* file_content, lna_memory_pool_t* memory_pool, const char* filename, bool is_binary)
+void lna_file_debug_load(lna_file_content_t* file_content, lna_memory_pool_t* memory_pool, const char* filename, bool is_binary)
 {
     lna_assert(memory_pool)
     lna_assert(file_content)

@@ -53,6 +53,6 @@ typedef struct lna_ui_buffer_text_config_s
 
 extern void             lna_ui_buffer_push_rect             (lna_ui_buffer_t* buffer, const lna_ui_buffer_rect_config_t* config);
 extern void             lna_ui_buffer_push_text             (lna_ui_buffer_t* buffer, const lna_ui_buffer_text_config_t* config);
-extern void             lna_ui_buffer_empty                 (lna_ui_buffer_t* buffer)
+extern void             lna_ui_buffer_empty                 (lna_ui_buffer_t* buffer);
 
 #endif

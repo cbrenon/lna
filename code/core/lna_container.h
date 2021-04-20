@@ -28,6 +28,7 @@
     (array)->element_count = 0 //! we do not add ; to let user add the ; when he uses the macro
 
 #define lna_array_is_empty(array) ((array)->elements == 0 && (array)->element_count == 0)
+#define lna_array_size(array) ((array)->element_count)
 
 //! ----------------------------------------------------------------------------
 //!                                 VECTOR
