@@ -27,11 +27,11 @@ typedef struct lna_ui_buffer_s
     uint32_t                            max_index_count;
     uint32_t                            cur_index_count;
     lna_texture_t*                      texture;
-    lna_vulkan_buffer_array_t           vertex_buffers;
-    lna_vulkan_device_memory_array_t    vertex_buffers_memory;
-    lna_vulkan_buffer_array_t           index_buffers;
-    lna_vulkan_device_memory_array_t    index_buffers_memory;
-    lna_vulkan_descriptor_set_array_t   descriptor_sets;    
+    VkBuffer                            vertex_buffer;
+    VkDeviceMemory                      vertex_buffer_memory;
+    VkBuffer                            index_buffer;
+    VkDeviceMemory                      index_buffer_memory;
+    VkDescriptorSet                     descriptor_set;   
     lna_ui_push_const_block_vulkan_t    push_const_block;
     void*                               vertex_data_mapped;
     void*                               index_data_mapped;

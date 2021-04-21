@@ -1522,7 +1522,7 @@ void lna_renderer_end_draw_frame(lna_renderer_t* renderer, bool window_resized, 
     lna_memory_pool_empty(&renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME]);
 }
 
-void lna_renderer_release(lna_renderer_t* renderer)
+void lna_renderer_wait_idle(lna_renderer_t* renderer)
 {
     lna_assert(renderer)
     lna_assert(renderer->device)
@@ -1532,6 +1532,12 @@ void lna_renderer_release(lna_renderer_t* renderer)
             renderer->device
             )
         )
+}
+
+void lna_renderer_release(lna_renderer_t* renderer)
+{
+    lna_assert(renderer)
+    lna_assert(renderer->device)
 
     lna_vulkan_renderer_cleanup_swap_chain(renderer);
 

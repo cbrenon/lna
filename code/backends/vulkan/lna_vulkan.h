@@ -26,7 +26,7 @@ extern void             lna_vulkan_end_single_time_commands     (VkDevice device
 extern void             lna_vulkan_transition_image_layout      (VkDevice device, VkCommandPool command_pool, VkQueue graphics_queue, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 extern void             lna_vulkan_copy_buffer_to_image         (VkDevice device, VkCommandPool command_pool, VkBuffer buffer, VkQueue graphics_queue, VkImage image, uint32_t width, uint32_t height);
 extern void             lna_vulkan_copy_buffer                  (VkDevice device, VkCommandPool command_pool, VkQueue graphics_queue, VkBuffer src, VkBuffer dst, VkDeviceSize size);
-extern VkShaderModule   lna_vulkan_create_shader_module         (VkDevice device, uint32_t* code, size_t code_size);
+extern VkShaderModule   lna_vulkan_create_shader_module         (VkDevice device, const uint32_t* code, size_t code_size);
 extern VkFormat         lna_vulkan_find_supported_format        (VkPhysicalDevice physical_device, VkFormat* candidate_formats, uint32_t candidate_format_count, VkImageTiling tiling, VkFormatFeatureFlags features);
 extern VkFormat         lna_vulkan_find_depth_format            (VkPhysicalDevice physical_device);
 extern bool             lna_vulkan_has_stencil_component        (VkFormat format);

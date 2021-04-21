@@ -168,8 +168,8 @@ static bool lna_tweak_menu_node_is_editable(const lna_tweak_menu_node_t* node)
 //! ============================================================================
 
 static const uint32_t   LNA_TWEAK_MENU_MAX_NODE_COUNT           = 1000;
-static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_VERTEX_COUNT  = 1500;
-static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_INDEX_COUNT   = 1500;
+static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_VERTEX_COUNT  = 1280;
+static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_INDEX_COUNT   = 1280;
 
 void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
 {
@@ -206,8 +206,8 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
     g_tweak_menu->graphics.uv_char_size             = (lna_vec2_t)
     {
         //! we divide by texture width and height again to have normalized uv data
-        ((float)(g_tweak_menu->graphics.font_texture_col_count) / (float)(lna_texture_width(config->font_texture))) / (float)(lna_texture_width(config->font_texture)),
-        ((float)(g_tweak_menu->graphics.font_texture_row_count) / (float)(lna_texture_height(config->font_texture))) / (float)(lna_texture_height(config->font_texture)),
+        ((float)(g_tweak_menu->graphics.font_texture_col_count) / (float)(lna_texture_width(config->font_texture))),
+        ((float)(g_tweak_menu->graphics.font_texture_row_count) / (float)(lna_texture_height(config->font_texture))),
     };
 
     g_tweak_menu->graphics.buffer = lna_ui_system_new_buffer(
@@ -238,60 +238,57 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
         nav->cur_page_item = nav->cur_page->first_child;
     }
 
-    lna_tweak_menu_node_t* cur_page = nav->cur_page;
-    lna_tweak_menu_node_t* cur_item = nav->cur_page_item;
-
     if (
         lna_input_is_key_has_been_pressed(input, LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_GO_TO_PARENT])
-        && cur_page->parent
+        && nav->cur_page->parent
         && !nav->edit_mode
         )
     {
-        cur_page = cur_page->parent;
-        cur_item = cur_page->first_child;
+        nav->cur_page = nav->cur_page->parent;
+        nav->cur_page_item = nav->cur_page->first_child;
     }
     else if (
         lna_input_is_key_has_been_pressed(input, LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_GO_TO_CHILD])
-        && lna_tweak_menu_node_has_child(cur_item)
+        && lna_tweak_menu_node_has_child(nav->cur_page_item)
         && !nav->edit_mode
         )
     {
-        cur_page = cur_item;
-        cur_item = cur_page->first_child;
+        nav->cur_page = nav->cur_page_item;
+        nav->cur_page_item = nav->cur_page->first_child;
     }
     else if (
         lna_input_is_key_has_been_pressed(input, LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_GO_TO_NEXT])
-        && cur_item->next_sibling
+        && nav->cur_page_item->next_sibling
         && !nav->edit_mode
         )
     {
-        cur_item = cur_item->next_sibling;
+        nav->cur_page_item = nav->cur_page_item->next_sibling;
     }
     else if (
         lna_input_is_key_has_been_pressed(input, LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_GO_TO_PREV])
-        && cur_item->prev_sibling
+        && nav->cur_page_item->prev_sibling
         && !nav->edit_mode
         )
     {
-        cur_item = cur_item->prev_sibling;
+        nav->cur_page_item = nav->cur_page_item->prev_sibling;
     }
     else if (
         lna_input_is_key_has_been_pressed(input, LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_EDIT])
         && !nav->edit_mode
-        && lna_tweak_menu_node_is_editable(cur_item)
+        && lna_tweak_menu_node_is_editable(nav->cur_page_item)
         )
     {
-        if (cur_item->type == LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_BOOL)
+        if (nav->cur_page_item->type == LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_BOOL)
         {
-            lna_assert(cur_item->var_ptr)
+            lna_assert(nav->cur_page_item->var_ptr)
             //! for boolean, there is no edit mode, when user press enter it changes automatically the boolean value to the opposite.
-            *((bool*)cur_item->var_ptr) = !(*((bool*)cur_item->var_ptr));
+            *((bool*)nav->cur_page_item->var_ptr) = !(*((bool*)nav->cur_page_item->var_ptr));
         }
         else
         {
             nav->edit_mode = true;
             nav->edit_char_index = 0;
-            cur_item->edit_buffer[0] = '\0';
+            nav->cur_page_item->edit_buffer[0] = '\0';
         }
     }
     else if (
@@ -304,26 +301,26 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
     else if (
         lna_input_is_key_has_been_pressed(input, LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_EDIT_VALIDATE])
         && nav->edit_mode
-        && lna_tweak_menu_node_is_editable(cur_item)
+        && lna_tweak_menu_node_is_editable(nav->cur_page_item)
         )
     {
-        lna_assert(cur_item->var_ptr)
+        lna_assert(nav->cur_page_item->var_ptr)
 
         if (nav->edit_char_index > 0)
         {
-            switch (cur_item->type)
+            switch (nav->cur_page_item->type)
             {
                 case LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_INT:
-                    lna_string_to_int((int32_t*)cur_item->var_ptr, cur_item->edit_buffer);
+                    lna_string_to_int((int32_t*)nav->cur_page_item->var_ptr, nav->cur_page_item->edit_buffer);
                     break;
                 case LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_UNSIGNED_INT:
-                    lna_string_to_uint((uint32_t*)cur_item->var_ptr, cur_item->edit_buffer);
+                    lna_string_to_uint((uint32_t*)nav->cur_page_item->var_ptr, nav->cur_page_item->edit_buffer);
                     break;
                 case LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_FLOAT:
-                    lna_string_to_float((float*)cur_item->var_ptr, cur_item->edit_buffer);
+                    lna_string_to_float((float*)nav->cur_page_item->var_ptr, nav->cur_page_item->edit_buffer);
                     break;
                 case LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_DOUBLE:
-                    lna_string_to_double((double*)cur_item->var_ptr, cur_item->edit_buffer);
+                    lna_string_to_double((double*)nav->cur_page_item->var_ptr, nav->cur_page_item->edit_buffer);
                     break;
                 case LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_BOOL:
                     break; //! we do nothing here! boolean are automatically modified when we press enter.
@@ -343,7 +340,7 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
         if (nav->edit_char_index > 0)
         {
             --nav->edit_char_index;
-            cur_item->edit_buffer[nav->edit_char_index] = '\0';
+            nav->cur_page_item->edit_buffer[nav->edit_char_index] = '\0';
         }
     }
     else if (
@@ -353,7 +350,7 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
     {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
-        switch (cur_item->type)
+        switch (nav->cur_page_item->type)
         {
             case LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_FLOAT:
                 {
@@ -362,15 +359,15 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
                         bool period_already_added = false;
                         for (size_t i = 0; i < nav->edit_char_index; ++i)
                         {
-                            if (cur_item->edit_buffer[i] == '.')
+                            if (nav->cur_page_item->edit_buffer[i] == '.')
                             {
                                 period_already_added = true;
                             }
                         }
                         if (!period_already_added)
                         {
-                            cur_item->edit_buffer[nav->edit_char_index++] = '.';
-                            cur_item->edit_buffer[nav->edit_char_index] = '\0';
+                            nav->cur_page_item->edit_buffer[nav->edit_char_index++] = '.';
+                            nav->cur_page_item->edit_buffer[nav->edit_char_index] = '\0';
                         }
                     }
                 }
@@ -384,8 +381,8 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
                         && nav->edit_char_index == 0
                         )
                     {
-                        cur_item->edit_buffer[nav->edit_char_index++] = '-';
-                        cur_item->edit_buffer[nav->edit_char_index] = '\0';
+                        nav->cur_page_item->edit_buffer[nav->edit_char_index++] = '-';
+                        nav->cur_page_item->edit_buffer[nav->edit_char_index] = '\0';
                     }
                 }
                 //! no break point here => need code below
@@ -395,8 +392,8 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
                     {
                         if (lna_input_is_key_has_been_pressed(input, LNA_KEY_0 + i))
                         {
-                            cur_item->edit_buffer[nav->edit_char_index++] = (char)i + '0';
-                            cur_item->edit_buffer[nav->edit_char_index] = '\0';
+                            nav->cur_page_item->edit_buffer[nav->edit_char_index++] = (char)i + '0';
+                            nav->cur_page_item->edit_buffer[nav->edit_char_index] = '\0';
                         }
                     }
                 }
@@ -417,7 +414,7 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
     while (node)
     {
         if (
-            (!nav->edit_mode || node != cur_item)
+            (!nav->edit_mode || node != nav->cur_page_item)
             && lna_tweak_menu_node_is_editable(node)
             )
         {
@@ -476,10 +473,10 @@ static const lna_vec4_t LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_COUNT
     { 0.8f, 0.8f, 0.8f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE_TEXT
 };
 
-static const float LNA_TWEAK_MENU_OUTLINE_SIZE  = 2.0f;
-static const float LNA_TWEAK_MENU_PADDING       = 4.0f;
+static const float LNA_TWEAK_MENU_OUTLINE_SIZE  = 1.0f;
+static const float LNA_TWEAK_MENU_PADDING       = 2.0f;
 
-void lna_tweak_menu_build_ui_buffer(void)
+void lna_tweak_menu_update(void)
 {
     //? Drawing here is just rebuild the buffer from scratch using the current page node information.
     //? It is done in N part:
@@ -505,6 +502,8 @@ void lna_tweak_menu_build_ui_buffer(void)
     //?  |========================================|     -|-            -|-
 
     lna_assert(g_tweak_menu)
+
+    lna_ui_buffer_empty(g_tweak_menu->graphics.buffer);
 
     lna_tweak_menu_node_t*      page        = g_tweak_menu->navigation.cur_page;
     if (!page) return;

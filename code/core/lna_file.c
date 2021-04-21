@@ -40,3 +40,36 @@ void lna_file_debug_load(lna_file_content_t* file_content, lna_memory_pool_t* me
     }
     fclose(fp);
 }
+
+void lna_binary_file_debug_load_uint32(lna_binary_file_content_uint32_t* file_content, lna_memory_pool_t* memory_pool, const char* filename)
+{
+    lna_assert(memory_pool)
+    lna_assert(file_content)
+    lna_assert(strlen(filename) > 0)
+
+    FILE* fp = NULL;
+    fopen_s(&fp, filename, "rb");
+    lna_assert(fp)
+
+    if (fseek(fp, 0L, SEEK_END) == 0)
+    {
+        long file_length = ftell(fp);
+        lna_assert(file_length != -1)
+
+        lna_array_init(
+            file_content,
+            memory_pool,
+            uint32_t,
+            (uint32_t)file_length
+            );
+
+        if (fseek(fp, 0L, SEEK_SET) != 0)
+        {
+            lna_assert(0)
+        }
+
+        fread(file_content->elements, sizeof(uint32_t), file_content->element_count, fp);
+        lna_assert(ferror(fp) == 0)
+    }
+    fclose(fp);
+}

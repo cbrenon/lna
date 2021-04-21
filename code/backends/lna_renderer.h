@@ -18,6 +18,7 @@ typedef struct lna_renderer_config_s
 extern bool lna_renderer_init               (lna_renderer_t* renderer, const lna_renderer_config_t* config);
 extern void lna_renderer_begin_draw_frame   (lna_renderer_t* renderer, uint32_t window_width, uint32_t window_height);
 extern void lna_renderer_end_draw_frame     (lna_renderer_t* renderer, bool window_resized, uint32_t window_width, uint32_t window_height);
+extern void lna_renderer_wait_idle          (lna_renderer_t* renderer);
 extern void lna_renderer_release            (lna_renderer_t* renderer);
 
 #endif

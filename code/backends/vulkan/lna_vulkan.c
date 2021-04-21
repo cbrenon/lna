@@ -432,7 +432,7 @@ void lna_vulkan_copy_buffer(VkDevice device, VkCommandPool command_pool, VkQueue
         );
 }
 
-VkShaderModule lna_vulkan_create_shader_module(VkDevice device, uint32_t* code, size_t code_size)
+VkShaderModule lna_vulkan_create_shader_module(VkDevice device, const uint32_t* code, size_t code_size)
 {
     lna_assert(device)
     lna_assert(code)

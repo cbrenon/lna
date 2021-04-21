@@ -3,7 +3,7 @@
 #pragma clang diagnostic ignored "-Weverything"
 #pragma warning(push, 0)
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+#include <stb_image.h>
 #pragma warning(pop)
 
 #include "backends/vulkan/lna_texture_vulkan.h"
@@ -229,8 +229,10 @@ static void lna_texture_init(lna_texture_t* texture, const lna_texture_config_t*
             )
         )
 
-    texture->width  = (uint32_t)texture_width;
-    texture->height = (uint32_t)texture_height;
+    texture->width              = (uint32_t)texture_width;
+    texture->height             = (uint32_t)texture_height;
+    texture->atlas_col_count    = config->atlas_col_count;
+    texture->atlas_row_count    = config->atlas_row_count;
 }
 
 static void lna_texture_release(lna_texture_t* texture, VkDevice device)
