@@ -670,10 +670,10 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
             &viewport
             );
         
-        buffer->push_const_block.scale.x = 7.0f / viewport.width;
-        buffer->push_const_block.scale.y = 7.0f / viewport.height;
-        buffer->push_const_block.translate.x = 0.0f; //-1.0f;
-        buffer->push_const_block.translate.y = 0.0f; //-1.0f;
+        buffer->push_const_block.scale.x = 7.0f / viewport.width;   // TODO: remove hard coded values
+        buffer->push_const_block.scale.y = 7.0f / viewport.height;  // TODO: remove hard coded values
+        buffer->push_const_block.translate.x = 0.0f;
+        buffer->push_const_block.translate.y = 0.0f;
         vkCmdPushConstants(
             command_buffer,
             ui_system->pipeline_layout,
