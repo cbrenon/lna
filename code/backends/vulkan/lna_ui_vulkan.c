@@ -261,6 +261,7 @@ static void lna_ui_buffer_release(lna_ui_buffer_t* buffer, VkDevice device)
 void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t* config)
 {
     lna_assert(ui_system)
+    lna_assert(ui_system->renderer == NULL)
     lna_assert(lna_vector_size(&ui_system->buffers) == 0)
     lna_assert(ui_system->pipeline == VK_NULL_HANDLE)
     lna_assert(ui_system->pipeline_cache == VK_NULL_HANDLE)

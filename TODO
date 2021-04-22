@@ -1,6 +1,22 @@
+ROAD TO PROTOTYPING FRAMEWORK:
+  ☐ mesh
+  ☐ sprite
+  ☐ debug primitives
+    ☐ text
+    ☐ line
+    ☐ rect
+    ☐ circle
+    ☐ raw vertices
 
 MISC:
-  ☐ be able to manage mesh without texture (default texture?)
+  ☐ regroup VkBuffer and VkDeviceMemory in one struct
+    they are always used together in my code so it will limit function parameters count
+    and help to realize the next task on config struct for vulkan function
+  ☐ use config struct instead of long parameter list in vulkan helpers function
+  ☐ add shader binary code directly in each dedicated files instead of loading files
+  ☐ centralize vulkan version to avoid multiple line change in build file after a vulkan update
+  ☐ centralize sdl version to avoid multiple line change in build file after a sdl update
+  ☐ be able to manage mesh without texture (default texture or check with empty texture)
   ☐ fix all TODO in code
 
 Archive:

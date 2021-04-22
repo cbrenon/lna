@@ -27,9 +27,12 @@
     (array)->elements = NULL;       \
     (array)->element_count = 0 //! we do not add ; to let user add the ; when he uses the macro
 
-#define lna_array_at(array, index)  (&((array)->elements[index]))
-#define lna_array_is_empty(array)   ((array)->elements == 0 && (array)->element_count == 0)
-#define lna_array_size(array)       ((array)->element_count)
+#define lna_array_at(array, index)          ((array)->elements[index])
+#define lna_array_at_ptr(array, index)      (&((array)->elements[index]))
+#define lna_array_set(array, index, value)  (array)->elements[index] = value
+#define lna_array_is_empty(array)           ((array)->elements == 0 && (array)->element_count == 0)
+#define lna_array_size(array)               ((array)->element_count)
+#define lna_array_ptr(array)                ((array)->elements)
 
 //! ----------------------------------------------------------------------------
 //!                                 VECTOR

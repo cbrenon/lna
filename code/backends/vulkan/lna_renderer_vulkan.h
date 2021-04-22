@@ -15,14 +15,15 @@ typedef enum lna_vulkan_renderer_memory_pool_s
     LNA_VULKAN_RENDERER_MEMORY_POOL_COUNT
 } lana_renderer_memory_pool_t;
 
-lna_array_def(VkFence)          lna_vulkan_fence_array_t;
-lna_array_def(VkImage)          lna_vulkan_image_array_t;
-lna_array_def(VkImageView)      lna_vulkan_image_view_array_t;
-lna_array_def(VkFramebuffer)    lna_vulkan_frame_buffer_array_t;
-lna_array_def(VkCommandBuffer)  lna_vulkan_command_buffer_array_t;
-lna_array_def(VkBuffer)         lna_vulkan_buffer_array_t;
-lna_array_def(VkDeviceMemory)   lna_vulkan_device_memory_array_t;
-lna_array_def(VkDescriptorSet)  lna_vulkan_descriptor_set_array_t;
+lna_array_def(VkFence)                  lna_vulkan_fence_array_t;
+lna_array_def(VkImage)                  lna_vulkan_image_array_t;
+lna_array_def(VkImageView)              lna_vulkan_image_view_array_t;
+lna_array_def(VkFramebuffer)            lna_vulkan_frame_buffer_array_t;
+lna_array_def(VkCommandBuffer)          lna_vulkan_command_buffer_array_t;
+lna_array_def(VkBuffer)                 lna_vulkan_buffer_array_t;
+lna_array_def(VkDeviceMemory)           lna_vulkan_device_memory_array_t;
+lna_array_def(VkDescriptorSet)          lna_vulkan_descriptor_set_array_t;
+lna_array_def(VkDescriptorSetLayout)    lna_vulkan_descriptor_set_layout_array_t;
 
 typedef struct lna_renderer_s
 {

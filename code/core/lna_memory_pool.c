@@ -28,6 +28,7 @@ void* lna_memory_pool_alloc(lna_memory_pool_t* memory_pool, size_t size_in_bytes
     lna_assert(memory_pool)
     lna_assert(memory_pool->content)
     lna_assert(memory_pool->cur_content_size + size_in_bytes <= memory_pool->max_content_size)
+    lna_assert(size_in_bytes > 0)
 
     size_t offset = memory_pool->cur_content_size;
     memory_pool->cur_content_size += size_in_bytes;
