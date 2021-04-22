@@ -821,8 +821,8 @@ static void lna_vulkan_renderer_create_swap_chain(
         vkGetSwapchainImagesKHR(
             renderer->device,
             renderer->swap_chain,
-            &renderer->swap_chain_images.element_count,
-            renderer->swap_chain_images.elements
+            &lna_array_size(&renderer->swap_chain_images),
+            lna_array_ptr(&renderer->swap_chain_images)
             )
         )
     renderer->swap_chain_image_format   = surface_format.format;
@@ -832,7 +832,7 @@ static void lna_vulkan_renderer_create_swap_chain(
         &renderer->images_in_flight_fences,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
         VkFence,
-        renderer->swap_chain_images.element_count
+        lna_array_size(&renderer->swap_chain_images)
         );
 }
 
@@ -846,14 +846,14 @@ static void lna_vulkan_renderer_create_image_views(
         &renderer->swap_chain_image_views,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
         VkImageView,
-        renderer->swap_chain_images.element_count
+        lna_array_size(&renderer->swap_chain_images)
         );
 
-    for (size_t i = 0; i < renderer->swap_chain_image_views.element_count; ++i)
+    for (size_t i = 0; i < lna_array_size(&renderer->swap_chain_image_views); ++i)
     {
-        renderer->swap_chain_image_views.elements[i] = lna_vulkan_create_image_view(
+        lna_array_at_ref(&renderer->swap_chain_image_views, i) = lna_vulkan_create_image_view(
             renderer->device,
-            renderer->swap_chain_images.elements[i],
+            lna_array_at_ref(&renderer->swap_chain_images, i),
             renderer->swap_chain_image_format,
             VK_IMAGE_ASPECT_COLOR_BIT
             );
@@ -1019,14 +1019,14 @@ static void lna_vulkan_renderer_create_framebuffers(
         &renderer->swap_chain_framebuffers,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
         VkFramebuffer,
-        renderer->swap_chain_image_views.element_count
+        lna_array_size(&renderer->swap_chain_image_views)
         );
 
-    for (size_t i = 0; i < renderer->swap_chain_framebuffers.element_count; ++i)
+    for (size_t i = 0; i < lna_array_size(&renderer->swap_chain_framebuffers); ++i)
     {
-        VkImageView attachments[] =
+        const VkImageView attachments[] =
         {
-            renderer->swap_chain_image_views.elements[i],
+            lna_array_at_ref(&renderer->swap_chain_image_views, i),
             renderer->depth_image_view
         };
 
@@ -1046,7 +1046,7 @@ static void lna_vulkan_renderer_create_framebuffers(
                 renderer->device,
                 &framebuffer_create_info,
                 NULL,
-                &renderer->swap_chain_framebuffers.elements[i]
+                lna_array_at_ptr(&renderer->swap_chain_framebuffers, i)
                 )
             )
     }
@@ -1063,7 +1063,7 @@ static void lna_vulkan_renderer_create_command_buffers(
         &renderer->command_buffers,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
         VkCommandBuffer,
-        renderer->swap_chain_images.element_count
+        lna_array_size(&renderer->swap_chain_images)
         );
 
     const VkCommandBufferAllocateInfo command_buffer_allocate_info =
@@ -1071,14 +1071,14 @@ static void lna_vulkan_renderer_create_command_buffers(
         .sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool        = renderer->command_pool,
         .level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = renderer->command_buffers.element_count,
+        .commandBufferCount = lna_array_size(&renderer->command_buffers),
     };
 
     VULKAN_CHECK_RESULT(
         vkAllocateCommandBuffers(
             renderer->device,
             &command_buffer_allocate_info,
-            renderer->command_buffers.elements
+            lna_array_ptr(&renderer->command_buffers)
             )
         )
 }
@@ -1142,11 +1142,11 @@ static void lna_vulkan_renderer_cleanup_swap_chain(
     vkFreeMemory(renderer->device, renderer->depth_image_memory, NULL);
 
 
-    for (size_t i = 0; i < renderer->swap_chain_framebuffers.element_count; ++i)
+    for (size_t i = 0; i < lna_array_size(&renderer->swap_chain_framebuffers); ++i)
     {
         vkDestroyFramebuffer(
             renderer->device,
-            renderer->swap_chain_framebuffers.elements[i],
+            lna_array_at_ref(&renderer->swap_chain_framebuffers, i),
             NULL
             );
     }
@@ -1154,8 +1154,8 @@ static void lna_vulkan_renderer_cleanup_swap_chain(
     vkFreeCommandBuffers(
         renderer->device,
         renderer->command_pool,
-        renderer->command_buffers.element_count,
-        renderer->command_buffers.elements
+        lna_array_size(&renderer->command_buffers),
+        lna_array_ptr(&renderer->command_buffers)
         );
 
     // TODO: uncomment and migrate to C if we stay with callback for swap chain clean
@@ -1175,11 +1175,11 @@ static void lna_vulkan_renderer_cleanup_swap_chain(
         NULL
         );
 
-    for (size_t i = 0; i < renderer->swap_chain_image_views.element_count; ++i)
+    for (size_t i = 0; i < lna_array_size(&renderer->swap_chain_image_views); ++i)
     {
         vkDestroyImageView(
             renderer->device,
-            renderer->swap_chain_image_views.elements[i],
+            lna_array_at_ref(&renderer->swap_chain_image_views, i),
             NULL
             );
     }
@@ -1334,20 +1334,20 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
         lna_assert(0)
     }
 
-    lna_assert(renderer->images_in_flight_fences.element_count > renderer->image_index)
-    if (renderer->images_in_flight_fences.elements[renderer->image_index] != VK_NULL_HANDLE)
+    lna_assert(lna_array_size(&renderer->images_in_flight_fences) > renderer->image_index)
+    if (lna_array_at_ref(&renderer->images_in_flight_fences, renderer->image_index) != VK_NULL_HANDLE)
     {
         VULKAN_CHECK_RESULT(
             vkWaitForFences(
                 renderer->device,
                 1,
-                &renderer->images_in_flight_fences.elements[renderer->image_index],
+                lna_array_at_ptr(&renderer->images_in_flight_fences, renderer->image_index),
                 VK_TRUE,
                 UINT64_MAX
                 )
             )
     }
-    renderer->images_in_flight_fences.elements[renderer->image_index] = renderer->in_flight_fences[renderer->curr_frame];
+    lna_array_at_ref(&renderer->images_in_flight_fences, renderer->image_index) = renderer->in_flight_fences[renderer->curr_frame];
 
     VULKAN_CHECK_RESULT(
         vkResetFences(
@@ -1393,14 +1393,14 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
 
     VULKAN_CHECK_RESULT(
         vkResetCommandBuffer(
-            renderer->command_buffers.elements[renderer->image_index],
+            lna_array_at_ref(&renderer->command_buffers, renderer->image_index),
             VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
             )
         )
 
     VULKAN_CHECK_RESULT(
         vkBeginCommandBuffer(
-            renderer->command_buffers.elements[renderer->image_index],
+            lna_array_at_ref(&renderer->command_buffers, renderer->image_index),
             &command_buffer_begin_info
             )
         )
@@ -1409,7 +1409,7 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
     {
         .sType              = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass         = renderer->render_pass,
-        .framebuffer        = renderer->swap_chain_framebuffers.elements[renderer->image_index],
+        .framebuffer        = lna_array_at_ref(&renderer->swap_chain_framebuffers, renderer->image_index),
         .renderArea.offset  = { 0, 0 },
         .renderArea.extent  = renderer->swap_chain_extent,
         .clearValueCount    = clear_value_count,
@@ -1417,18 +1417,18 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
     };
 
     vkCmdBeginRenderPass(
-        renderer->command_buffers.elements[renderer->image_index],
+        lna_array_at_ref(&renderer->command_buffers, renderer->image_index),
         &render_pass_begin_info,
         VK_SUBPASS_CONTENTS_INLINE
         );
     vkCmdSetViewport(
-        renderer->command_buffers.elements[renderer->image_index],
+        lna_array_at_ref(&renderer->command_buffers, renderer->image_index),
         0,
         1,
         &viewport
         );
     vkCmdSetScissor(
-        renderer->command_buffers.elements[renderer->image_index],
+        lna_array_at_ref(&renderer->command_buffers, renderer->image_index),
         0,
         1,
         &scissor_rect
@@ -1453,15 +1453,15 @@ void lna_renderer_end_draw_frame(lna_renderer_t* renderer, bool window_resized, 
     };
 
     vkCmdEndRenderPass(
-        renderer->command_buffers.elements[renderer->image_index]
+        lna_array_at_ref(&renderer->command_buffers, renderer->image_index)
         );
     VULKAN_CHECK_RESULT(
         vkEndCommandBuffer(
-            renderer->command_buffers.elements[renderer->image_index]
+            lna_array_at_ref(&renderer->command_buffers, renderer->image_index)
             )
         )
 
-    lna_assert(renderer->command_buffers.element_count > renderer->image_index)
+    lna_assert(lna_array_size(&renderer->command_buffers) > renderer->image_index)
     const VkSubmitInfo submit_info =
     {
         .sType                  = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -1469,7 +1469,7 @@ void lna_renderer_end_draw_frame(lna_renderer_t* renderer, bool window_resized, 
         .pWaitSemaphores        = wait_semaphores,
         .pWaitDstStageMask      = wait_stages,
         .commandBufferCount     = 1,
-        .pCommandBuffers        = &renderer->command_buffers.elements[renderer->image_index],
+        .pCommandBuffers        = lna_array_at_ptr(&renderer->command_buffers, renderer->image_index),
         .signalSemaphoreCount   = 1,
         .pSignalSemaphores      = signal_semaphores,
     };

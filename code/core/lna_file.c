@@ -30,12 +30,17 @@ void lna_file_debug_load(lna_file_content_t* file_content, lna_memory_pool_t* me
             lna_assert(0)
         }
 
-        size_t count = fread(file_content->elements, sizeof(char), file_content->element_count, fp);
+        size_t count = fread(
+            lna_array_ptr(file_content),
+            sizeof(char),
+            lna_array_size(file_content),
+            fp
+            );
         lna_assert(ferror(fp) == 0)
 
         if (!is_binary)
         {
-            file_content->elements[count] = '\0';
+            lna_array_at_ref(file_content, count) = '\0';
         }
     }
     fclose(fp);
@@ -68,7 +73,12 @@ void lna_binary_file_debug_load_uint32(lna_binary_file_content_uint32_t* file_co
             lna_assert(0)
         }
 
-        fread(file_content->elements, sizeof(uint32_t), file_content->element_count, fp);
+        fread(
+            lna_array_ptr(file_content),
+            sizeof(uint32_t),
+            lna_array_size(file_content),
+            fp
+            );
         lna_assert(ferror(fp) == 0)
     }
     fclose(fp);

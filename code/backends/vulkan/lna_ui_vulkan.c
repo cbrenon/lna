@@ -456,13 +456,13 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
     // -------------------------------------------------------------------------
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         config->renderer->device,
-        vertex_shader_file.elements,
-        vertex_shader_file.element_count
+        lna_array_ptr(&vertex_shader_file),
+        lna_array_size(&vertex_shader_file)
         );
     VkShaderModule fragment_shader_module = lna_vulkan_create_shader_module(
         config->renderer->device,
-        fragment_shader_file.elements,
-        fragment_shader_file.element_count
+        lna_array_ptr(&fragment_shader_file),
+        lna_array_size(&fragment_shader_file)
         );
     const VkPipelineShaderStageCreateInfo shader_stage_create_infos[2] =
     {
@@ -591,7 +591,7 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
         .extent.height  = ui_system->renderer->swap_chain_extent.height,
     };
 
-    VkCommandBuffer command_buffer = ui_system->renderer->command_buffers.elements[ui_system->renderer->image_index];
+    VkCommandBuffer command_buffer = lna_array_at_ref(&ui_system->renderer->command_buffers, ui_system->renderer->image_index);
 
     for (uint32_t i = 0; i < lna_vector_size(&ui_system->buffers); ++i)
     {

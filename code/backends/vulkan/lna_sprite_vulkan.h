@@ -9,7 +9,7 @@ typedef struct lna_mat4_s lna_mat4_t;
 
 typedef struct lna_sprite_s
 {
-    lna_texture_t*                      texture;
+    const lna_texture_t*                texture;
     VkBuffer                            vertex_buffer;
     VkDeviceMemory                      vertex_buffer_memory;
     VkBuffer                            index_buffer;
@@ -17,9 +17,9 @@ typedef struct lna_sprite_s
     lna_vulkan_buffer_array_t           mv_uniform_buffers;
     lna_vulkan_device_memory_array_t    mv_uniform_buffers_memory;
     lna_vulkan_descriptor_set_array_t   descriptor_sets;
-    lna_mat4_t*                         model_matrix;
-    lna_mat4_t*                         view_matrix;
-    lna_mat4_t*                         projection_matrix;
+    const lna_mat4_t*                   model_matrix;
+    const lna_mat4_t*                   view_matrix;
+    const lna_mat4_t*                   projection_matrix;
 } lna_sprite_t;
 
 lna_vector_def(lna_sprite_t) lna_sprite_vec_t;

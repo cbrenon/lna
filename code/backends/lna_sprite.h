@@ -8,9 +8,9 @@ typedef struct lna_sprite_system_s  lna_sprite_system_t;
 typedef struct lna_memory_pool_s    lna_memory_pool_t;
 typedef struct lna_renderer_s       lna_renderer_t;
 typedef struct lna_texture_s        lna_texture_t;
-typedef struct lna_vec2_s           lna_vec2_t;
-typedef struct lna_vec3_s           lna_vec3_t;
-typedef struct lna_vec4_s           lna_vec4_t;
+typedef union lna_vec2_u            lna_vec2_t;
+typedef union lna_vec3_u            lna_vec3_t;
+typedef union lna_vec4_u            lna_vec4_t;
 typedef struct lna_mat4_s           lna_mat4_t;
 
 typedef struct lna_sprite_system_config_s

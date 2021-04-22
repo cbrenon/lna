@@ -1,5 +1,6 @@
 #include <string.h>
 #include "backends/vulkan/lna_sprite_vulkan.h"
+#include "backends/vulkan/lna_texture_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"
 #include "core/lna_assert.h"
 #include "core/lna_memory_pool.h"
@@ -55,8 +56,8 @@ static void lna_sprite_create_uniform_buffer(
             uniform_buffer_size,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            lna_array_at(&sprite->mv_uniform_buffers, i),
-            lna_array_at(&sprite->mv_uniform_buffers_memory, i)
+            lna_array_at_ptr(&sprite->mv_uniform_buffers, i),
+            lna_array_at_ptr(&sprite->mv_uniform_buffers_memory, i)
             );
     }
 }
@@ -67,11 +68,16 @@ static void lna_sprite_create_descriptor_sets(
     )
 {
     lna_assert(sprite)
-    lna_assert(lna_array_size(&sprite->descriptor_sets) == 0)
     lna_assert(sprite_system)
+    lna_assert(lna_array_size(&sprite->descriptor_sets) == 0)
+
+    const lna_texture_t* texture = sprite->texture;
+    lna_assert(texture)
+    lna_assert(texture->image_view)
+    lna_assert(texture->image_sampler)
 
     lna_renderer_t* renderer = sprite_system->renderer;
-    lna_assert(renderer);
+    lna_assert(renderer)
 
     lna_vulkan_descriptor_set_layout_array_t layouts;
     lna_array_init(
@@ -82,7 +88,7 @@ static void lna_sprite_create_descriptor_sets(
         );
     for (uint32_t i = 0; i < lna_array_size(&layouts); ++i)
     {
-        lna_array_set(&layouts, i, sprite_system->descriptor_set_layout);
+        lna_array_at_ref(&layouts, i) = sprite_system->descriptor_set_layout;
     }
 
     const VkDescriptorSetAllocateInfo allocate_info =
@@ -112,54 +118,49 @@ static void lna_sprite_create_descriptor_sets(
     {
         const VkDescriptorBufferInfo buffer_info =
         {
-            .buffer = lna_array_at(&sprite->mv_uniform_buffers, i),
+            .buffer = lna_array_at_ref(&sprite->mv_uniform_buffers, i),
             .offset = 0,
             .range = sizeof(lna_sprite_uniform_t),
         };
-
-        VkDescriptorImageInfo image_info{};
-        image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        image_info.imageView = mesh.texture_ptr->image_view;
-        image_info.sampler = mesh.texture_ptr->sampler;
-
-        VkWriteDescriptorSet write_descriptors[3]{};
-
-        write_descriptors[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_descriptors[0].dstSet = mesh.descriptor_sets[i];
-        write_descriptors[0].dstBinding = 0;
-        write_descriptors[0].dstArrayElement = 0;
-        write_descriptors[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write_descriptors[0].descriptorCount = 1;
-        write_descriptors[0].pBufferInfo = &buffer_info;
-        write_descriptors[0].pImageInfo = nullptr;
-        write_descriptors[0].pTexelBufferView = nullptr;
-
-        write_descriptors[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_descriptors[1].dstSet = mesh.descriptor_sets[i];
-        write_descriptors[1].dstBinding = 1;
-        write_descriptors[1].dstArrayElement = 0;
-        write_descriptors[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        write_descriptors[1].descriptorCount = 1;
-        write_descriptors[1].pBufferInfo = nullptr;
-        write_descriptors[1].pImageInfo = &image_info;
-        write_descriptors[1].pTexelBufferView = nullptr;
-
-        write_descriptors[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write_descriptors[2].dstSet = mesh.descriptor_sets[i];
-        write_descriptors[2].dstBinding = 2;
-        write_descriptors[2].dstArrayElement = 0;
-        write_descriptors[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write_descriptors[2].descriptorCount = 1;
-        write_descriptors[2].pBufferInfo = &light_buffer_info;
-        write_descriptors[2].pTexelBufferView = nullptr;
-        write_descriptors[2].pImageInfo = nullptr;
+        const VkDescriptorImageInfo image_info =
+        {
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .imageView = texture->image_view,
+            .sampler = texture->image_sampler,
+        };
+        const VkWriteDescriptorSet write_descriptors[] =
+        {
+            {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = lna_array_at_ref(&sprite->descriptor_sets, i),
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1,
+                .pBufferInfo = &buffer_info,
+                .pImageInfo = NULL,
+                .pTexelBufferView = NULL,
+            },
+            {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = lna_array_at_ref(&sprite->descriptor_sets, i),
+                .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .descriptorCount = 1,
+                .pBufferInfo = NULL,
+                .pImageInfo = &image_info,
+                .pTexelBufferView = NULL,
+            },
+        };
 
         vkUpdateDescriptorSets(
-            backend.renderer_backend_ptr->device,
-            static_cast<uint32_t>(sizeof(write_descriptors) / sizeof(write_descriptors[0])),
+            renderer->device,
+            (uint32_t)(sizeof(write_descriptors) / sizeof(write_descriptors[0])),
             write_descriptors,
             0,
-            nullptr);
+            NULL
+            );
     }
 }
 
@@ -188,7 +189,7 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
 
     //! DESCRIPTOR SET LAYOUT
 
-    const VkDescriptorSetLayoutBinding bindings[2] =
+    const VkDescriptorSetLayoutBinding bindings[] =
     {
         {
             .binding = 0,
@@ -238,15 +239,15 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
     // -------------------------------------------------------------------------
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         config->renderer->device,
-        vertex_shader_file.elements,
-        vertex_shader_file.element_count
+        lna_array_ptr(&vertex_shader_file),
+        lna_array_size(&vertex_shader_file)
         );
     VkShaderModule fragment_shader_module = lna_vulkan_create_shader_module(
         config->renderer->device,
-        fragment_shader_file.elements,
-        fragment_shader_file.element_count
+        lna_array_ptr(&fragment_shader_file),
+        lna_array_size(&fragment_shader_file)
         );
-    const VkPipelineShaderStageCreateInfo shader_stage_create_infos[2] =
+    const VkPipelineShaderStageCreateInfo shader_stage_create_infos[] =
     {
         {
             .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -261,7 +262,7 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
             .pName  = "main",
         },
     };
-    const VkVertexInputAttributeDescription vertex_input_attribute_descriptions[3] =
+    const VkVertexInputAttributeDescription vertex_input_attribute_descriptions[] =
     {
         {
             .binding = 0,
@@ -282,7 +283,7 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
             .offset = offsetof(lna_sprite_vertex_t, color),
         },
     };
-    const VkVertexInputBindingDescription vertex_input_binding_description[1] =
+    const VkVertexInputBindingDescription vertex_input_binding_description[] =
     {
         {
             .binding = 0,
@@ -443,15 +444,15 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
 
     //! DESCRIPTOR POOL
 
-    const VkDescriptorPoolSize pool_sizes[2] =
+    const VkDescriptorPoolSize pool_sizes[] =
     {
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = config->renderer->swap_chain_images.element_count,
+            .descriptorCount = lna_array_size(&config->renderer->swap_chain_images),
         },
         {
             .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = config->renderer->swap_chain_images.element_count,
+            .descriptorCount = lna_array_size(&config->renderer->swap_chain_images),
         },
     };
 
@@ -460,7 +461,7 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .poolSizeCount = (uint32_t)(sizeof(pool_sizes) / sizeof(pool_sizes[0])),
         .pPoolSizes = pool_sizes,
-        .maxSets = config->renderer->swap_chain_images.element_count * config->max_sprite_count,
+        .maxSets = lna_array_size(&config->renderer->swap_chain_images) * config->max_sprite_count,
     };
 
     VULKAN_CHECK_RESULT(
@@ -501,7 +502,7 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
     lna_assert(sprite_system)
 
     lna_renderer_t* renderer = sprite_system->renderer;
-    lna_assert(renderer);
+    lna_assert(renderer)
 
     sprite->model_matrix        = config->model_matrix;
     sprite->view_matrix         = config->view_matrix;
@@ -515,12 +516,11 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
         const lna_vec2_t default_uv_offset_position = { 0.0f, 0.0f };
         const lna_vec2_t default_uv_offset_size     = { 1.0f, 1.0f };
         const lna_vec4_t default_color              = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-        lna_vec3_t* position            = config->local_position ? config->local_position : &default_position;
-        lna_vec2_t* size                = config->size; 
-        lna_vec2_t* uv_offset_position  = config->uv_offset_position ? config->uv_offset_position : &default_uv_offset_position;
-        lna_vec2_t* uv_offset_size      = config->uv_offset_size ? config->uv_offset_size : &default_uv_offset_size;
-        lna_vec4_t* color               = config->blend_color ? config->blend_color : &default_color;
+        const lna_vec3_t* position                  = config->local_position ? config->local_position : &default_position;
+        const lna_vec2_t* size                      = config->size; 
+        const lna_vec2_t* uv_offset_position        = config->uv_offset_position ? config->uv_offset_position : &default_uv_offset_position;
+        const lna_vec2_t* uv_offset_size            = config->uv_offset_size ? config->uv_offset_size : &default_uv_offset_size;
+        const lna_vec4_t* color                     = config->blend_color ? config->blend_color : &default_color;
 
         lna_sprite_vertex_t vertices[] =
         {
@@ -585,8 +585,8 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
             vertex_buffer_size,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            sprite->vertex_buffer,
-            sprite->vertex_buffer_memory
+            &sprite->vertex_buffer,
+            &sprite->vertex_buffer_memory
             );
         lna_vulkan_copy_buffer(
             renderer->device,
