@@ -1158,16 +1158,11 @@ static void lna_vulkan_renderer_cleanup_swap_chain(
         lna_array_ptr(&renderer->command_buffers)
         );
 
-    // TODO: uncomment and migrate to C if we stay with callback for swap chain clean
-    // for (uint32_t i = 0; i < lna::backend_renderer::MAX_SWAP_CHAIN_CALLBACKS; ++i)
-    // {
-    //     if (
-    //         renderer.swap_chain_cleanup_callbacks[i] && renderer.callback_owners[i])
-    //     {
-    //         renderer.swap_chain_cleanup_callbacks[i](
-    //             renderer.callback_owners[i]);
-    //     }
-    // }
+    for (uint32_t i = 0; i < lna_vector_size(&renderer->listeners); ++i)
+    {
+        lna_renderer_listener_t* listener = lna_vector_at_ptr(&renderer->listeners, i);
+        listener->on_cleanup(listener->handle);
+    }
 
     vkDestroyRenderPass(
         renderer->device,
@@ -1221,24 +1216,18 @@ static void lna_vulkan_renderer_recreate_swap_chain(
     lna_vulkan_renderer_create_framebuffers(renderer);
     lna_vulkan_renderer_create_command_buffers(renderer);
 
-    // TODO: uncomment and migrate to C if we stay with callback for swap chain recreate
-    // for (uint32_t i = 0; i < lna::backend_renderer::MAX_SWAP_CHAIN_CALLBACKS; ++i)
-    // {
-    //     if (
-    //         renderer.swap_chain_recreate_callbacks[i]
-    //         && renderer.callback_owners[i]
-    //         )
-    //     {
-    //         renderer.swap_chain_recreate_callbacks[i](
-    //             renderer.callback_owners[i]
-    //             );
-    //     }
-    // }
+    for (uint32_t i = 0; i < lna_vector_size(&renderer->listeners); ++i)
+    {
+        lna_renderer_listener_t* listener = lna_vector_at_ptr(&renderer->listeners, i);
+        listener->on_recreate(listener->handle);
+    }
 }
 
 //! ============================================================================
 //!                         RENDERER PUBLIC FUNCTIONS
 //! ============================================================================
+
+static const uint32_t LNA_RENDERER_MAX_LISTENERS_COUNT = 5;
 
 bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* config)
 {
@@ -1260,6 +1249,7 @@ bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* co
     lna_assert(lna_array_is_empty(&renderer->swap_chain_image_views))
     lna_assert(lna_array_is_empty(&renderer->swap_chain_framebuffers))
     lna_assert(lna_array_is_empty(&renderer->command_buffers))
+    lna_assert(lna_vector_max_capacity(&renderer->listeners) == 0)
     lna_assert(config)
     lna_assert(config->window)
 
@@ -1271,6 +1261,13 @@ bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* co
             LNA_VULKAN_RENDERER_MEMORY_POOL_SIZES[i]
             );
     }
+
+    lna_vector_init(
+        &renderer->listeners,
+        &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_PERSISTENT],
+        lna_renderer_listener_t,
+        LNA_RENDERER_MAX_LISTENERS_COUNT
+        );
 
     renderer->curr_frame = 0;
     renderer->graphics_family = (uint32_t)-1;
