@@ -37,13 +37,13 @@ static void lna_sprite_system_create_graphics_pipeline(
     lna_binary_file_debug_load_uint32(
         &vertex_shader_file,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
-        "shaders/default_vert.spv"
+        "shaders/sprite_vert.spv"
         );
     lna_binary_file_content_uint32_t fragment_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &fragment_shader_file,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
-        "shaders/default_frag.spv"
+        "shaders/sprite_frag.spv"
         );
     // -------------------------------------------------------------------------
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
@@ -345,7 +345,7 @@ static void lna_sprite_create_descriptor_sets(
     lna_renderer_t* renderer = sprite_system->renderer;
     lna_assert(renderer)
 
-    lna_vulkan_descriptor_set_layout_array_t layouts;
+    lna_vulkan_descriptor_set_layout_array_t layouts = { 0 };
     lna_array_init(
         &layouts,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
@@ -614,7 +614,6 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
     lna_assert(sprite->view_matrix == NULL)
     lna_assert(sprite->projection_matrix == NULL)
     lna_assert(config)
-    lna_assert(config->size)
     lna_assert(config->model_matrix)
     lna_assert(config->view_matrix)
     lna_assert(config->projection_matrix)
@@ -632,11 +631,12 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
 
     {
         const lna_vec3_t default_position           = { 0.0f, 0.0f, 0.0f };
+        const lna_vec2_t default_size               = { 1.0f, 1.0f };
         const lna_vec2_t default_uv_offset_position = { 0.0f, 0.0f };
         const lna_vec2_t default_uv_offset_size     = { 1.0f, 1.0f };
         const lna_vec4_t default_color              = { 1.0f, 1.0f, 1.0f, 1.0f };
         const lna_vec3_t* position                  = config->local_position ? config->local_position : &default_position;
-        const lna_vec2_t* size                      = config->size; 
+        const lna_vec2_t* size                      = config->size ? config->size : &default_size; 
         const lna_vec2_t* uv_offset_position        = config->uv_offset_position ? config->uv_offset_position : &default_uv_offset_position;
         const lna_vec2_t* uv_offset_size            = config->uv_offset_size ? config->uv_offset_size : &default_uv_offset_size;
         const lna_vec4_t* color                     = config->blend_color ? config->blend_color : &default_color;
@@ -649,18 +649,45 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
                 .color = *color,
             },
             {
-                .position = { position->x, position->y + size->height, position->z },
-                .uv = { uv_offset_position->x, uv_offset_position->y + uv_offset_size->height },
+                .position =
+                {
+                    position->x,
+                    position->y + size->height,
+                    position->z
+                },
+                .uv =
+                {
+                    uv_offset_position->x,
+                    uv_offset_position->y + uv_offset_size->height
+                },
                 .color = *color,
             },
             {
-                .position = { position->x + size->width, position->y + size->height, position->z },
-                .uv = { uv_offset_position->x + uv_offset_size->width, uv_offset_position->y + uv_offset_size->height },
+                .position =
+                {
+                    position->x + size->width,
+                    position->y + size->height,
+                    position->z
+                },
+                .uv =
+                {
+                    uv_offset_position->x + uv_offset_size->width,
+                    uv_offset_position->y + uv_offset_size->height
+                },
                 .color = *color,
             },
             {
-                .position = { position->x + size->width, position->y, position->z },
-                .uv = { uv_offset_position->x + uv_offset_size->width, uv_offset_position->y },
+                .position =
+                {
+                    position->x + size->width,
+                    position->y,
+                    position->z
+                },
+                .uv =
+                {
+                    uv_offset_position->x + uv_offset_size->width,
+                    uv_offset_position->y
+                },
                 .color = *color,
             },
         };
@@ -732,6 +759,8 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
     {
         const uint32_t indices[] = { 0, 1, 2, 2, 3, 0 };
         const size_t index_buffer_size = sizeof(indices);
+
+        sprite->index_count = (uint32_t)(sizeof(indices) / sizeof(indices[0]));
 
         VkBuffer staging_buffer;
         VkDeviceMemory staging_buffer_memory;
