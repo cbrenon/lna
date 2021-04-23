@@ -14,12 +14,13 @@ typedef struct lna_sprite_s
     VkDeviceMemory                      vertex_buffer_memory;
     VkBuffer                            index_buffer;
     VkDeviceMemory                      index_buffer_memory;
-    lna_vulkan_buffer_array_t           mv_uniform_buffers;
-    lna_vulkan_device_memory_array_t    mv_uniform_buffers_memory;
+    lna_vulkan_buffer_array_t           mvp_uniform_buffers;
+    lna_vulkan_device_memory_array_t    mvp_uniform_buffers_memory;
     lna_vulkan_descriptor_set_array_t   descriptor_sets;
     const lna_mat4_t*                   model_matrix;
     const lna_mat4_t*                   view_matrix;
     const lna_mat4_t*                   projection_matrix;
+    uint32_t                            index_count;
 } lna_sprite_t;
 
 lna_vector_def(lna_sprite_t) lna_sprite_vec_t;

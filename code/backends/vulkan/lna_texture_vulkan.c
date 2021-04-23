@@ -313,8 +313,10 @@ void lna_texture_system_release(lna_texture_system_t* texture_system)
 
     for (uint32_t index = 0; index < lna_vector_size(&texture_system->textures); ++index)
     {
-        lna_texture_t* texture = lna_vector_at(&texture_system->textures, index);
-        lna_texture_release(texture, texture_system->renderer->device);
+        lna_texture_release(
+            lna_vector_at_ptr(&texture_system->textures, index),
+            texture_system->renderer->device
+            );
     }
     lna_vector_release(&texture_system->textures);
     texture_system->renderer = NULL;

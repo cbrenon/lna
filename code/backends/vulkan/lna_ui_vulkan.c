@@ -595,7 +595,7 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
 
     for (uint32_t i = 0; i < lna_vector_size(&ui_system->buffers); ++i)
     {
-        lna_ui_buffer_t* buffer = lna_vector_at(&ui_system->buffers, i);
+        lna_ui_buffer_t* buffer = lna_vector_at_ptr(&ui_system->buffers, i);
 
         //! 1. UPDATE MAPPED DATA
 
@@ -732,7 +732,7 @@ void lna_ui_system_release(lna_ui_system_t* ui_system)
 
     for (uint32_t index = 0; index < lna_vector_size(&ui_system->buffers); ++index)
     {
-        lna_ui_buffer_t* buffer = lna_vector_at(&ui_system->buffers, index);
+        lna_ui_buffer_t* buffer = lna_vector_at_ptr(&ui_system->buffers, index);
         lna_ui_buffer_release(buffer, ui_system->renderer->device);
     }
 
