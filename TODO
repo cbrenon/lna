@@ -1,14 +1,8 @@
 ROAD TO PROTOTYPING FRAMEWORK:
   ☐ mesh
-  ☐ sprite
-  ☐ debug primitives
-    ☐ text
-    ☐ line
-    ☐ rect
-    ☐ circle
-    ☐ raw vertices
 
 MISC:
+  ☐ use vec3 parameters for mat4 look at create function instead of floats
   ☐ regroup VkBuffer and VkDeviceMemory in one struct
     they are always used together in my code so it will limit function parameters count
     and help to realize the next task on config struct for vulkan function
@@ -20,6 +14,8 @@ MISC:
   ☐ fix all TODO in code
 
 Archive:
+  ✔ sprite                                                                                 @done(21-04-23 22:13) @project(ROAD TO PROTOTYPING FRAMEWORK)
+  ✔ debug primitives                                                                       @done(21-04-23 22:13) @project(ROAD TO PROTOTYPING FRAMEWORK)
   ✔ more modern C++ friendly code                                                          @done(21-04-11 18:11) @project(MISC)
   ✔ debug fly camera                                                                       @done(21-04-11 18:11) @project(MISC)
   ✔ rename vulkan_backend files to vulkan_renderer (only files)                            @done(21-04-11 00:33) @project(MISC)
