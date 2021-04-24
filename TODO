@@ -1,5 +1,6 @@
 ROAD TO PROTOTYPING FRAMEWORK:
   ☐ mesh
+  ☐ load obj function (dev only function)
 
 MISC:
   ☐ use vec3 parameters for mat4 look at create function instead of floats
