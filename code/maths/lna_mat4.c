@@ -98,10 +98,12 @@ lna_mat4_t lna_mat4_look_at(float eye_x, float eye_y, float eye_z, float target_
     m.values[1][0] = x_vec.y;
     m.values[2][0] = x_vec.z;
     m.values[3][0] = -lna_vec3_dot_product(x_vec, (lna_vec3_t){ eye_x, eye_y, eye_z});
+
     m.values[0][1] = y_vec.x;
     m.values[1][1] = y_vec.y;
     m.values[2][1] = y_vec.z;
     m.values[3][1] = -lna_vec3_dot_product(y_vec, (lna_vec3_t){ eye_x, eye_y, eye_z});
+    
     m.values[0][2] = -z_vec.x;
     m.values[1][2] = -z_vec.y;
     m.values[2][2] = -z_vec.z;

@@ -3,7 +3,6 @@
 
 #include "backends/lna_ui.h"
 #include "backends/vulkan/lna_renderer_vulkan.h"
-#include "core/lna_container.h"
 
 typedef struct lna_ui_vertex_s
 {
@@ -37,7 +36,7 @@ typedef struct lna_ui_buffer_s
     void*                               index_data_mapped;
 } lna_ui_buffer_t;
 
-lna_vector_def(lna_ui_buffer_t) lna_ui_buffer_vec_t;
+lna_vector_def(lna_ui_buffer_t)         lna_ui_buffer_vec_t;
 
 typedef struct lna_ui_system_s
 {

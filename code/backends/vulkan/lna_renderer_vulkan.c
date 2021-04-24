@@ -695,6 +695,8 @@ static void lna_vulkan_renderer_create_logical_device(
     const VkPhysicalDeviceFeatures device_features =
     {
         .samplerAnisotropy = VK_TRUE,
+        .fillModeNonSolid = VK_TRUE,
+        .wideLines = VK_TRUE,
     };
 
     const VkDeviceCreateInfo device_create_info =
@@ -1354,7 +1356,7 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
             )
         )
 
-    const VkClearValue clear_values[2] =
+    const VkClearValue clear_values[] =
     {
         {
             .color = { 0.0f, 0.0f, 0.0f, 1.0f },
