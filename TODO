@@ -1,8 +1,13 @@
 ROAD TO PROTOTYPING FRAMEWORK:
-  ☐ mesh
-  ☐ load obj function (dev only function)
+  ☐ arrow primitive
+  ☐ circle primitive
+  ☐ rect primitive
+  ☐ cross primitive
+  ☐ raw primitive (vertices and indices in config)
 
 MISC:
+  ☐ mesh
+  ☐ load obj function (dev only function)
   ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
   ☐ use vec3 parameters for mat4 look at create function instead of floats
   ☐ regroup VkBuffer and VkDeviceMemory in one struct

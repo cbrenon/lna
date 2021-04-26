@@ -880,3 +880,58 @@ void lna_primitive_system_release(lna_primitive_system_t* primitive_system)
             );
     }
 }
+
+lna_primitive_t* lna_primitive_system_new_raw    (lna_primitive_system_t* primitive_system, const lna_primitive_raw_config_t* config)
+{
+    lna_assert(primitive_system)
+    lna_assert(config)
+
+    lna_primitive_t* primitive = NULL;
+    lna_vector_new_element(&primitive_system->primitives, primitive);
+    
+    return primitive;
+}
+
+lna_primitive_t* lna_primitive_system_new_rect(lna_primitive_system_t* primitive_system, const lna_primitive_rect_config_t* config)
+{
+    lna_assert(primitive_system)
+    lna_assert(config)
+
+    lna_primitive_t* primitive = NULL;
+    lna_vector_new_element(&primitive_system->primitives, primitive);
+    
+    return primitive;
+}
+
+lna_primitive_t* lna_primitive_system_new_circle(lna_primitive_system_t* primitive_system, const lna_primitive_circle_config_t* config)
+{
+    lna_assert(primitive_system)
+    lna_assert(config)
+
+    lna_primitive_t* primitive = NULL;
+    lna_vector_new_element(&primitive_system->primitives, primitive);
+    
+    return primitive;
+}
+
+lna_primitive_t* lna_primitive_system_new_arrow(lna_primitive_system_t* primitive_system, const lna_primitive_arrow_config_t* config)
+{
+    lna_assert(primitive_system)
+    lna_assert(config)
+
+    lna_primitive_t* primitive = NULL;
+    lna_vector_new_element(&primitive_system->primitives, primitive);
+    
+    return primitive;
+}
+
+lna_primitive_t* lna_primitive_system_new_cross(lna_primitive_system_t* primitive_system, const lna_primitive_cross_config_t* config)
+{
+    lna_assert(primitive_system)
+    lna_assert(config)
+
+    lna_primitive_t* primitive = NULL;
+    lna_vector_new_element(&primitive_system->primitives, primitive);
+    
+    return primitive;
+}

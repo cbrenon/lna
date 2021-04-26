@@ -24,6 +24,18 @@ typedef struct lna_primitive_vertex_s
     lna_vec4_t                          color;
 } lna_primitive_vertex_t;
 
+extern void             lna_primitive_system_init       (lna_primitive_system_t* primitive_system, const lna_primitive_system_config_t* config);
+extern void             lna_primitive_system_draw       (lna_primitive_system_t* primitive_system);
+extern void             lna_primitive_system_release    (lna_primitive_system_t* primitive_system);
+
+typedef struct lna_primitive_raw_config_s
+{
+    const lna_primitive_vertex_t*       vertices;
+    const uint32_t*                     indices;
+    uint32_t                            vertex_count;
+    uint32_t                            index_count;
+} lna_primitive_raw_config_t;
+
 typedef struct lna_primitive_line_config_s
 {
     const lna_vec3_t*                   pos_a;
@@ -35,9 +47,48 @@ typedef struct lna_primitive_line_config_s
     const lna_mat4_t*                   projection_matrix;
 } lna_primitive_line_config_t;
 
-extern void             lna_primitive_system_init       (lna_primitive_system_t* primitive_system, const lna_primitive_system_config_t* config);
+typedef struct lna_primitive_rect_config_s
+{
+    const lna_vec3_t*                   center;
+    const lna_vec3_t*                   normal;
+    const lna_vec4_t*                   color;
+    const lna_mat4_t*                   model_matrix;
+    const lna_mat4_t*                   view_matrix;
+    const lna_mat4_t*                   projection_matrix;
+} lna_primitive_rect_config_t;
+
+typedef struct lna_primitive_circle_config_s
+{
+    const lna_vec3_t*                   radius;
+    const lna_vec3_t*                   normal;
+    float                               radius;
+    const lna_vec4_t*                   color;
+    const lna_mat4_t*                   model_matrix;
+    const lna_mat4_t*                   view_matrix;
+    const lna_mat4_t*                   projection_matrix;
+} lna_primitive_circle_config_t;
+
+typedef struct lna_primitive_arrow_config_s
+{
+    const lna_vec3_t*                   tail_position;
+    const lna_vec3_t*                   head_position;
+    const lna_vec4_t*                   color;
+    float                               head_size;
+} lna_primitive_arrow_config_t;
+
+typedef struct lna_primitive_cross_config_s
+{
+    const lna_vec3_t*                   position;
+    const lna_vec3_t*                   normal;
+    float                               size;
+    const lna_vec4_t*                   color;
+} lna_primitive_cross_config_t;
+
+extern lna_primitive_t* lna_primitive_system_new_raw    (lna_primitive_system_t* primitive_system, const lna_primitive_raw_config_t* config);
 extern lna_primitive_t* lna_primitive_system_new_line   (lna_primitive_system_t* primitive_system, const lna_primitive_line_config_t* config);
-extern void             lna_primitive_system_draw       (lna_primitive_system_t* primitive_system);
-extern void             lna_primitive_system_release    (lna_primitive_system_t* primitive_system);
+extern lna_primitive_t* lna_primitive_system_new_rect   (lna_primitive_system_t* primitive_system, const lna_primitive_rect_config_t* config);
+extern lna_primitive_t* lna_primitive_system_new_circle (lna_primitive_system_t* primitive_system, const lna_primitive_circle_config_t* config);
+extern lna_primitive_t* lna_primitive_system_new_arrow  (lna_primitive_system_t* primitive_system, const lna_primitive_arrow_config_t* config);
+extern lna_primitive_t* lna_primitive_system_new_cross  (lna_primitive_system_t* primitive_system, const lna_primitive_cross_config_t* config);
 
 #endif
