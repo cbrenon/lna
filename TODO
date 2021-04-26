@@ -3,6 +3,7 @@ ROAD TO PROTOTYPING FRAMEWORK:
   ☐ load obj function (dev only function)
 
 MISC:
+  ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
   ☐ use vec3 parameters for mat4 look at create function instead of floats
   ☐ regroup VkBuffer and VkDeviceMemory in one struct
     they are always used together in my code so it will limit function parameters count
