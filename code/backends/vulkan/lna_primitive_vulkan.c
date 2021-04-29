@@ -553,204 +553,6 @@ void lna_primitive_system_init(lna_primitive_system_t* primitive_system, const l
         );
 }
 
-lna_primitive_t* lna_primitive_system_new_line(lna_primitive_system_t* primitive_system, const lna_primitive_line_config_t* config)
-{
-    lna_assert(primitive_system)
-    lna_assert(config)
-
-    lna_primitive_t* primitive = NULL;
-    lna_vector_new_element(&primitive_system->primitives, primitive);
-
-    lna_assert(primitive)
-    lna_assert(primitive->vertex_buffer == VK_NULL_HANDLE)
-    lna_assert(primitive->vertex_buffer_memory == VK_NULL_HANDLE)
-    lna_assert(primitive->index_buffer == VK_NULL_HANDLE)
-    lna_assert(primitive->index_buffer_memory == VK_NULL_HANDLE)
-    lna_assert(lna_array_is_empty(&primitive->mvp_uniform_buffers))
-    lna_assert(lna_array_is_empty(&primitive->mvp_uniform_buffers_memory))
-    lna_assert(lna_array_is_empty(&primitive->descriptor_sets))
-    lna_assert(primitive->model_matrix == NULL)
-    lna_assert(primitive->view_matrix == NULL)
-    lna_assert(primitive->projection_matrix == NULL)
-    lna_assert(config)
-    lna_assert(config->pos_a)
-    lna_assert(config->pos_b)
-    lna_assert(config->col_a)
-    lna_assert(config->col_b)
-    lna_assert(config->model_matrix)
-    lna_assert(config->view_matrix)
-    lna_assert(config->projection_matrix)
-    lna_assert(primitive_system)
-
-    lna_renderer_t* renderer = primitive_system->renderer;
-    lna_assert(renderer)
-
-    primitive->model_matrix        = config->model_matrix;
-    primitive->view_matrix         = config->view_matrix;
-    primitive->projection_matrix   = config->projection_matrix;
-
-    //! VERTEX BUFFER PART
-
-    {
-        lna_primitive_vertex_t vertices[] =
-        {
-            {
-                .position = *config->pos_a,
-                .color = *config->col_a,
-            },
-            {
-                .position = *config->pos_b,
-                .color = *config->col_b,
-            },
-        };
-
-        size_t vertex_buffer_size = sizeof(vertices);
-        
-        VkBuffer staging_buffer;
-        VkDeviceMemory staging_buffer_memory;
-        lna_vulkan_create_buffer(
-            renderer->device,
-            renderer->physical_device,
-            vertex_buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &staging_buffer,
-            &staging_buffer_memory
-            );
-        void *vertices_data;
-        VULKAN_CHECK_RESULT(
-            vkMapMemory(
-                renderer->device,
-                staging_buffer_memory,
-                0,
-                vertex_buffer_size,
-                0,
-                &vertices_data
-                )
-            )
-        memcpy(
-            vertices_data,
-            vertices,
-            vertex_buffer_size
-            );
-        vkUnmapMemory(
-            renderer->device,
-            staging_buffer_memory
-            );
-        lna_vulkan_create_buffer(
-            renderer->device,
-            renderer->physical_device,
-            vertex_buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &primitive->vertex_buffer,
-            &primitive->vertex_buffer_memory
-            );
-        lna_vulkan_copy_buffer(
-            renderer->device,
-            renderer->command_pool,
-            renderer->graphics_queue,
-            staging_buffer,
-            primitive->vertex_buffer,
-            vertex_buffer_size
-            );
-        vkDestroyBuffer(
-            renderer->device,
-            staging_buffer,
-            NULL
-            );
-        vkFreeMemory(
-            renderer->device,
-            staging_buffer_memory,
-            NULL
-            );
-    }
-
-    //! INDEX BUFFER PART
-
-    {
-        const uint32_t indices[] = { 0, 1 };
-        const size_t index_buffer_size = sizeof(indices);
-
-        primitive->index_count = (uint32_t)(sizeof(indices) / sizeof(indices[0]));
-
-        VkBuffer staging_buffer;
-        VkDeviceMemory staging_buffer_memory;
-        lna_vulkan_create_buffer(
-            renderer->device,
-            renderer->physical_device,
-            index_buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &staging_buffer,
-            &staging_buffer_memory
-            );
-        void *indices_data;
-        VULKAN_CHECK_RESULT(
-            vkMapMemory(
-                renderer->device,
-                staging_buffer_memory,
-                0,
-                index_buffer_size,
-                0,
-                &indices_data
-                )
-            )
-        memcpy(
-            indices_data,
-            indices,
-            index_buffer_size
-            );
-        vkUnmapMemory(
-            renderer->device,
-            staging_buffer_memory
-            );
-        lna_vulkan_create_buffer(
-            renderer->device,
-            renderer->physical_device,
-            index_buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &primitive->index_buffer,
-            &primitive->index_buffer_memory
-            );
-        lna_vulkan_copy_buffer(
-            renderer->device,
-            renderer->command_pool,
-            renderer->graphics_queue,
-            staging_buffer,
-            primitive->index_buffer,
-            index_buffer_size
-            );
-        vkDestroyBuffer(
-            renderer->device,
-            staging_buffer,
-            NULL
-            );
-        vkFreeMemory(
-            renderer->device,
-            staging_buffer_memory,
-            NULL
-            );
-    }
-
-    //! UNIFORM BUFFER
-
-    lna_primitive_create_uniform_buffer(
-        primitive,
-        renderer
-        );
-
-    //! DESCRIPTOR SETS
-
-    lna_primitive_create_descriptor_sets(
-        primitive,
-        primitive_system
-        );
-
-    return primitive;
-}
-
 void lna_primitive_system_draw(lna_primitive_system_t* primitive_system)
 {
     lna_assert(primitive_system)
@@ -881,57 +683,264 @@ void lna_primitive_system_release(lna_primitive_system_t* primitive_system)
     }
 }
 
-lna_primitive_t* lna_primitive_system_new_raw    (lna_primitive_system_t* primitive_system, const lna_primitive_raw_config_t* config)
+lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_system, const lna_primitive_raw_config_t* config)
 {
     lna_assert(primitive_system)
     lna_assert(config)
 
     lna_primitive_t* primitive = NULL;
     lna_vector_new_element(&primitive_system->primitives, primitive);
-    
+
+    lna_assert(primitive)
+    lna_assert(primitive->vertex_buffer == VK_NULL_HANDLE)
+    lna_assert(primitive->vertex_buffer_memory == VK_NULL_HANDLE)
+    lna_assert(primitive->index_buffer == VK_NULL_HANDLE)
+    lna_assert(primitive->index_buffer_memory == VK_NULL_HANDLE)
+    lna_assert(lna_array_is_empty(&primitive->mvp_uniform_buffers))
+    lna_assert(lna_array_is_empty(&primitive->mvp_uniform_buffers_memory))
+    lna_assert(lna_array_is_empty(&primitive->descriptor_sets))
+    lna_assert(primitive->model_matrix == NULL)
+    lna_assert(primitive->view_matrix == NULL)
+    lna_assert(primitive->projection_matrix == NULL)
+    lna_assert(config)
+    lna_assert(config->vertices)
+    lna_assert(config->indices)
+    lna_assert(config->vertex_count > 0)
+    lna_assert(config->index_count > 0)
+    lna_assert(config->model_matrix)
+    lna_assert(config->view_matrix)
+    lna_assert(config->projection_matrix)
+    lna_assert(primitive_system)
+
+    lna_renderer_t* renderer = primitive_system->renderer;
+    lna_assert(renderer)
+
+    primitive->model_matrix        = config->model_matrix;
+    primitive->view_matrix         = config->view_matrix;
+    primitive->projection_matrix   = config->projection_matrix;
+
+    //! VERTEX BUFFER PART
+
+    {
+        size_t vertex_buffer_size = sizeof(config->vertices[0]) * config->vertex_count;
+        
+        VkBuffer staging_buffer;
+        VkDeviceMemory staging_buffer_memory;
+        lna_vulkan_create_buffer(
+            renderer->device,
+            renderer->physical_device,
+            vertex_buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &staging_buffer,
+            &staging_buffer_memory
+            );
+        void *vertices_data;
+        VULKAN_CHECK_RESULT(
+            vkMapMemory(
+                renderer->device,
+                staging_buffer_memory,
+                0,
+                vertex_buffer_size,
+                0,
+                &vertices_data
+                )
+            )
+        memcpy(
+            vertices_data,
+            config->vertices,
+            vertex_buffer_size
+            );
+        vkUnmapMemory(
+            renderer->device,
+            staging_buffer_memory
+            );
+        lna_vulkan_create_buffer(
+            renderer->device,
+            renderer->physical_device,
+            vertex_buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            &primitive->vertex_buffer,
+            &primitive->vertex_buffer_memory
+            );
+        lna_vulkan_copy_buffer(
+            renderer->device,
+            renderer->command_pool,
+            renderer->graphics_queue,
+            staging_buffer,
+            primitive->vertex_buffer,
+            vertex_buffer_size
+            );
+        vkDestroyBuffer(
+            renderer->device,
+            staging_buffer,
+            NULL
+            );
+        vkFreeMemory(
+            renderer->device,
+            staging_buffer_memory,
+            NULL
+            );
+    }
+
+    //! INDEX BUFFER PART
+
+    {
+        const size_t index_buffer_size = sizeof(config->indices[0]) * config->index_count;
+
+        primitive->index_count = config->index_count;
+
+        VkBuffer staging_buffer;
+        VkDeviceMemory staging_buffer_memory;
+        lna_vulkan_create_buffer(
+            renderer->device,
+            renderer->physical_device,
+            index_buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &staging_buffer,
+            &staging_buffer_memory
+            );
+        void *indices_data;
+        VULKAN_CHECK_RESULT(
+            vkMapMemory(
+                renderer->device,
+                staging_buffer_memory,
+                0,
+                index_buffer_size,
+                0,
+                &indices_data
+                )
+            )
+        memcpy(
+            indices_data,
+            config->indices,
+            index_buffer_size
+            );
+        vkUnmapMemory(
+            renderer->device,
+            staging_buffer_memory
+            );
+        lna_vulkan_create_buffer(
+            renderer->device,
+            renderer->physical_device,
+            index_buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            &primitive->index_buffer,
+            &primitive->index_buffer_memory
+            );
+        lna_vulkan_copy_buffer(
+            renderer->device,
+            renderer->command_pool,
+            renderer->graphics_queue,
+            staging_buffer,
+            primitive->index_buffer,
+            index_buffer_size
+            );
+        vkDestroyBuffer(
+            renderer->device,
+            staging_buffer,
+            NULL
+            );
+        vkFreeMemory(
+            renderer->device,
+            staging_buffer_memory,
+            NULL
+            );
+    }
+
+    //! UNIFORM BUFFER
+
+    lna_primitive_create_uniform_buffer(
+        primitive,
+        renderer
+        );
+
+    //! DESCRIPTOR SETS
+
+    lna_primitive_create_descriptor_sets(
+        primitive,
+        primitive_system
+        );
+
     return primitive;
 }
 
-lna_primitive_t* lna_primitive_system_new_rect(lna_primitive_system_t* primitive_system, const lna_primitive_rect_config_t* config)
+lna_primitive_t* lna_primitive_system_new_line(lna_primitive_system_t* primitive_system, const lna_primitive_line_config_t* config)
 {
-    lna_assert(primitive_system)
     lna_assert(config)
-
-    lna_primitive_t* primitive = NULL;
-    lna_vector_new_element(&primitive_system->primitives, primitive);
+    lna_assert(config->pos_a)
+    lna_assert(config->pos_b)
+    lna_assert(config->col_a)
+    lna_assert(config->col_b)
     
-    return primitive;
+    const lna_primitive_vertex_t vertices[] =
+    {
+        {
+            .position = *config->pos_a,
+            .color = *config->col_a,
+        },
+        {
+            .position = *config->pos_b,
+            .color = *config->col_b,
+        },
+    };
+    const uint32_t indices[] = { 0, 1 };
+    return lna_primitive_system_new_raw(
+        primitive_system,
+        &(lna_primitive_raw_config_t)
+        {
+            .vertices = vertices,
+            .indices = indices,
+            .vertex_count = 2,
+            .index_count = 2,
+            .model_matrix = config->model_matrix,
+            .view_matrix = config->view_matrix,
+            .projection_matrix = config->projection_matrix,
+        }
+        );
 }
 
-lna_primitive_t* lna_primitive_system_new_circle(lna_primitive_system_t* primitive_system, const lna_primitive_circle_config_t* config)
+lna_primitive_t* lna_primitive_system_new_rect_xy(lna_primitive_system_t* primitive_system, const lna_primitive_rect_config_t* config)
 {
-    lna_assert(primitive_system)
     lna_assert(config)
+    lna_assert(config->position)
+    lna_assert(config->size)
+    lna_assert(config->color)
 
-    lna_primitive_t* primitive = NULL;
-    lna_vector_new_element(&primitive_system->primitives, primitive);
-    
-    return primitive;
-}
-
-lna_primitive_t* lna_primitive_system_new_arrow(lna_primitive_system_t* primitive_system, const lna_primitive_arrow_config_t* config)
-{
-    lna_assert(primitive_system)
-    lna_assert(config)
-
-    lna_primitive_t* primitive = NULL;
-    lna_vector_new_element(&primitive_system->primitives, primitive);
-    
-    return primitive;
-}
-
-lna_primitive_t* lna_primitive_system_new_cross(lna_primitive_system_t* primitive_system, const lna_primitive_cross_config_t* config)
-{
-    lna_assert(primitive_system)
-    lna_assert(config)
-
-    lna_primitive_t* primitive = NULL;
-    lna_vector_new_element(&primitive_system->primitives, primitive);
-    
-    return primitive;
+    const lna_primitive_vertex_t vertices[] =
+    {
+        {
+            .position = { config->position->x, config->position->y, 0.0f },
+            .color = *config->color,
+        },
+        {
+            .position = { config->position->x, config->position->y - config->size->height, 0.0f },
+            .color = *config->color,
+        },
+        {
+            .position = { config->position->x + config->size->width, config->position->y - config->size->height, 0.0f },
+            .color = *config->color,
+        },
+        {
+            .position = { config->position->x + config->size->width, config->position->y, 0.0f },
+            .color = *config->color,
+        },
+    };
+    const uint32_t indices[] = { 0, 1, 1, 2, 2, 3, 3, 0 };
+    return lna_primitive_system_new_raw(
+        primitive_system,
+        &(lna_primitive_raw_config_t)
+        {
+            .vertices = vertices,
+            .indices = indices,
+            .vertex_count = 4,
+            .index_count = 8,
+            .model_matrix = config->model_matrix,
+            .view_matrix = config->view_matrix,
+            .projection_matrix = config->projection_matrix,
+        }
+        );
 }
