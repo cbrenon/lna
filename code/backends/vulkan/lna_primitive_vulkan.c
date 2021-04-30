@@ -277,6 +277,14 @@ static void lna_primitive_system_create_descriptor_pool(
             &primitive_system->descriptor_pool
             )
         )
+
+    lna_log_message("-------------------------------");
+    lna_log_message("primitive descriptor pool info:");
+    lna_log_message("-------------------------------");
+    lna_log_message("\tdescriptor pool: %p", (void*)primitive_system->descriptor_pool);
+    lna_log_message("\tpool size count: %d", pool_create_info.poolSizeCount);
+    lna_log_message("\tpool 0 size    : %d", pool_sizes[0].descriptorCount);
+    lna_log_message("\tmax sets       : %d", pool_create_info.maxSets);
 }
 
 static void lna_primitive_create_uniform_buffer(
