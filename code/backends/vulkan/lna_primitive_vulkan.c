@@ -1,10 +1,12 @@
 #include <string.h>
+#include <math.h>
 #include "backends/vulkan/lna_primitive_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"
 #include "core/lna_assert.h"
 #include "core/lna_memory_pool.h"
 #include "core/lna_file.h"
 #include "maths/lna_mat4.h"
+#include "maths/lna_maths.h"
 
 typedef struct lna_primitive_uniform_s
 {
@@ -257,7 +259,7 @@ static void lna_primitive_system_create_descriptor_pool(
     {
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = lna_array_size(&renderer->swap_chain_images),
+            .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&primitive_system->primitives),
         },
     };
 
@@ -356,6 +358,8 @@ static void lna_primitive_create_descriptor_sets(
         .descriptorSetCount = lna_array_size(&layouts),
         .pSetLayouts = lna_array_ptr(&layouts),
     };
+
+    lna_log_message("needed descriptor set count: %d", lna_array_size(&layouts));
 
     lna_array_init(
         &primitive->descriptor_sets,
@@ -727,6 +731,8 @@ lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_
     primitive->view_matrix         = config->view_matrix;
     primitive->projection_matrix   = config->projection_matrix;
 
+    lna_log_message("create new primitive buffer (%d vertices, %d indices)", config->vertex_count, config->index_count);
+
     //! VERTEX BUFFER PART
 
     {
@@ -946,6 +952,219 @@ lna_primitive_t* lna_primitive_system_new_rect_xy(lna_primitive_system_t* primit
             .indices = indices,
             .vertex_count = 4,
             .index_count = 8,
+            .model_matrix = config->model_matrix,
+            .view_matrix = config->view_matrix,
+            .projection_matrix = config->projection_matrix,
+        }
+        );
+}
+
+#define LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT 32
+#define LNA_PRIMITIVE_CIRCLE_INDEX_COUNT (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT * 2)
+
+lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* primitive_system, const lna_primitive_circle_config_t* config)
+{
+    lna_assert(config)
+    lna_assert(config->center_position) 
+    lna_assert(config->color)
+
+    lna_primitive_vertex_t vertices[LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT];
+    for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT; ++i)
+    {
+        float theta = 2.0f * LNA_PI * (float)i / (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT - 1);
+        vertices[i] = (lna_primitive_vertex_t)
+        {
+            .position =
+            {
+                config->center_position->x + config->radius * cosf(theta),
+                config->center_position->y + config->radius * sinf(theta),
+                0.0f
+            },
+            .color = *config->color,
+        };
+    }
+
+    uint32_t indices[LNA_PRIMITIVE_CIRCLE_INDEX_COUNT];
+    uint32_t index = 0;
+    for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_INDEX_COUNT; i += 2)
+    {
+        indices[i] = index;
+        indices[i+1] = index + 1;
+        ++index;
+    }
+    indices[LNA_PRIMITIVE_CIRCLE_INDEX_COUNT-1] = 0;
+
+    return lna_primitive_system_new_raw(
+        primitive_system,
+        &(lna_primitive_raw_config_t)
+        {
+            .vertices = vertices,
+            .indices = indices,
+            .vertex_count = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT,
+            .index_count = LNA_PRIMITIVE_CIRCLE_INDEX_COUNT,
+            .model_matrix = config->model_matrix,
+            .view_matrix = config->view_matrix,
+            .projection_matrix = config->projection_matrix,
+        }
+        );
+}
+
+lna_primitive_t* lna_primitive_system_new_arrow_xy(lna_primitive_system_t* primitive_system, const lna_primitive_arrow_config_t* config)
+{
+    lna_assert(config)
+    lna_assert(config->head_position)
+    lna_assert(config->tail_position)
+    lna_assert(config->color)
+
+    //? ------------------------------------------------------------------------
+    //?
+    //? SCHEMA OF THE DIFFERENT POINT
+    //? 
+    //?             e
+    //?             |\
+    //? tail _______| \ head
+    //?            g| /
+    //?             |/
+    //?             f
+    //?
+    //? ------------------------------------------------------------------------
+
+    float head_size = config->head_size;
+    float head_x    = config->head_position->x;
+    float head_y    = config->head_position->y;
+    float tail_x    = config->tail_position->x;
+    float tail_y    = config->tail_position->y;
+    float dx        = head_x - tail_x;
+    float dy        = head_y - tail_y;
+    float d_length  = sqrtf(dx * dx + dy * dy);
+    float ndx       = dx / d_length;
+    float ndy       = dy / d_length;
+    float gx        = head_x - head_size * ndx;
+    float gy        = head_y - head_size * ndy;
+    float ex        = head_x - ndx * head_size - ndy * head_size;
+    float ey        = head_y - ndy * head_size + ndx * head_size;
+    float fx        = head_x - ndx * head_size + ndy * head_size;
+    float fy        = head_y - ndy * head_size - ndx * head_size;
+
+    const lna_primitive_vertex_t vertices[] =
+    {
+        {
+            .position = //! tail
+            {
+                tail_x,
+                tail_y,
+                0.0f
+            },
+            .color = *config->color,
+        },
+        {
+            .position = //! head
+            {
+                head_x,
+                head_y,
+                0.0f
+            },
+            .color = *config->color,
+        },
+        {
+            .position = //! g
+            {
+                gx,
+                gy,
+                0.0f
+            },
+            .color = *config->color,
+        },
+        {
+            .position = //! e
+            {
+                ex,
+                ey,
+                0.0f
+            },
+            .color = *config->color,
+        },
+        {
+            .position = //! f
+            {
+                fx,
+                fy,
+                0.0f
+            },
+            .color = *config->color,
+        },
+    };
+    const uint32_t indices[] = { 0, 2, 3, 4, 1, 3, 1, 4 };
+    return lna_primitive_system_new_raw(
+        primitive_system,
+        &(lna_primitive_raw_config_t)
+        {
+            .vertices = vertices,
+            .indices = indices,
+            .vertex_count = 5,
+            .index_count = 8,
+            .model_matrix = config->model_matrix,
+            .view_matrix = config->view_matrix,
+            .projection_matrix = config->projection_matrix,
+        }
+        );
+}
+
+lna_primitive_t* lna_primitive_system_new_cross_xy(lna_primitive_system_t* primitive_system, const lna_primitive_cross_config_t* config)
+{
+    lna_assert(config)
+    lna_assert(config->center_position)
+    lna_assert(config->size)
+    lna_assert(config->color)
+
+    const lna_primitive_vertex_t vertices[] =
+    {
+        {
+            .position =
+            {
+                config->center_position->x,
+                config->center_position->y + config->size->height * 0.5f,
+                0.0f
+            },
+            .color = *config->color,
+        },
+        {
+            .position =
+            {
+                config->center_position->x,
+                config->center_position->y - config->size->height * 0.5f,
+                0.0f
+            },
+            .color = *config->color,
+        },
+        {
+            .position =
+            {
+                config->center_position->x + config->size->width * 0.5f,
+                config->center_position->y,
+                0.0f
+            },
+            .color = *config->color,
+        },
+        {
+            .position =
+            {
+                config->center_position->x - config->size->width * 0.5f,
+                config->center_position->y,
+                0.0f
+            },
+            .color = *config->color,
+        },
+    };
+    const uint32_t indices[] = { 0, 1, 2, 3 };
+    return lna_primitive_system_new_raw(
+        primitive_system,
+        &(lna_primitive_raw_config_t)
+        {
+            .vertices = vertices,
+            .indices = indices,
+            .vertex_count = 4,
+            .index_count = 4,
             .model_matrix = config->model_matrix,
             .view_matrix = config->view_matrix,
             .projection_matrix = config->projection_matrix,

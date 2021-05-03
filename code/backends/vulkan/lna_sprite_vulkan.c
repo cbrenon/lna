@@ -264,11 +264,11 @@ static void lna_sprite_system_create_descriptor_pool(
     {
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = lna_array_size(&renderer->swap_chain_images),
+            .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&sprite_system->sprites),
         },
         {
             .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = lna_array_size(&renderer->swap_chain_images),
+            .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&sprite_system->sprites),
         },
     };
 
