@@ -30,6 +30,7 @@ typedef struct lna_primitive_system_s
     VkDescriptorPool                    descriptor_pool;
     VkPipelineLayout                    pipeline_layout;
     VkPipeline                          pipeline;
+    bool                                fill_shapes;
 } lna_primitive_system_t;
 
 #endif

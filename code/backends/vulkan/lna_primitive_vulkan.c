@@ -96,7 +96,7 @@ static void lna_primitive_system_create_graphics_pipeline(
     const VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+        .topology = primitive_system->fill_shapes ? VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST : VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
     const VkViewport viewport =
@@ -126,7 +126,7 @@ static void lna_primitive_system_create_graphics_pipeline(
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .depthClampEnable = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = VK_POLYGON_MODE_LINE,
+        .polygonMode = primitive_system->fill_shapes ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE,
         .lineWidth = 2.0f,
         .cullMode = VK_CULL_MODE_NONE,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
@@ -198,10 +198,6 @@ static void lna_primitive_system_create_graphics_pipeline(
     const VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        // .depthTestEnable = VK_FALSE,
-        // .depthWriteEnable = VK_FALSE,
-        // .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-        // .back.compareOp = VK_COMPARE_OP_ALWAYS,
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = VK_TRUE,
         .depthCompareOp = VK_COMPARE_OP_LESS,
@@ -506,6 +502,7 @@ void lna_primitive_system_init(lna_primitive_system_t* primitive_system, const l
     lna_assert(config->renderer->render_pass)
 
     primitive_system->renderer = config->renderer;
+    primitive_system->fill_shapes = config->fill_shapes;
 
     lna_renderer_listener_t* listener = NULL;
     lna_vector_new_element(
@@ -884,6 +881,8 @@ lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_
 
 lna_primitive_t* lna_primitive_system_new_line(lna_primitive_system_t* primitive_system, const lna_primitive_line_config_t* config)
 {
+    lna_assert(primitive_system)
+    lna_assert(!primitive_system->fill_shapes) //! cannot draw arrow in fill shape mode
     lna_assert(config)
     lna_assert(config->pos_a)
     lna_assert(config->pos_b)
@@ -943,15 +942,15 @@ lna_primitive_t* lna_primitive_system_new_rect_xy(lna_primitive_system_t* primit
             .color = *config->color,
         },
     };
-    const uint32_t indices[] = { 0, 1, 1, 2, 2, 3, 3, 0 };
+
     return lna_primitive_system_new_raw(
         primitive_system,
         &(lna_primitive_raw_config_t)
         {
             .vertices = vertices,
-            .indices = indices,
+            .indices = primitive_system->fill_shapes ? (uint32_t[]){ 0, 1, 2, 2, 3, 0 } : (uint32_t[]){ 0, 1, 1, 2, 2, 3, 3, 0 },
             .vertex_count = 4,
-            .index_count = 8,
+            .index_count = primitive_system->fill_shapes ? 6 : 8,
             .model_matrix = config->model_matrix,
             .view_matrix = config->view_matrix,
             .projection_matrix = config->projection_matrix,
@@ -1011,6 +1010,8 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
 
 lna_primitive_t* lna_primitive_system_new_arrow_xy(lna_primitive_system_t* primitive_system, const lna_primitive_arrow_config_t* config)
 {
+    lna_assert(primitive_system)
+    lna_assert(!primitive_system->fill_shapes) //! cannot draw arrow in fill shape mode
     lna_assert(config)
     lna_assert(config->head_position)
     lna_assert(config->tail_position)
@@ -1112,6 +1113,8 @@ lna_primitive_t* lna_primitive_system_new_arrow_xy(lna_primitive_system_t* primi
 
 lna_primitive_t* lna_primitive_system_new_cross_xy(lna_primitive_system_t* primitive_system, const lna_primitive_cross_config_t* config)
 {
+    lna_assert(primitive_system)
+    lna_assert(!primitive_system->fill_shapes) //! cannot draw arrow in fill shape mode
     lna_assert(config)
     lna_assert(config->center_position)
     lna_assert(config->size)

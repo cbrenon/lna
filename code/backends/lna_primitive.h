@@ -2,6 +2,7 @@
 #define LNA_BACKENDS_LNA_PRIMITIVE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "maths/lna_vec2.h"
 #include "maths/lna_vec3.h"
 #include "maths/lna_vec4.h"
@@ -17,6 +18,7 @@ typedef struct lna_primitive_system_config_s
     uint32_t                                max_primitive_count;
     lna_memory_pool_t*                      memory_pool;
     lna_renderer_t*                         renderer;
+    bool                                    fill_shapes;
 } lna_primitive_system_config_t;
 
 typedef struct lna_primitive_vertex_s
