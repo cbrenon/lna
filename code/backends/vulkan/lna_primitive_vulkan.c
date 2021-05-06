@@ -958,8 +958,10 @@ lna_primitive_t* lna_primitive_system_new_rect_xy(lna_primitive_system_t* primit
         );
 }
 
-#define LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT 32
-#define LNA_PRIMITIVE_CIRCLE_INDEX_COUNT (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT * 2)
+#define LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT       32
+#define LNA_PRIMITIVE_CIRCLE_INDEX_COUNT        (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT * 2)
+#define LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT  (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT + 1)
+#define LNA_PRIMITIVE_FILL_CIRCLE_INDEX_COUNT   (LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT * 3)
 
 lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* primitive_system, const lna_primitive_circle_config_t* config)
 {
@@ -967,45 +969,95 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
     lna_assert(config->center_position) 
     lna_assert(config->color)
 
-    lna_primitive_vertex_t vertices[LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT];
-    for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT; ++i)
+    if (!primitive_system->fill_shapes)
     {
-        float theta = 2.0f * LNA_PI * (float)i / (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT - 1);
-        vertices[i] = (lna_primitive_vertex_t)
+        lna_primitive_vertex_t vertices[LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT];
+        for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT; ++i)
         {
-            .position =
+            float theta = 2.0f * LNA_PI * (float)i / (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT - 1);
+            vertices[i] = (lna_primitive_vertex_t)
             {
-                config->center_position->x + config->radius * cosf(theta),
-                config->center_position->y + config->radius * sinf(theta),
-                0.0f
-            },
+                .position =
+                {
+                    config->center_position->x + config->radius * cosf(theta),
+                    config->center_position->y + config->radius * sinf(theta),
+                    0.0f
+                },
+                .color = *config->color,
+            };
+        }
+
+        uint32_t indices[LNA_PRIMITIVE_CIRCLE_INDEX_COUNT];
+        uint32_t index = 0;
+        for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_INDEX_COUNT; i += 2)
+        {
+            indices[i] = index;
+            indices[i+1] = index + 1;
+            ++index;
+        }
+        indices[LNA_PRIMITIVE_CIRCLE_INDEX_COUNT-1] = 0;
+
+        return lna_primitive_system_new_raw(
+            primitive_system,
+            &(lna_primitive_raw_config_t)
+            {
+                .vertices = vertices,
+                .indices = indices,
+                .vertex_count = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT,
+                .index_count = LNA_PRIMITIVE_CIRCLE_INDEX_COUNT,
+                .model_matrix = config->model_matrix,
+                .view_matrix = config->view_matrix,
+                .projection_matrix = config->projection_matrix,
+            }
+            );
+    }
+    else
+    {
+        lna_primitive_vertex_t vertices[LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT];
+        for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT - 1; ++i)
+        {
+            float theta = 2.0f * LNA_PI * (float)i / (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT - 1);
+            vertices[i] = (lna_primitive_vertex_t)
+            {
+                .position =
+                {
+                    config->center_position->x + config->radius * cosf(theta),
+                    config->center_position->y + config->radius * sinf(theta),
+                    0.0f
+                },
+                .color = *config->color,
+            };
+        }
+        vertices[LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT] = (lna_primitive_vertex_t)
+        {
+            .position = { config->center_position->x, config->center_position->y , 0.0f },
             .color = *config->color,
         };
-    }
 
-    uint32_t indices[LNA_PRIMITIVE_CIRCLE_INDEX_COUNT];
-    uint32_t index = 0;
-    for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_INDEX_COUNT; i += 2)
-    {
-        indices[i] = index;
-        indices[i+1] = index + 1;
-        ++index;
-    }
-    indices[LNA_PRIMITIVE_CIRCLE_INDEX_COUNT-1] = 0;
-
-    return lna_primitive_system_new_raw(
-        primitive_system,
-        &(lna_primitive_raw_config_t)
+        uint32_t indices[LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT];
+        uint32_t index = 0;
+        for (uint32_t i = 0; i < LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT; i += 3)
         {
-            .vertices = vertices,
-            .indices = indices,
-            .vertex_count = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT,
-            .index_count = LNA_PRIMITIVE_CIRCLE_INDEX_COUNT,
-            .model_matrix = config->model_matrix,
-            .view_matrix = config->view_matrix,
-            .projection_matrix = config->projection_matrix,
+            indices[i] = index;
+            indices[i+1] = index + 1;
+            indices[i+2] = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT;
+            ++index;
         }
-        );
+
+        return lna_primitive_system_new_raw(
+            primitive_system,
+            &(lna_primitive_raw_config_t)
+            {
+                .vertices = vertices,
+                .indices = indices,
+                .vertex_count = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT,
+                .index_count = LNA_PRIMITIVE_CIRCLE_INDEX_COUNT,
+                .model_matrix = config->model_matrix,
+                .view_matrix = config->view_matrix,
+                .projection_matrix = config->projection_matrix,
+            }
+            );
+    }
 }
 
 lna_primitive_t* lna_primitive_system_new_arrow_xy(lna_primitive_system_t* primitive_system, const lna_primitive_arrow_config_t* config)
