@@ -1014,7 +1014,7 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
     else
     {
         lna_primitive_vertex_t vertices[LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT];
-        for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT - 1; ++i)
+        for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT; ++i)
         {
             float theta = 2.0f * LNA_PI * (float)i / (LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT - 1);
             vertices[i] = (lna_primitive_vertex_t)
@@ -1034,9 +1034,9 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
             .color = *config->color,
         };
 
-        uint32_t indices[LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT];
+        uint32_t indices[LNA_PRIMITIVE_FILL_CIRCLE_INDEX_COUNT];
         uint32_t index = 0;
-        for (uint32_t i = 0; i < LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT; i += 3)
+        for (uint32_t i = 0; i < LNA_PRIMITIVE_FILL_CIRCLE_INDEX_COUNT; i += 3)
         {
             indices[i] = index;
             indices[i+1] = index + 1;
@@ -1050,8 +1050,8 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
             {
                 .vertices = vertices,
                 .indices = indices,
-                .vertex_count = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT,
-                .index_count = LNA_PRIMITIVE_CIRCLE_INDEX_COUNT,
+                .vertex_count = LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT,
+                .index_count = LNA_PRIMITIVE_FILL_CIRCLE_INDEX_COUNT,
                 .model_matrix = config->model_matrix,
                 .view_matrix = config->view_matrix,
                 .projection_matrix = config->projection_matrix,

@@ -35,9 +35,25 @@ typedef enum lna_input_event_e
 
 typedef struct lna_input_s lna_input_t;
 
-extern void                 lna_input_init                      (lna_input_t* input);
-extern lna_input_event_t    lna_input_poll_events               (lna_input_t* input);
-extern bool                 lna_input_is_key_pressed            (const lna_input_t* input, lna_key_t key);
-extern bool                 lna_input_is_key_has_been_pressed   (const lna_input_t* input, lna_key_t key);
+typedef enum lna_mouse_button_e
+{
+    LNA_MOUSE_BUTTON_LEFT,
+    LNA_MOUSE_BUTTON_MIDDLE,
+    LNA_MOUSE_BUTTON_RIGHT,
+    LNA_MOUSE_BUTTON_COUNT,
+} lna_mouse_button_t;
+
+typedef struct lna_mouse_state_s
+{
+    int x;
+    int y;
+    bool buttons[LNA_MOUSE_BUTTON_COUNT];
+} lna_mouse_state_t;
+
+extern void                     lna_input_init                      (lna_input_t* input);
+extern lna_input_event_t        lna_input_poll_events               (lna_input_t* input);
+extern bool                     lna_input_is_key_pressed            (const lna_input_t* input, lna_key_t key);
+extern bool                     lna_input_is_key_has_been_pressed   (const lna_input_t* input, lna_key_t key);
+extern const lna_mouse_state_t* lna_input_mouse_state               (const lna_input_t* input);
 
 #endif

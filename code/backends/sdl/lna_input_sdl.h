@@ -10,8 +10,9 @@
 
 typedef struct lna_input_s
 {
-    const Uint8*    keyboard_state;
-    Uint8           prev_keyboard_state[SDL_NUM_SCANCODES];
+    const Uint8*        keyboard_state;
+    Uint8               prev_keyboard_state[SDL_NUM_SCANCODES];
+    lna_mouse_state_t   mouse_state;
 } lna_input_t;
 
 #endif

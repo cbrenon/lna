@@ -93,3 +93,9 @@ bool lna_input_is_key_has_been_pressed(const lna_input_t* input, lna_key_t key)
 
     return input->keyboard_state[LNA_SDL_KEYBOARD_MAPPING[key]] == 1 && input->prev_keyboard_state[LNA_SDL_KEYBOARD_MAPPING[key]] == 0;
 }
+
+const lna_mouse_state_t* lna_input_mouse_state(const lna_input_t* input)
+{
+    lna_assert(input)
+    return &input->mouse_state;
+}
