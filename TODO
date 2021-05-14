@@ -1,12 +1,7 @@
-ROAD TO PROTOTYPING FRAMEWORK:
-  ☐ arrow primitive
-  ☐ circle primitive
-  ☐ rect primitive
-  ☐ cross primitive
-  ☐ raw primitive (vertices and indices in config)
-
 MISC:
   ☐ mesh
+  ☐ move all graphics (ui, primitive, renderer, sprite, texture, mesh) stuff from backends to graphics folder
+  ☐ move all system (input, timer, window, gamepad) stuff from backends to system folder
   ☐ load obj function (dev only function)
   ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
   ☐ use vec3 parameters for mat4 look at create function instead of floats
@@ -21,6 +16,11 @@ MISC:
   ☐ fix all TODO in code
 
 Archive:
+  ✔ arrow primitive                                                                        @done(21-05-09 10:56) @project(ROAD TO PROTOTYPING FRAMEWORK)
+  ✔ circle primitive                                                                       @done(21-05-09 10:56) @project(ROAD TO PROTOTYPING FRAMEWORK)
+  ✔ rect primitive                                                                         @done(21-05-09 10:56) @project(ROAD TO PROTOTYPING FRAMEWORK)
+  ✔ cross primitive                                                                        @done(21-05-09 10:56) @project(ROAD TO PROTOTYPING FRAMEWORK)
+  ✔ raw primitive (vertices and indices in config)                                         @done(21-05-09 10:56) @project(ROAD TO PROTOTYPING FRAMEWORK)
   ✔ sprite                                                                                 @done(21-04-23 22:13) @project(ROAD TO PROTOTYPING FRAMEWORK)
   ✔ debug primitives                                                                       @done(21-04-23 22:13) @project(ROAD TO PROTOTYPING FRAMEWORK)
   ✔ more modern C++ friendly code                                                          @done(21-04-11 18:11) @project(MISC)
