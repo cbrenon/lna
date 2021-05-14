@@ -70,6 +70,44 @@ lna_input_event_t lna_input_poll_events(lna_input_t* input)
                 }
                 break;
             }
+            case SDL_MOUSEMOTION:
+            {
+                input->mouse_state.x = sdl_event.motion.x;
+                input->mouse_state.y = sdl_event.motion.y;
+                break;
+            }
+            case SDL_MOUSEBUTTONUP:
+            {
+                switch(sdl_event.button.button)
+                {
+                    case SDL_BUTTON_LEFT:
+                        input->mouse_state.buttons[LNA_MOUSE_BUTTON_LEFT] = false;
+                        break;
+                    case SDL_BUTTON_MIDDLE:
+                        input->mouse_state.buttons[LNA_MOUSE_BUTTON_MIDDLE] = false;
+                        break;
+                    case SDL_BUTTON_RIGHT:
+                        input->mouse_state.buttons[LNA_MOUSE_BUTTON_RIGHT] = false;
+                        break;
+                }
+                break;
+            }
+            case SDL_MOUSEBUTTONDOWN:
+            {
+                switch(sdl_event.button.button)
+                {
+                    case SDL_BUTTON_LEFT:
+                        input->mouse_state.buttons[LNA_MOUSE_BUTTON_LEFT] = true;
+                        break;
+                    case SDL_BUTTON_MIDDLE:
+                        input->mouse_state.buttons[LNA_MOUSE_BUTTON_MIDDLE] = true;
+                        break;
+                    case SDL_BUTTON_RIGHT:
+                        input->mouse_state.buttons[LNA_MOUSE_BUTTON_RIGHT] = true;
+                        break;
+                }
+                break;
+            }
         }
     }
 
