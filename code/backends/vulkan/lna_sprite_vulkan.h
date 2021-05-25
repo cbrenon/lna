@@ -3,7 +3,8 @@
 
 #include "backends/vulkan/lna_renderer_vulkan.h"
 
-typedef struct lna_mat4_s lna_mat4_t;
+typedef struct lna_texture_s    lna_texture_t;
+typedef struct lna_mat4_s       lna_mat4_t;
 
 typedef struct lna_sprite_s
 {
