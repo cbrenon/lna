@@ -1,5 +1,6 @@
 #include <string.h>
 #include <math.h>
+#include "graphics/lna_primitive.h"
 #include "backends/vulkan/lna_primitive_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"
 #include "core/lna_assert.h"

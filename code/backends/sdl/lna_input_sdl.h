@@ -6,7 +6,7 @@
 #include <SDL.h>
 #pragma clang diagnostic pop
 
-#include "backends/lna_input.h"
+#include "system/lna_input.h"
 
 typedef struct lna_input_s
 {

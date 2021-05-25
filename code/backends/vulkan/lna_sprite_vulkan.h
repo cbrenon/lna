@@ -1,7 +1,6 @@
 #ifndef LNA_BACKENDS_VULKAN_LNA_SPRITE_VULKAN_H
 #define LNA_BACKENDS_VULKAN_LNA_SPRITE_VULKAN_H
 
-#include "backends/lna_sprite.h"
 #include "backends/vulkan/lna_renderer_vulkan.h"
 
 typedef struct lna_mat4_s lna_mat4_t;

@@ -10,9 +10,6 @@
 #pragma warning(pop)
 #pragma clang diagnostic pop
 
-#include "backends/lna_window.h"
-#include "core/lna_container.h"
-
 typedef struct lna_window_s
 {
     SDL_Window* handle;

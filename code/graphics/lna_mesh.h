@@ -12,7 +12,7 @@ typedef struct lna_texture_s        lna_texture_t;
 
 typedef struct lna_mesh_system_config_s
 {
-    uint32_t                        max_sprite_count;
+    uint32_t                        max_mesh_count;
     lna_renderer_t*                 renderer;
     lna_memory_pool_t*              memory_pool;
 } lna_mesh_system_config_t;

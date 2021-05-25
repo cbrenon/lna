@@ -1,6 +1,8 @@
 #include <string.h>
+#include "graphics/lna_renderer.h"
 #include "backends/vulkan/lna_renderer_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"
+#include "system/lna_window.h"
 #include "backends/sdl/lna_window_sdl.h"
 #include "maths/lna_maths.h"
 #include "core/lna_allocator.h"

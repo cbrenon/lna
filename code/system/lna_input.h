@@ -1,5 +1,5 @@
-#ifndef LNA_BACKENDS_LNA_INPUT_H
-#define LNA_BACKENDS_LNA_INPUT_H
+#ifndef LNA_SYSTEM_LNA_INPUT_H
+#define LNA_SYSTEM_LNA_INPUT_H
 
 #include <stdbool.h>
 

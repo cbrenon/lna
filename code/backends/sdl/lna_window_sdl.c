@@ -1,3 +1,4 @@
+#include "system/lna_window.h"
 #include "backends/sdl/lna_window_sdl.h"
 #include "core/lna_assert.h"
 #include "core/lna_memory_pool.h"

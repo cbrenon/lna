@@ -1,5 +1,5 @@
-#ifndef LNA_BACKENDS_LNA_SPRITE_H
-#define LNA_BACKENDS_LNA_SPRITE_H
+#ifndef LNA_GRAPHICS_LNA_SPRITE_H
+#define LNA_GRAPHICS_LNA_SPRITE_H
 
 #include <stdint.h>
 

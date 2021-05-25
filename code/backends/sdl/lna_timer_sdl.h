@@ -2,7 +2,6 @@
 #define LNA_BACKENDS_SDL_LNA_TIMER_SDL_H
 
 #include <stdint.h>
-#include "backends/lna_timer.h"
 
 typedef struct lna_timer_s
 {

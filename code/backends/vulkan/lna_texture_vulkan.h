@@ -2,8 +2,9 @@
 #define LNA_BACKENDS_VULKAN_LNA_TEXTURE_VULKAN_H
 
 #include <vulkan/vulkan.h>
-#include "backends/lna_texture.h"
 #include "core/lna_container.h"
+
+typedef struct lna_renderer_s lna_renderer_t;
 
 typedef struct lna_texture_s
 {

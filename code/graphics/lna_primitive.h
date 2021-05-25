@@ -1,5 +1,5 @@
-#ifndef LNA_BACKENDS_LNA_PRIMITIVE_H
-#define LNA_BACKENDS_LNA_PRIMITIVE_H
+#ifndef LNA_GRAPHICS_LNA_PRIMITIVE_H
+#define LNA_GRAPHICS_LNA_PRIMITIVE_H
 
 #include <stdint.h>
 #include <stdbool.h>

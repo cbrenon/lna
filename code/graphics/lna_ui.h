@@ -1,5 +1,5 @@
-#ifndef LNA_BACKENDS_LNA_UI_H
-#define LNA_BACKENDS_LNA_UI_H
+#ifndef LNA_GRAPHICS_LNA_UI_H
+#define LNA_GRAPHICS_LNA_UI_H
 
 #include <stdint.h>
 #include "maths/lna_vec2.h"

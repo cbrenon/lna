@@ -6,6 +6,7 @@
 #include <stb_image.h>
 #pragma warning(pop)
 
+#include "graphics/lna_texture.h"
 #include "backends/vulkan/lna_texture_vulkan.h"
 #include "backends/vulkan/lna_renderer_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"

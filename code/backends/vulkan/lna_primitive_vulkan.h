@@ -1,7 +1,7 @@
 #ifndef LNA_BACKENDS_VULKAN_LNA_PRIMITIVE_VULKAN_H
 #define LNA_BACKENDS_VULKAN_LNA_PRIMITIVE_VULKAN_H
 
-#include "backends/lna_primitive.h"
+#include <stdbool.h>
 #include "backends/vulkan/lna_renderer_vulkan.h"
 
 typedef struct lna_primitive_s

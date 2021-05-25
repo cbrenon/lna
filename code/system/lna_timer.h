@@ -1,5 +1,5 @@
-#ifndef LNA_BACKENDS_LNA_TIMER_BACKEND_H
-#define LNA_BACKENDS_LNA_TIMER_BACKEND_H
+#ifndef LNA_SYSTEM_LNA_TIMER_BACKEND_H
+#define LNA_SYSTEM_LNA_TIMER_BACKEND_H
 
 typedef struct lna_timer_s lna_timer_t;
 

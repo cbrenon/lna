@@ -1,5 +1,5 @@
-#ifndef LNA_BACKENDS_LNA_WINDOW_H
-#define LNA_BACKENDS_LNA_WINDOW_H
+#ifndef LNA_SYSTEM_LNA_WINDOW_H
+#define LNA_SYSTEM_LNA_WINDOW_H
 
 #include <stdint.h>
 #include <stdbool.h>

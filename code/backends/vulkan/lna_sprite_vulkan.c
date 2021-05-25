@@ -1,4 +1,5 @@
 #include <string.h>
+#include "graphics/lna_sprite.h"
 #include "backends/vulkan/lna_sprite_vulkan.h"
 #include "backends/vulkan/lna_texture_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"

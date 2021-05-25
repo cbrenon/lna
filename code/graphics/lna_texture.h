@@ -1,5 +1,5 @@
-#ifndef LNA_BACKENDS_LNA_TEXTURE_H
-#define LNA_BACKENDS_LNA_TEXTURE_H
+#ifndef LNA_GRAPHICS_LNA_TEXTURE_H
+#define LNA_GRAPHICS_LNA_TEXTURE_H
 
 #include <stdint.h>
 

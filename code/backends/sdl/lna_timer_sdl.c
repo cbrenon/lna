@@ -2,6 +2,7 @@
 #pragma clang diagnostic ignored "-Weverything"
 #include <SDL.h>
 #pragma clang diagnostic pop
+#include "system/lna_timer.h"
 #include "backends/sdl/lna_timer_sdl.h"
 #include "core/lna_assert.h"
 

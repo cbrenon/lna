@@ -1,8 +1,10 @@
 #ifndef LNA_BACKENDS_VULKAN_LNA_UI_VULKAN_H
 #define LNA_BACKENDS_VULKAN_LNA_UI_VULKAN_H
 
-#include "backends/lna_ui.h"
-#include "backends/vulkan/lna_renderer_vulkan.h"
+#include <vulkan/vulkan.h>
+#include "maths/lna_vec2.h"
+#include "maths/lna_vec4.h"
+#include "core/lna_container.h"
 
 typedef struct lna_ui_vertex_s
 {

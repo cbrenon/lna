@@ -2,7 +2,6 @@
 #define LNA_BACKENDS_VULKAN_LNA_RENDERER_VULKAN_H
 
 #include <vulkan/vulkan.h>
-#include "backends/lna_renderer.h"
 #include "core/lna_container.h"
 
 #define LNA_VULKAN_MAX_FRAMES_IN_FLIGHT 2

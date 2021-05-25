@@ -6,9 +6,9 @@
 #include "core/lna_memory_pool.h"
 #include "core/lna_assert.h"
 #include "core/lna_string.h"
-#include "backends/lna_input.h"
-#include "backends/lna_ui.h"
-#include "backends/lna_texture.h"
+#include "system/lna_input.h"
+#include "graphics/lna_ui.h"
+#include "graphics/lna_texture.h"
 
 typedef enum lna_tweak_menu_node_type_e
 {

@@ -1,4 +1,6 @@
 #include <string.h>
+#include "graphics/lna_ui.h"
+#include "backends/vulkan/lna_renderer_vulkan.h"
 #include "backends/vulkan/lna_ui_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"
 #include "backends/vulkan/lna_texture_vulkan.h"
