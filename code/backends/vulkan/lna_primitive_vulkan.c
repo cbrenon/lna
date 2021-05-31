@@ -283,7 +283,10 @@ static void lna_primitive_system_create_descriptor_pool(
     lna_log_message("\tdescriptor pool address: %p", (void*)primitive_system->descriptor_pool);
     lna_log_message("\tmax sets               : %d", pool_create_info.maxSets);
     lna_log_message("\tpool size count        : %d", pool_create_info.poolSizeCount);
-    lna_log_message("\tpool 0 descriptor count: %d", pool_sizes[0].descriptorCount);
+    for (uint32_t i = 0; i < pool_create_info.poolSizeCount; ++i)
+    {
+        lna_log_message("\tpool %d descriptor count: %d", i, pool_sizes[i].descriptorCount);
+    }
 }
 
 static void lna_primitive_create_uniform_buffer(
@@ -355,8 +358,6 @@ static void lna_primitive_create_descriptor_sets(
         .descriptorSetCount = lna_array_size(&layouts),
         .pSetLayouts = lna_array_ptr(&layouts),
     };
-
-    lna_log_message("needed descriptor set count: %d", lna_array_size(&layouts));
 
     lna_array_init(
         &primitive->descriptor_sets,
@@ -728,8 +729,6 @@ lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_
     primitive->model_matrix        = config->model_matrix;
     primitive->view_matrix         = config->view_matrix;
     primitive->projection_matrix   = config->projection_matrix;
-
-    lna_log_message("create new primitive buffer (%d vertices, %d indices)", config->vertex_count, config->index_count);
 
     //! VERTEX BUFFER PART
 

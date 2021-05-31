@@ -23,8 +23,8 @@ typedef struct lna_mesh_system_config_s
 typedef struct lna_mesh_vertex_s
 {
     lna_vec3_t                      position;
-    lna_vec2_t                      uv;
     lna_vec4_t                      color;
+    lna_vec2_t                      uv;
     lna_vec3_t                      normal;
 } lna_mesh_vertex_t;
 

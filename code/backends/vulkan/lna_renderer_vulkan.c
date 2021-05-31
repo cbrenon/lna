@@ -6,6 +6,7 @@
 #include "backends/sdl/lna_window_sdl.h"
 #include "maths/lna_maths.h"
 #include "core/lna_allocator.h"
+#include "core/lna_version.h"
 
 //! ============================================================================
 //!                             LOCAL CONST
@@ -19,11 +20,7 @@ static const char* LNA_VULKAN_VALIDATION_LAYERS[] =
 static const char* LNA_VULKAN_DEVICE_EXTENSIONS[] =
 {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-};
-
-static const uint32_t   LNA_ENGINE_MAJOR_VERSION_NUMBER = 0; // TODO: move in a specific file
-static const uint32_t   LNA_ENGINE_MINOR_VERSION_NUMBER = 1; // TODO: move in a specific file
-static const uint32_t   LNA_ENGINE_PATCH_VERSION_NUMBER = 0; // TODO: move in a specific file
+};  
 
 static const size_t LNA_VULKAN_RENDERER_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_COUNT] =
 {
@@ -1361,7 +1358,7 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
     const VkClearValue clear_values[] =
     {
         {
-            .color = { 0.0f, 0.0f, 0.0f, 1.0f },
+            .color = { 0.05f, 0.05f, 0.05f, 1.0f },
         },
         {
             .depthStencil = { 1.0f, 0 }

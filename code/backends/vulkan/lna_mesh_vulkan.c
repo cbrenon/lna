@@ -21,9 +21,9 @@ typedef struct lna_mesh_mvp_uniform_s
 
 typedef struct lna_mesh_light_uniform_s
 {
-    lna_vec3_t  light_position;
-    lna_vec3_t  view_position;
-    lna_vec3_t  light_color;
+    lna_vec4_t  light_position;
+    lna_vec4_t  view_position;
+    lna_vec4_t  light_color;
 } lna_mesh_light_uniform_t;
 
 static void lna_mesh_system_create_graphics_pipeline(
@@ -84,14 +84,14 @@ static void lna_mesh_system_create_graphics_pipeline(
         {
             .binding = 0,
             .location = 1,
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(lna_mesh_vertex_t, uv),
+            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+            .offset = offsetof(lna_mesh_vertex_t, color),
         },
         {
             .binding = 0,
             .location = 2,
-            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(lna_mesh_vertex_t, color),
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(lna_mesh_vertex_t, uv),
         },
         {
             .binding = 0,
@@ -283,6 +283,10 @@ static void lna_mesh_system_create_descriptor_pool(
             .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&mesh_system->meshes),
         },
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&mesh_system->meshes),
+        },
     };
 
     const VkDescriptorPoolCreateInfo pool_create_info =
@@ -293,15 +297,6 @@ static void lna_mesh_system_create_descriptor_pool(
         .maxSets = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&mesh_system->meshes),
     };
 
-    lna_log_message("--------------------------");
-    lna_log_message("mesh descriptor pool info:");
-    lna_log_message("--------------------------");
-    lna_log_message("\tdescriptor pool address: %p", (void*)mesh_system->descriptor_pool);
-    lna_log_message("\tmax sets               : %d", pool_create_info.maxSets);
-    lna_log_message("\tpool size count        : %d", pool_create_info.poolSizeCount);
-    lna_log_message("\tpool 0 descriptor count: %d", pool_sizes[0].descriptorCount);
-    lna_log_message("\tpool 1 descriptor count: %d", pool_sizes[1].descriptorCount);
-
     VULKAN_CHECK_RESULT(
         vkCreateDescriptorPool(
             renderer->device,
@@ -310,6 +305,17 @@ static void lna_mesh_system_create_descriptor_pool(
             &mesh_system->descriptor_pool
             )
         )
+
+    lna_log_message("--------------------------");
+    lna_log_message("mesh descriptor pool info:");
+    lna_log_message("--------------------------");
+    lna_log_message("\tdescriptor pool address: %p", (void*)mesh_system->descriptor_pool);
+    lna_log_message("\tmax sets               : %d", pool_create_info.maxSets);
+    lna_log_message("\tpool size count        : %d", pool_create_info.poolSizeCount);
+    for (uint32_t i = 0; i < pool_create_info.poolSizeCount; ++i)
+    {
+        lna_log_message("\tpool %d descriptor count: %d", i, pool_sizes[i].descriptorCount);
+    }
 }
 
 static void lna_mesh_create_uniform_buffer(
@@ -390,7 +396,7 @@ static void lna_mesh_create_descriptor_sets(
     lna_assert(lna_array_size(&mesh->descriptor_sets) == 0)
 
     const lna_material_t* material = mesh->material;
-    lna_assert(material);
+    lna_assert(material)
 
     const lna_texture_t* texture = material->texture;
     lna_assert(texture)
@@ -930,9 +936,9 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
 
         const lna_mesh_light_uniform_t light_ubo =
         {
-            .light_color      = { 1.0f, 1.0f, 1.0f }, // TODO: remove hard coded value!
-            .light_position   = { 2.0f, 2.0f, 2.0f }, // TODO: remove hard coded value!
-            .view_position    = { 6.0f, 4.0f, 6.0f }, // TODO: remove hard coded value!
+            .light_position   = { 1.5f, 1.5f, 1.5f, 0.0f }, // TODO: remove hard coded value!
+            .view_position    = { 2.0f, 2.0f, 2.0f, 0.0f }, // TODO: remove hard coded value!
+            .light_color      = { 1.0f, 1.0f, 1.0f, 0.0f }, // TODO: remove hard coded value!
         };
         void *light_data;
         VULKAN_CHECK_RESULT(
