@@ -4,6 +4,7 @@
 #include "system/lna_window.h"
 #include "system/lna_input.h"
 #include "system/lna_timer.h"
+#include "system/lna_gamepad.h"
 #include "graphics/lna_renderer.h"
 #include "graphics/lna_ui.h"
 #include "graphics/lna_texture.h"
