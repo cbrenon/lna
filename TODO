@@ -1,5 +1,4 @@
 MISC:
-  ☐ mesh system
   ☐ load obj function (dev only function)
   ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
   ☐ use vec3 parameters for mat4 look at create function instead of floats
@@ -14,6 +13,7 @@ MISC:
   ☐ fix all TODO in code
 
 Archive:
+  ✔ mesh system                                                                                                @done(21-05-30 13:29) @project(MISC)
   ✔ move all graphics (ui, primitive, renderer, sprite, texture, mesh) stuff from backends to graphics folder  @done(21-05-25 14:55) @project(MISC)
   ✔ move all system (input, timer, window, gamepad) stuff from backends to system folder                       @done(21-05-25 14:55) @project(MISC)
   ✔ arrow primitive                                                                        @done(21-05-09 10:56) @project(ROAD TO PROTOTYPING FRAMEWORK)
