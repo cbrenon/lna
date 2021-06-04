@@ -22,6 +22,62 @@ typedef enum lna_tweak_menu_node_type_e
     LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_BOOL,
 } lna_tweak_menu_node_type_t;
 
+typedef enum lna_tweak_menu_action_e
+{
+    LNA_TWEAK_MENU_ACTION_GO_TO_NEXT,
+    LNA_TWEAK_MENU_ACTION_GO_TO_PREV,
+    LNA_TWEAK_MENU_ACTION_GO_TO_PARENT,
+    LNA_TWEAK_MENU_ACTION_GO_TO_CHILD,
+    LNA_TWEAK_MENU_ACTION_EDIT,
+    LNA_TWEAK_MENU_ACTION_EDIT_DEL_LAST_CHAR,
+    LNA_TWEAK_MENU_ACTION_EDIT_CANCEL,
+    LNA_TWEAK_MENU_ACTION_EDIT_VALIDATE,
+    LNA_TWEAK_MENU_ACTION_COUNT,
+} lna_tweak_menu_action_t;
+
+typedef enum lna_tweak_menu_element_color_e
+{
+    LNA_TWEAK_MENU_ELEMENT_COLOR_OUTLINE,
+    LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR,
+    LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR_TEXT,
+    LNA_TWEAK_MENU_ELEMENT_COLOR_BODY,
+    LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT,
+    LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT_FOCUSED,
+    LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE,
+    LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE_TEXT,
+    LNA_TWEAK_MENU_ELEMENT_COLOR_COUNT,
+} lna_tweak_menu_element_color_t;
+
+static const lna_vec4_t LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_COUNT] =
+{
+    { 0.015f, 0.345f, 0.078f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_OUTLINE
+    { 0.152f, 0.988f, 0.317f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR
+    { 0.015f, 0.345f, 0.078f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR_TEXT
+    { 0.211f, 0.427f, 0.254f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_BODY
+    { 0.015f, 0.345f, 0.078f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT
+    { 0.7f, 0.7f, 0.7f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT_FOCUSED
+    { 0.1f, 0.1f, 0.1f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE
+    { 0.4f, 0.4f, 0.4f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE_TEXT
+};
+
+static const lna_key_t LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_COUNT] =
+{
+    LNA_KEY_DOWN,       // LNA_TWEAK_MENU_ACTION_GO_TO_NEXT
+    LNA_KEY_UP,         // LNA_TWEAK_MENU_ACTION_GO_TO_PREV
+    LNA_KEY_ESC,        // LNA_TWEAK_MENU_ACTION_GO_TO_PARENT
+    LNA_KEY_ENTER,      // LNA_TWEAK_MENU_ACTION_GO_TO_CHILD
+    LNA_KEY_ENTER,      // LNA_TWEAK_MENU_ACTION_EDIT
+    LNA_KEY_BACKSPACE,  // LNA_TWEAK_MENU_ACTION_EDIT_DEL_LAST_CHAR
+    LNA_KEY_ESC,        // LNA_TWEAK_MENU_ACTION_EDIT_CANCEL
+    LNA_KEY_ENTER,      // LNA_TWEAK_MENU_ACTION_EDIT_VALIDATE
+};
+
+static const float LNA_TWEAK_MENU_OUTLINE_SIZE  = 0.5f;
+static const float LNA_TWEAK_MENU_PADDING       = 2.0f;
+static const uint32_t   LNA_TWEAK_MENU_MAX_NODE_COUNT           = 1000;
+static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_VERTEX_COUNT  = 1280;
+static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_INDEX_COUNT   = 1280;
+
 #define LNA_TWEAK_MENU_NODE_NAME_MAX_LENGTH         16
 #define LNA_TWEAK_MENU_NODE_EDIT_BUFFER_MAX_LENGTH  12
 
@@ -44,31 +100,6 @@ typedef struct lna_tweak_menu_node_pool_s
     uint32_t                        cur_node_count;
     lna_tweak_menu_node_t*          last_parent_node;
 } lna_tweak_menu_node_pool_t;
-
-typedef enum lna_tweak_menu_action_e
-{
-    LNA_TWEAK_MENU_ACTION_GO_TO_NEXT,
-    LNA_TWEAK_MENU_ACTION_GO_TO_PREV,
-    LNA_TWEAK_MENU_ACTION_GO_TO_PARENT,
-    LNA_TWEAK_MENU_ACTION_GO_TO_CHILD,
-    LNA_TWEAK_MENU_ACTION_EDIT,
-    LNA_TWEAK_MENU_ACTION_EDIT_DEL_LAST_CHAR,
-    LNA_TWEAK_MENU_ACTION_EDIT_CANCEL,
-    LNA_TWEAK_MENU_ACTION_EDIT_VALIDATE,
-    LNA_TWEAK_MENU_ACTION_COUNT,
-} lna_tweak_menu_action_t;
-
-static const lna_key_t LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_COUNT] =
-{
-    LNA_KEY_DOWN,       // LNA_TWEAK_MENU_ACTION_GO_TO_NEXT
-    LNA_KEY_UP,         // LNA_TWEAK_MENU_ACTION_GO_TO_PREV
-    LNA_KEY_ESC,        // LNA_TWEAK_MENU_ACTION_GO_TO_PARENT
-    LNA_KEY_ENTER,      // LNA_TWEAK_MENU_ACTION_GO_TO_CHILD
-    LNA_KEY_ENTER,      // LNA_TWEAK_MENU_ACTION_EDIT
-    LNA_KEY_BACKSPACE,  // LNA_TWEAK_MENU_ACTION_EDIT_DEL_LAST_CHAR
-    LNA_KEY_ESC,        // LNA_TWEAK_MENU_ACTION_EDIT_CANCEL
-    LNA_KEY_ENTER,      // LNA_TWEAK_MENU_ACTION_EDIT_VALIDATE
-};
 
 typedef struct lna_tweak_menu_navigation_s
 {
@@ -166,10 +197,6 @@ static bool lna_tweak_menu_node_is_editable(const lna_tweak_menu_node_t* node)
 //! ============================================================================
 //!                          TWEAK MENU FUNCTIONS
 //! ============================================================================
-
-static const uint32_t   LNA_TWEAK_MENU_MAX_NODE_COUNT           = 1000;
-static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_VERTEX_COUNT  = 1280;
-static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_INDEX_COUNT   = 1280;
 
 void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
 {
@@ -447,34 +474,6 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
         node = node->next_sibling;
     }
 }
-
-typedef enum lna_tweak_menu_element_color_e
-{
-    LNA_TWEAK_MENU_ELEMENT_COLOR_OUTLINE,
-    LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR,
-    LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR_TEXT,
-    LNA_TWEAK_MENU_ELEMENT_COLOR_BODY,
-    LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT,
-    LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT_FOCUSED,
-    LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE,
-    LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE_TEXT,
-    LNA_TWEAK_MENU_ELEMENT_COLOR_COUNT,
-} lna_tweak_menu_element_color_t;
-
-static const lna_vec4_t LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_COUNT] =
-{
-    { 0.1f, 1.0f, 0.1f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_OUTLINE
-    { 0.0f, 0.0f, 0.0f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR
-    { 0.2f, 1.0f, 0.2f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR_TEXT
-    { 0.2f, 0.7f, 0.2f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_BODY
-    { 0.1f, 1.0f, 0.1f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT
-    { 0.9f, 1.0f, 0.9f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT_FOCUSED
-    { 0.1f, 0.1f, 0.1f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE
-    { 0.8f, 1.0f, 0.8f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE_TEXT
-};
-
-static const float LNA_TWEAK_MENU_OUTLINE_SIZE  = 1.0f;
-static const float LNA_TWEAK_MENU_PADDING       = 2.0f;
 
 void lna_tweak_menu_update(void)
 {
