@@ -699,11 +699,6 @@ void lna_tweak_menu_update(void)
     }
 }
 
-void lna_tweak_menu_release(void)
-{
-    g_tweak_menu = NULL; //TODO: take the time to see if it is the best way to "release"
-}
-
 //! ============================================================================
 //!                           BUILD MENU FUNCTIONS
 //! ============================================================================

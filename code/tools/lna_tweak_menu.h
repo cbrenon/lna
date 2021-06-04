@@ -30,7 +30,6 @@ typedef struct lna_tweak_menu_config_s
 extern void                     lna_tweak_menu_init                     (const lna_tweak_menu_config_t* config);
 extern void                     lna_tweak_menu_process_input            (const lna_input_t* input);
 extern void                     lna_tweak_menu_update                   (void);
-extern void                     lna_tweak_menu_release                  (void);
 
 //! BUILD MENU FUNCTIONS
 extern void                     lna_tweak_menu_push_page                (const char* name);

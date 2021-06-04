@@ -93,8 +93,8 @@ void lna_gamepad_system_update(lna_gamepad_system_t* gamepad_system)
             {
                 gamepad->buttons[i] = SDL_GameControllerGetButton(device, (SDL_GameControllerButton)b) == 1;
             }
-            float x = (float)SDL_GameControllerGetAxis(device, SDL_CONTROLLER_AXIS_LEFTX);
-            float y = (float)SDL_GameControllerGetAxis(device, SDL_CONTROLLER_AXIS_LEFTY);
+            float x = (float)((uint32_t)SDL_GameControllerGetAxis(device, SDL_CONTROLLER_AXIS_LEFTX)); // TODO: fix this ugly "warning safe" double cast
+            float y = (float)((uint32_t)SDL_GameControllerGetAxis(device, SDL_CONTROLLER_AXIS_LEFTY)); // TODO: fix this ugly "warning safe" double cast
             float nx = x / gamepad->left_stick_max_value;
             float ny = y / gamepad->left_stick_max_value;
             float tx = 0.0f;

@@ -22,6 +22,7 @@ typedef enum lna_key_e
     LNA_KEY_7,
     LNA_KEY_8,
     LNA_KEY_9,
+    LNA_KEY_F1,
     LNA_KEY_COUNT,
     LNA_KEY_NONE,
 } lna_key_t;

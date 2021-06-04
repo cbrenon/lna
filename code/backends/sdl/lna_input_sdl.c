@@ -21,6 +21,7 @@ static const uint16_t LNA_SDL_KEYBOARD_MAPPING[LNA_KEY_COUNT] =
     SDL_SCANCODE_7,
     SDL_SCANCODE_8,
     SDL_SCANCODE_9,
+    SDL_SCANCODE_F1,
 };
 
 void lna_input_init(lna_input_t* input)
