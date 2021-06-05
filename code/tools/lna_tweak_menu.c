@@ -51,7 +51,7 @@ typedef enum lna_tweak_menu_element_color_e
 static const lna_vec4_t LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_COUNT] =
 {
     { 0.015f, 0.345f, 0.078f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_OUTLINE
-    { 0.152f, 0.988f, 0.317f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR
+    { 1.0f, 0.0f, 0.0f, 1.0f }, //{ 0.152f, 0.988f, 0.317f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR
     { 0.015f, 0.345f, 0.078f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR_TEXT
     { 0.211f, 0.427f, 0.254f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_BODY
     { 0.015f, 0.345f, 0.078f, 1.0f }, // LNA_TWEAK_MENU_ELEMENT_COLOR_BODY_TEXT
@@ -72,8 +72,8 @@ static const lna_key_t LNA_TWEAK_MENU_ACTION_MAPPING[LNA_TWEAK_MENU_ACTION_COUNT
     LNA_KEY_ENTER,      // LNA_TWEAK_MENU_ACTION_EDIT_VALIDATE
 };
 
-static const float LNA_TWEAK_MENU_OUTLINE_SIZE  = 0.5f;
-static const float LNA_TWEAK_MENU_PADDING       = 2.0f;
+static const float      LNA_TWEAK_MENU_OUTLINE_SIZE             = 5.0f;
+static const float      LNA_TWEAK_MENU_PADDING                  = 5.0f;
 static const uint32_t   LNA_TWEAK_MENU_MAX_NODE_COUNT           = 1000;
 static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_VERTEX_COUNT  = 1280;
 static const uint32_t   LNA_TWEAK_MENU_MAX_BUFFER_INDEX_COUNT   = 1280;
@@ -201,6 +201,8 @@ static bool lna_tweak_menu_node_is_editable(const lna_tweak_menu_node_t* node)
 void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
 {
     lna_assert(config)
+    lna_assert(config->viewport_position)
+    lna_assert(config->viewport_size)
     lna_assert(g_tweak_menu == NULL)
 
     g_tweak_menu = lna_memory_alloc(
@@ -236,6 +238,8 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
         ((float)(g_tweak_menu->graphics.font_texture_col_count) / (float)(lna_texture_width(config->font_texture))),
         ((float)(g_tweak_menu->graphics.font_texture_row_count) / (float)(lna_texture_height(config->font_texture))),
     };
+    g_tweak_menu->graphics.viewport_pos             = *config->viewport_position;
+    g_tweak_menu->graphics.viewport_size            = *config->viewport_size;
 
     g_tweak_menu->graphics.buffer = lna_ui_system_new_buffer(
         config->ui_system,
@@ -514,17 +518,19 @@ void lna_tweak_menu_update(void)
     min_horizontal_empty_space_size += LNA_TWEAK_MENU_OUTLINE_SIZE * 2.0f;  //? we add border left and right border size
     min_horizontal_empty_space_size += LNA_TWEAK_MENU_PADDING * 2.0f;       //? we add border left and right padding
     float width = min_horizontal_empty_space_size;
-    width += (float)((int32_t)strlen(page->name)) * graphics->font_size; // TODO: find a better way than this double cast
+    float char_length = (float)((int32_t)strlen(page->name)); // TODO: find a better way than this double cast
+    width += char_length * (graphics->font_size) + (char_length - 1.0f) * graphics->spacing;
 
     lna_tweak_menu_node_t*  child_node              = page->first_child;
     uint32_t                child_count             = 0;
     float                   max_value_name_length   = 0.0f;
     while (child_node)
     {
-        float child_node_width = min_horizontal_empty_space_size + (float)((int32_t)strlen(child_node->name)) * graphics->font_size;  // TODO: find a better way than this double cast
+        char_length = (float)((int32_t)strlen(child_node->name));
+        float child_node_width = min_horizontal_empty_space_size + char_length * graphics->font_size + (char_length - 1.0f) * graphics->spacing;  // TODO: find a better way than this double cast
         max_value_name_length = (child_node_width > max_value_name_length) ? child_node_width : max_value_name_length;
         
-        child_node_width += lna_tweak_menu_node_is_editable(child_node) ? LNA_TWEAK_MENU_NODE_EDIT_BUFFER_MAX_LENGTH * graphics->font_size + LNA_TWEAK_MENU_PADDING * 4.0f : 0.0f;
+        child_node_width += lna_tweak_menu_node_is_editable(child_node) ? LNA_TWEAK_MENU_NODE_EDIT_BUFFER_MAX_LENGTH * graphics->font_size + (LNA_TWEAK_MENU_NODE_EDIT_BUFFER_MAX_LENGTH - 1.0f) * graphics->spacing + LNA_TWEAK_MENU_PADDING * 4.0f : 0.0f;
         width = (child_node_width > width) ? child_node_width : width;
 
         child_node = child_node->next_sibling;
@@ -539,8 +545,8 @@ void lna_tweak_menu_update(void)
 
     lna_vec2_t window_pos =
     {
-        (graphics->viewport_size.width - width) * 0.5f + graphics->viewport_pos.x,
-        (graphics->viewport_size.height - height) * 0.5f + graphics->viewport_pos.y,
+        g_tweak_menu->graphics.viewport_size.width * 0.5f - width * 0.5f,
+        g_tweak_menu->graphics.viewport_size.height * 0.5f - height * 0.5f,
     };
     lna_vec2_t window_size =
     {
@@ -573,6 +579,18 @@ void lna_tweak_menu_update(void)
         window_size.height - window_title_bar_size.height -LNA_TWEAK_MENU_OUTLINE_SIZE * 2.0f,
     };
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdouble-promotion"
+    static bool one_time = false;
+    if (!one_time)
+    {
+        lna_log_debug("window info: position(%f, %f) size(%f, %f)",             window_pos.x,           window_pos.y,           window_size.width,              window_size.height);
+        lna_log_debug("window title bar info: position(%f, %f) size(%f, %f)",   window_title_bar_pos.x, window_title_bar_pos.y, window_title_bar_size.width,    window_title_bar_size.height);
+        lna_log_debug("window body info: position(%f, %f) size(%f, %f)",        window_body_pos.x,      window_body_pos.y,      window_body_size.width,         window_body_size.height);
+        one_time = true;
+    }
+#pragma clang diagnostic pop
+
     lna_ui_buffer_push_rect(
         buffer,
         &(lna_ui_buffer_rect_config_t)
@@ -580,6 +598,7 @@ void lna_tweak_menu_update(void)
             .position = &window_pos,
             .size = &window_size,
             .color = &LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_OUTLINE],
+            .window_size = &g_tweak_menu->graphics.viewport_size
         }
         );
 
@@ -590,6 +609,7 @@ void lna_tweak_menu_update(void)
             .position = &window_title_bar_pos,
             .size = &window_title_bar_size,
             .color = &LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_TITLE_BAR],
+            .window_size = &g_tweak_menu->graphics.viewport_size
         }
         );
 
@@ -606,6 +626,7 @@ void lna_tweak_menu_update(void)
             .texture_col_char_count = graphics->font_texture_col_count,
             .texture_row_char_count = graphics->font_texture_row_count,
             .uv_char_size = &graphics->uv_char_size,
+            .window_size = &g_tweak_menu->graphics.viewport_size
         }
         );
 
@@ -616,6 +637,7 @@ void lna_tweak_menu_update(void)
             .position = &window_body_pos,
             .size = &window_body_size,
             .color = &LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_BODY],
+            .window_size = &g_tweak_menu->graphics.viewport_size
         }
         );
 
@@ -646,6 +668,7 @@ void lna_tweak_menu_update(void)
                 .texture_col_char_count = graphics->font_texture_col_count,
                 .texture_row_char_count = graphics->font_texture_row_count,
                 .uv_char_size = &graphics->uv_char_size,
+                .window_size = &g_tweak_menu->graphics.viewport_size
             }
             );
 
@@ -669,6 +692,7 @@ void lna_tweak_menu_update(void)
                     .position = &node_value_pos,
                     .size = &node_value_size,
                     .color = &LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE],
+                    .window_size = &g_tweak_menu->graphics.viewport_size
                 }
                 );
 
@@ -688,6 +712,7 @@ void lna_tweak_menu_update(void)
                     .texture_col_char_count = graphics->font_texture_col_count,
                     .texture_row_char_count = graphics->font_texture_row_count,
                     .uv_char_size = &graphics->uv_char_size,
+                    .window_size = &g_tweak_menu->graphics.viewport_size
                 }
                 );
         }

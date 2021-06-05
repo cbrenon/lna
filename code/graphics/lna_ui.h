@@ -36,6 +36,7 @@ typedef struct lna_ui_buffer_rect_config_s
     const lna_vec2_t*   position;
     const lna_vec2_t*   size;
     const lna_vec4_t*   color;
+    const lna_vec2_t*   window_size;
 } lna_ui_buffer_rect_config_t;
 
 typedef struct lna_ui_buffer_text_config_s
@@ -49,6 +50,7 @@ typedef struct lna_ui_buffer_text_config_s
     uint32_t            texture_col_char_count;
     uint32_t            texture_row_char_count;
     lna_vec2_t*         uv_char_size;
+    const lna_vec2_t*   window_size;
 } lna_ui_buffer_text_config_t;
 
 extern void             lna_ui_buffer_push_rect             (lna_ui_buffer_t* buffer, const lna_ui_buffer_rect_config_t* config);

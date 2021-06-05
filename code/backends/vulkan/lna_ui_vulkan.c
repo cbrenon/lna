@@ -1,5 +1,6 @@
 #include <string.h>
 #include "graphics/lna_ui.h"
+#include "system/lna_window.h"
 #include "backends/vulkan/lna_renderer_vulkan.h"
 #include "backends/vulkan/lna_ui_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"
@@ -673,8 +674,8 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
             &viewport
             );
         
-        buffer->push_const_block.scale.x = 1.0f; //7.0f / viewport.width;   // TODO: remove hard coded values
-        buffer->push_const_block.scale.y = 1.0f; //7.0f / viewport.height;  // TODO: remove hard coded values
+        buffer->push_const_block.scale.x = 1.0f;
+        buffer->push_const_block.scale.y = 1.0f;
         buffer->push_const_block.translate.x = 0.0f;
         buffer->push_const_block.translate.y = 0.0f;
         vkCmdPushConstants(
@@ -765,20 +766,32 @@ void lna_ui_buffer_push_rect(lna_ui_buffer_t* buffer, const lna_ui_buffer_rect_c
     lna_assert(config->position)
     lna_assert(config->size)
     lna_assert(config->color)
+    lna_assert(config->window_size)
 
-    buffer->vertices[buffer->cur_vertex_count].position     = *config->position;
+    lna_vec2_t position =
+    {
+        2.0f * config->position->x / config->window_size->width - 1.0f,
+        2.0f * config->position->y / config->window_size->height - 1.0f,
+    };
+    lna_vec2_t size =
+    {
+        2.0f * config->size->x / config->window_size->width,
+        2.0f * config->size->y / config->window_size->height,
+    };
+
+    buffer->vertices[buffer->cur_vertex_count].position     = position;
     buffer->vertices[buffer->cur_vertex_count].uv           = (lna_vec2_t){ 0.0f, 0.0f };
     buffer->vertices[buffer->cur_vertex_count].color        = *config->color;
 
-    buffer->vertices[buffer->cur_vertex_count + 1].position = (lna_vec2_t){ config->position->x, config->position->y + config->size->height };
+    buffer->vertices[buffer->cur_vertex_count + 1].position = (lna_vec2_t){ position.x, position.y + size.height };
     buffer->vertices[buffer->cur_vertex_count + 1].uv       = (lna_vec2_t){ 0.0f, 0.0f };
     buffer->vertices[buffer->cur_vertex_count + 1].color    = *config->color;
 
-    buffer->vertices[buffer->cur_vertex_count + 2].position = (lna_vec2_t){ config->position->x + config->size->width, config->position->y + config->size->height };
+    buffer->vertices[buffer->cur_vertex_count + 2].position = (lna_vec2_t){ position.x + size.width, position.y + size.height };
     buffer->vertices[buffer->cur_vertex_count + 2].uv       = (lna_vec2_t){ 0.0f, 0.0f };
     buffer->vertices[buffer->cur_vertex_count + 2].color    = *config->color;
 
-    buffer->vertices[buffer->cur_vertex_count + 3].position = (lna_vec2_t){ config->position->x + config->size->width, config->position->y };
+    buffer->vertices[buffer->cur_vertex_count + 3].position = (lna_vec2_t){ position.x + size.width, position.y };
     buffer->vertices[buffer->cur_vertex_count + 3].uv       = (lna_vec2_t){ 0.0f, 0.0f };
     buffer->vertices[buffer->cur_vertex_count + 3].color    = *config->color;
 
@@ -800,19 +813,33 @@ void lna_ui_buffer_push_text(lna_ui_buffer_t* buffer, const lna_ui_buffer_text_c
     lna_assert(config->text)
     lna_assert(config->position)
     lna_assert(config->color)
+    lna_assert(config->window_size)
 
-    lna_vec2_t  char_pos            = *config->position;
     size_t      text_length         = strlen(config->text);
     lna_vec2_t  texture_offset_pos  = { 0.0f, 0.0f };
 
     lna_assert(buffer->cur_vertex_count + ((uint32_t)text_length * LNA_UI_VERTEX_COUNT_PER_RECT) < buffer->max_vertex_count)
     lna_assert(buffer->cur_vertex_count + ((uint32_t)text_length * LNA_UI_INDEX_COUNT_PER_RECT) < buffer->max_vertex_count)
 
+    lna_vec2_t position =
+    {
+        2.0f * config->position->x / config->window_size->width - 1.0f,
+        2.0f * config->position->y / config->window_size->height - 1.0f,
+    };
+    lna_vec2_t size =
+    {
+        2.0f * config->size / config->window_size->width,
+        2.0f * config->size / config->window_size->height,
+    };
+    float leading = config->leading / (config->window_size->height * 0.5f);
+    float spacing = config->spacing / (config->window_size->width * 0.5f);
+
     for (size_t i = 0; i < text_length; ++i)
     {
         if (config->text[i] == '\n')
         {
-            char_pos = (lna_vec2_t) { config->position->x, char_pos.y + config->leading };
+            position.x = config->position->x / config->window_size->width - 1.0f;
+            position.y += leading;
         }
         else
         {
@@ -822,19 +849,19 @@ void lna_ui_buffer_push_text(lna_ui_buffer_t* buffer, const lna_ui_buffer_text_c
                 (float)((uint32_t)config->text[i] / config->texture_row_char_count) * config->uv_char_size->height
             };
 
-            buffer->vertices[buffer->cur_vertex_count].position     = (lna_vec2_t){ char_pos.x, char_pos.y };
-            buffer->vertices[buffer->cur_vertex_count].uv           = (lna_vec2_t){ texture_offset_pos.x, texture_offset_pos.y };
+            buffer->vertices[buffer->cur_vertex_count].position     = position;
+            buffer->vertices[buffer->cur_vertex_count].uv           = texture_offset_pos;
             buffer->vertices[buffer->cur_vertex_count].color        = *config->color;
 
-            buffer->vertices[buffer->cur_vertex_count + 1].position = (lna_vec2_t){ char_pos.x, char_pos.y + config->size };
+            buffer->vertices[buffer->cur_vertex_count + 1].position = (lna_vec2_t){ position.x, position.y + size.height };
             buffer->vertices[buffer->cur_vertex_count + 1].uv       = (lna_vec2_t){ texture_offset_pos.x, texture_offset_pos.y + config->uv_char_size->height };
             buffer->vertices[buffer->cur_vertex_count + 1].color    = *config->color;
 
-            buffer->vertices[buffer->cur_vertex_count + 2].position = (lna_vec2_t){ char_pos.x + config->size, char_pos.y + config->size };
+            buffer->vertices[buffer->cur_vertex_count + 2].position = (lna_vec2_t){ position.x + size.width, position.y + size.height };
             buffer->vertices[buffer->cur_vertex_count + 2].uv       = (lna_vec2_t){ texture_offset_pos.x + config->uv_char_size->width, texture_offset_pos.y + config->uv_char_size->height };
             buffer->vertices[buffer->cur_vertex_count + 2].color    = *config->color;
 
-            buffer->vertices[buffer->cur_vertex_count + 3].position = (lna_vec2_t){ char_pos.x + config->size, char_pos.y };
+            buffer->vertices[buffer->cur_vertex_count + 3].position = (lna_vec2_t){ position.x + size.width, position.y };
             buffer->vertices[buffer->cur_vertex_count + 3].uv       = (lna_vec2_t){ texture_offset_pos.x + config->uv_char_size->width, texture_offset_pos.y };
             buffer->vertices[buffer->cur_vertex_count + 3].color    = *config->color;
 
@@ -848,7 +875,7 @@ void lna_ui_buffer_push_text(lna_ui_buffer_t* buffer, const lna_ui_buffer_text_c
             buffer->cur_vertex_count    += LNA_UI_VERTEX_COUNT_PER_RECT;
             buffer->cur_index_count     += LNA_UI_INDEX_COUNT_PER_RECT;
 
-            char_pos.x += config->size + config->spacing;
+            position.x += size.width + spacing;
         }
     }
 }

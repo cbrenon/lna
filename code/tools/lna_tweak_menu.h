@@ -24,6 +24,8 @@ typedef struct lna_tweak_menu_config_s
     float                           spacing;
     lna_ui_system_t*                ui_system;
     lna_texture_t*                  font_texture;
+    lna_vec2_t*                     viewport_position;
+    lna_vec2_t*                     viewport_size;
 } lna_tweak_menu_config_t;
 
 //! TWEAK MENU FUNCTIONS
