@@ -289,11 +289,11 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
 
     //! DESCRIPTOR POOL
 
-    const VkDescriptorPoolSize descriptor_pool_sizes[1] =
+    const VkDescriptorPoolSize descriptor_pool_sizes[] =
     {
         {
             .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = 1,
+            .descriptorCount = config->max_buffer_count,
         },
     };
     const VkDescriptorPoolCreateInfo pool_create_info =
