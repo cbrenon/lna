@@ -1,16 +1,29 @@
-MISC:
-  ☐ load obj function (dev only function)
-  ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
+MUST DO:
+  ☐ UI elements:
+    ☐ button
+    ☐ check box
+    ☐ edit box
+    ☐ list view
+    ☐ tree view
+    ☐ radio button
+  ☐ fix all TODO in code
+  ☐ add shader binary code directly in each dedicated files instead of loading files
+  ☐ centralize vulkan version to avoid multiple line change in build file after a vulkan update
+  ☐ centralize sdl version to avoid multiple line change in build file after a sdl update
+  ☐ do not call VirtualAlloc and VirtualFree directly in allocator
+    like renderer, window, input, etc. I must use an interface and add implementation in a backends/windows folder
+
+SHOULD DO:
   ☐ use vec3 parameters for mat4 look at create function instead of floats
+  ☐ be able to manage mesh without texture (default texture or check with empty texture)
   ☐ regroup VkBuffer and VkDeviceMemory in one struct
     they are always used together in my code so it will limit function parameters count
     and help to realize the next task on config struct for vulkan function
   ☐ use config struct instead of long parameter list in vulkan helpers function
-  ☐ add shader binary code directly in each dedicated files instead of loading files
-  ☐ centralize vulkan version to avoid multiple line change in build file after a vulkan update
-  ☐ centralize sdl version to avoid multiple line change in build file after a sdl update
-  ☐ be able to manage mesh without texture (default texture or check with empty texture)
-  ☐ fix all TODO in code
+
+OPTIONAL:
+  ☐ load obj function (dev only function)
+  ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
 
 Archive:
   ✔ mesh system                                                                                                @done(21-05-30 13:29) @project(MISC)
