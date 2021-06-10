@@ -6,12 +6,13 @@ MUST DO:
     ☐ list view
     ☐ tree view
     ☐ radio button
-  ☐ fix all TODO in code
+  ☐ real file system
   ☐ add shader binary code directly in each dedicated files instead of loading files
   ☐ centralize vulkan version to avoid multiple line change in build file after a vulkan update
   ☐ centralize sdl version to avoid multiple line change in build file after a sdl update
   ☐ do not call VirtualAlloc and VirtualFree directly in allocator
     like renderer, window, input, etc. I must use an interface and add implementation in a backends/windows folder
+  ☐ fix all TODO in code
 
 SHOULD DO:
   ☐ use vec3 parameters for mat4 look at create function instead of floats
