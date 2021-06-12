@@ -37,3 +37,44 @@ float lna_vec3_dot_product(
 {
     return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 }
+
+lna_vec3_t lna_vec3_mult(lna_vec3_t v, float r)
+{
+    return (lna_vec3_t)
+    {
+        v.x * r,
+        v.y * r,
+        v.z * r,
+    };
+}
+
+lna_vec3_t lna_vec3_div(lna_vec3_t v, float r)
+{
+    lna_assert(r != 0.0f)
+    return (lna_vec3_t)
+    {
+        v.x / r,
+        v.y / r,
+        v.z / r,
+    };
+}
+
+lna_vec3_t lna_vec3_add(lna_vec3_t a, lna_vec3_t b)
+{
+    return (lna_vec3_t)
+    {
+        a.x + b.x,
+        a.y + b.y,
+        a.z + b.z,
+    };
+}
+
+lna_vec3_t lna_vec3_sub(lna_vec3_t a, lna_vec3_t b)
+{
+    return (lna_vec3_t)
+    {
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z,
+    };
+}

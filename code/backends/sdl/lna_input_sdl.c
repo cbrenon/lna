@@ -5,12 +5,14 @@
 static const uint16_t LNA_SDL_KEYBOARD_MAPPING[LNA_KEY_COUNT] =
 {
     SDL_SCANCODE_ESCAPE,
-    SDL_SCANCODE_UP,
-    SDL_SCANCODE_DOWN,
     SDL_SCANCODE_RETURN,
     SDL_SCANCODE_BACKSPACE,
     SDL_SCANCODE_PERIOD,
     SDL_SCANCODE_MINUS,
+    SDL_SCANCODE_LEFT,
+    SDL_SCANCODE_RIGHT,
+    SDL_SCANCODE_UP,
+    SDL_SCANCODE_DOWN,
     SDL_SCANCODE_0,
     SDL_SCANCODE_1,
     SDL_SCANCODE_2,
@@ -22,6 +24,7 @@ static const uint16_t LNA_SDL_KEYBOARD_MAPPING[LNA_KEY_COUNT] =
     SDL_SCANCODE_8,
     SDL_SCANCODE_9,
     SDL_SCANCODE_F1,
+    SDL_SCANCODE_F2,
 };
 
 void lna_input_init(lna_input_t* input)
@@ -35,14 +38,16 @@ lna_input_event_t lna_input_poll_events(lna_input_t* input)
 {
     lna_assert(input)
 
-    lna_input_event_t   input_event = LNA_INPUT_EVENT_NONE;
-    SDL_Event           sdl_event;
-
     memcpy(
         input->prev_keyboard_state,
         input->keyboard_state,
         sizeof(input->prev_keyboard_state)
         );
+
+    input->prev_mouse_state = input->mouse_state;
+
+    lna_input_event_t   input_event = LNA_INPUT_EVENT_NONE;
+    SDL_Event           sdl_event;
 
     SDL_JoystickEventState(SDL_DISABLE);
     while (SDL_PollEvent(&sdl_event))
@@ -137,4 +142,10 @@ const lna_mouse_state_t* lna_input_mouse_state(const lna_input_t* input)
 {
     lna_assert(input)
     return &input->mouse_state;
+}
+
+const lna_mouse_state_t* lna_input_prev_mouse_state(const lna_input_t* input)
+{
+    lna_assert(input)
+    return &input->prev_mouse_state;
 }

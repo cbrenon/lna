@@ -1,10 +1,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include "core/lna_allocator.h"
+#include "core/lna_heap_allocator.h"
 #include "core/lna_assert.h"
 #include "core/lna_log.h"
 
-void lna_allocator_init(lna_allocator_t* allocator, size_t max_size_in_bytes)
+void lna_heap_allocator_init(lna_heap_allocator_t* allocator, size_t max_size_in_bytes)
 {
     lna_assert(allocator)
     lna_assert(allocator->content == 0)
@@ -29,7 +29,7 @@ void lna_allocator_init(lna_allocator_t* allocator, size_t max_size_in_bytes)
     lna_assert(allocator->content)
 }
 
-char* lna_allocator_alloc(lna_allocator_t* allocator, size_t size_in_bytes)
+char* lna_heap_allocator_alloc(lna_heap_allocator_t* allocator, size_t size_in_bytes)
 {
     lna_assert(allocator)
     lna_assert(allocator->content)
@@ -40,7 +40,7 @@ char* lna_allocator_alloc(lna_allocator_t* allocator, size_t size_in_bytes)
     return allocator->content + offset;
 }
 
-void lna_allocator_release(lna_allocator_t* allocator)
+void lna_heap_allocator_release(lna_heap_allocator_t* allocator)
 {
     lna_assert(allocator)
     lna_assert(allocator->content)

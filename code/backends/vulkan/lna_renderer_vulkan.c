@@ -5,8 +5,9 @@
 #include "system/lna_window.h"
 #include "backends/sdl/lna_window_sdl.h"
 #include "maths/lna_maths.h"
-#include "core/lna_allocator.h"
+#include "core/lna_heap_allocator.h"
 #include "core/lna_version.h"
+#include "core/lna_memory.h"
 
 //! ============================================================================
 //!                             LOCAL CONST
@@ -141,7 +142,7 @@ static bool lna_vulkan_check_validation_layer_support(lna_memory_pool_t* memory_
             NULL
             )
         )
-    VkLayerProperties* available_layers = lna_memory_alloc(
+    VkLayerProperties* available_layers = lna_memory_reserve(
         memory_pool,
         VkLayerProperties,
         layer_count
@@ -196,7 +197,7 @@ static lna_vulkan_queue_family_indices_t lna_vulkan_find_queue_families(
         NULL
         );
 
-    VkQueueFamilyProperties* queue_families = lna_memory_alloc(
+    VkQueueFamilyProperties* queue_families = lna_memory_reserve(
         memory_pool,
         VkQueueFamilyProperties,
         queue_family_count
@@ -254,7 +255,7 @@ static bool lna_vulkan_check_device_extension_support(
             )
         )
 
-    VkExtensionProperties *available_extensions = lna_memory_alloc(
+    VkExtensionProperties *available_extensions = lna_memory_reserve(
         memory_pool,
         VkExtensionProperties,
         extension_count
@@ -319,7 +320,7 @@ static lna_vulkan_swap_chain_support_details_t lna_vulkan_query_swap_chain_suppo
         )
     if (details.format_count > 0)
     {
-        details.formats = lna_memory_alloc(
+        details.formats = lna_memory_reserve(
             memory_pool,
             VkSurfaceFormatKHR,
             details.format_count
@@ -345,7 +346,7 @@ static lna_vulkan_swap_chain_support_details_t lna_vulkan_query_swap_chain_suppo
         )
     if (details.present_mode_count > 0)
     {
-        details.present_modes = lna_memory_alloc(
+        details.present_modes = lna_memory_reserve(
             memory_pool,
             VkPresentModeKHR,
             details.present_mode_count
@@ -514,7 +515,7 @@ static bool lna_vulkan_renderer_create_instance(
 
     uint32_t extension_count;
     lna_window_vulkan_extension_count(window, &extension_count);
-    const char** extension_names = lna_memory_alloc(
+    const char** extension_names = lna_memory_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         const char*,
         enable_validation_layers ? extension_count + 1 : extension_count
@@ -620,7 +621,7 @@ static void lna_vulkan_renderer_pick_physical_device(
         )
     lna_assert(device_count > 0)
 
-    VkPhysicalDevice* devices = lna_memory_alloc(
+    VkPhysicalDevice* devices = lna_memory_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         VkPhysicalDevice,
         device_count
@@ -676,7 +677,7 @@ static void lna_vulkan_renderer_create_logical_device(
     };
     uint32_t unique_queue_family_count = (indices.graphics_family == indices.present_family) ? 1 : 2;
 
-    VkDeviceQueueCreateInfo *queue_create_infos = lna_memory_alloc(
+    VkDeviceQueueCreateInfo *queue_create_infos = lna_memory_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         VkDeviceQueueCreateInfo,
         unique_queue_family_count
@@ -1256,7 +1257,7 @@ bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* co
 
     for (uint32_t i = 0; i < LNA_VULKAN_RENDERER_MEMORY_POOL_COUNT; ++i)
     {
-        lna_memory_pool_init(
+        lna_memory_pool_init_with_heap(
             &renderer->memory_pools[i],
             config->allocator,
             LNA_VULKAN_RENDERER_MEMORY_POOL_SIZES[i]

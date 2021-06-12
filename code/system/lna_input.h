@@ -6,12 +6,14 @@
 typedef enum lna_key_e
 {
     LNA_KEY_ESC,
-    LNA_KEY_UP,
-    LNA_KEY_DOWN,
     LNA_KEY_ENTER,
     LNA_KEY_BACKSPACE,
     LNA_KEY_PERIOD,
     LNA_KEY_MINUS,
+    LNA_KEY_LEFT,
+    LNA_KEY_RIGHT,
+    LNA_KEY_UP,
+    LNA_KEY_DOWN,
     LNA_KEY_0,
     LNA_KEY_1,
     LNA_KEY_2,
@@ -23,6 +25,7 @@ typedef enum lna_key_e
     LNA_KEY_8,
     LNA_KEY_9,
     LNA_KEY_F1,
+    LNA_KEY_F2, 
     LNA_KEY_COUNT,
     LNA_KEY_NONE,
 } lna_key_t;
@@ -56,5 +59,6 @@ extern lna_input_event_t        lna_input_poll_events               (lna_input_t
 extern bool                     lna_input_is_key_pressed            (const lna_input_t* input, lna_key_t key);
 extern bool                     lna_input_is_key_has_been_pressed   (const lna_input_t* input, lna_key_t key);
 extern const lna_mouse_state_t* lna_input_mouse_state               (const lna_input_t* input);
+extern const lna_mouse_state_t* lna_input_prev_mouse_state          (const lna_input_t* input);
 
 #endif

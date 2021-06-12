@@ -205,14 +205,14 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
     lna_assert(config->viewport_size)
     lna_assert(g_tweak_menu == NULL)
 
-    g_tweak_menu = lna_memory_alloc(
+    g_tweak_menu = lna_memory_reserve(
         config->memory_pool,
         lna_tweak_menu_t,
         1
         );
 
     g_tweak_menu->node_pool.max_node_count  = config->max_node_count == 0 ? LNA_TWEAK_MENU_MAX_NODE_COUNT : config->max_node_count;
-    g_tweak_menu->node_pool.nodes           = lna_memory_alloc(
+    g_tweak_menu->node_pool.nodes           = lna_memory_reserve(
         config->memory_pool,
         lna_tweak_menu_node_t,
         g_tweak_menu->node_pool.max_node_count

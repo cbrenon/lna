@@ -12,10 +12,12 @@
 #include "graphics/lna_primitive.h"
 #include "graphics/lna_mesh.h"
 #include "graphics/lna_material.h"
-#include "core/lna_allocator.h"
+#include "core/lna_heap_allocator.h"
 #include "core/lna_log.h"
 #include "core/lna_memory_pool.h"
+#include "core/lna_memory.h"
 #include "tools/lna_tweak_menu.h"
+#include "tools/lna_free_camera.h"
 #include "maths/lna_mat4.h"
 #include "backends/lan_platform.h"
 

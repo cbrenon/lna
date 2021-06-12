@@ -16,11 +16,11 @@
         type*   elements;           \
     } //! we let user specify the name of the struct
 
-#define lna_array_init(array, memory_pool, type, count)             \
-    lna_assert(array);                                              \
-    lna_assert((array)->elements == 0);                             \
-    lna_assert((array)->element_count == 0);                        \
-    (array)->elements = lna_memory_alloc(memory_pool, type, count); \
+#define lna_array_init(array, memory_pool, type, count)                 \
+    lna_assert(array);                                                  \
+    lna_assert((array)->elements == 0);                                 \
+    lna_assert((array)->element_count == 0);                            \
+    (array)->elements = lna_memory_reserve(memory_pool, type, count);   \
     (array)->element_count = count //! we do not add ; to let user add the ; when he uses the macro
 
 #define lna_array_release(array)    \
@@ -45,12 +45,12 @@
         type*   elements;               \
     } //! we let user specify the name of the struct
 
-#define lna_vector_init(array, memory_pool, type, count)            \
-    lna_assert(array);                                              \
-    lna_assert((array)->elements == 0);                             \
-    lna_assert((array)->cur_element_count == 0);                    \
-    lna_assert((array)->max_element_count == 0);                    \
-    (array)->elements = lna_memory_alloc(memory_pool, type, count); \
+#define lna_vector_init(array, memory_pool, type, count)                \
+    lna_assert(array);                                                  \
+    lna_assert((array)->elements == 0);                                 \
+    lna_assert((array)->cur_element_count == 0);                        \
+    lna_assert((array)->max_element_count == 0);                        \
+    (array)->elements = lna_memory_reserve(memory_pool, type, count);   \
     (array)->max_element_count = count //! we do not add ; to let user add the ; when he uses the macro
 
 #define lna_vector_new_element(array, result)                               \

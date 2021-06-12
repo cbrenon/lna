@@ -42,8 +42,8 @@ static void lna_ui_buffer_init(
 
     buffer->max_vertex_count    = config->max_vertex_count;
     buffer->max_index_count     = config->max_index_count;
-    buffer->vertices            = lna_memory_alloc(config->memory_pool, lna_ui_vertex_t, buffer->max_vertex_count);
-    buffer->indices             = lna_memory_alloc(config->memory_pool, uint32_t, buffer->max_index_count);
+    buffer->vertices            = lna_memory_reserve(config->memory_pool, lna_ui_vertex_t, buffer->max_vertex_count);
+    buffer->indices             = lna_memory_reserve(config->memory_pool, uint32_t, buffer->max_index_count);
     buffer->texture             = config->texture;
 
     const VkDescriptorSetAllocateInfo set_allocate_info =

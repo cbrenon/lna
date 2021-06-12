@@ -4,15 +4,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct lna_renderer_s   lna_renderer_t;
-typedef struct lna_window_s     lna_window_t;
-typedef struct lna_allocator_s  lna_allocator_t;
+typedef struct lna_renderer_s       lna_renderer_t;
+typedef struct lna_window_s         lna_window_t;
+typedef struct lna_heap_allocator_s lna_heap_allocator_t;
 
 typedef struct lna_renderer_config_s
 {
-    const lna_window_t* window;
-    bool                enable_api_diagnostic;
-    lna_allocator_t*    allocator;
+    const lna_window_t*     window;
+    bool                    enable_api_diagnostic;
+    lna_heap_allocator_t*   allocator;
 } lna_renderer_config_t;
 
 extern bool     lna_renderer_init               (lna_renderer_t* renderer, const lna_renderer_config_t* config);

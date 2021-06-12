@@ -1,8 +1,8 @@
 #include "core/lna_memory_pool.h"
 #include "core/lna_assert.h"
-#include "core/lna_allocator.h"
+#include "core/lna_heap_allocator.h"
 
-void lna_memory_pool_init(lna_memory_pool_t* memory_pool, lna_allocator_t* allocator, size_t size_in_bytes)
+void lna_memory_pool_init_with_heap(lna_memory_pool_t* memory_pool, lna_heap_allocator_t* allocator, size_t size_in_bytes)
 {
     lna_assert(memory_pool)
     lna_assert(memory_pool->content == 0)
@@ -16,14 +16,14 @@ void lna_memory_pool_init(lna_memory_pool_t* memory_pool, lna_allocator_t* alloc
         memory_pool
         );
 
-    memory_pool->content = lna_allocator_alloc(
+    memory_pool->content = lna_heap_allocator_alloc(
         allocator,
         size_in_bytes
         );
     memory_pool->max_content_size = size_in_bytes;
 }
 
-void* lna_memory_pool_alloc(lna_memory_pool_t* memory_pool, size_t size_in_bytes)
+void* lna_memory_pool_reserve(lna_memory_pool_t* memory_pool, size_t size_in_bytes)
 {
     lna_assert(memory_pool)
     lna_assert(memory_pool->content)
