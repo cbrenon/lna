@@ -12,6 +12,7 @@ typedef struct lna_memory_pool_s    lna_memory_pool_t;
 typedef struct lna_renderer_s       lna_renderer_t;
 typedef struct lna_material_s       lna_material_t;
 typedef struct lna_mat4_s           lna_mat4_t;
+typedef struct lna_model_vertex_s   lna_model_vertex_t;
 
 typedef struct lna_mesh_system_config_s
 {
@@ -20,18 +21,10 @@ typedef struct lna_mesh_system_config_s
     lna_memory_pool_t*              memory_pool;
 } lna_mesh_system_config_t;
 
-typedef struct lna_mesh_vertex_s
-{
-    lna_vec3_t                      position;
-    lna_vec4_t                      color;
-    lna_vec2_t                      uv;
-    lna_vec3_t                      normal;
-} lna_mesh_vertex_t;
-
 typedef struct lna_mesh_config_s
 {
     const lna_material_t*           material;
-    const lna_mesh_vertex_t*        vertices;
+    const lna_model_vertex_t*       vertices;
     uint32_t                        vertex_count;
     const uint32_t*                 indices;
     uint32_t                        index_count;

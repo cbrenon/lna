@@ -12,6 +12,7 @@
 #include "graphics/lna_primitive.h"
 #include "graphics/lna_mesh.h"
 #include "graphics/lna_material.h"
+#include "graphics/lna_model.h"
 #include "core/lna_heap_allocator.h"
 #include "core/lna_log.h"
 #include "core/lna_memory_pool.h"

@@ -4,6 +4,7 @@
 #include "backends/vulkan/lna_texture_vulkan.h"
 #include "backends/vulkan/lna_vulkan.h"
 #include "graphics/lna_material.h"
+#include "graphics/lna_model.h"
 #include "core/lna_assert.h"
 #include "core/lna_memory_pool.h"
 #include "core/lna_file.h"
@@ -79,32 +80,32 @@ static void lna_mesh_system_create_graphics_pipeline(
             .binding = 0,
             .location = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(lna_mesh_vertex_t, position),
+            .offset = offsetof(lna_model_vertex_t, position),
         },
         {
             .binding = 0,
             .location = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(lna_mesh_vertex_t, color),
+            .offset = offsetof(lna_model_vertex_t, color),
         },
         {
             .binding = 0,
             .location = 2,
             .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(lna_mesh_vertex_t, uv),
+            .offset = offsetof(lna_model_vertex_t, uv),
         },
         {
             .binding = 0,
             .location = 3,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(lna_mesh_vertex_t, normal),
+            .offset = offsetof(lna_model_vertex_t, normal),
         },
     };
     const VkVertexInputBindingDescription vertex_input_binding_description[] =
     {
         {
             .binding = 0,
-            .stride = sizeof(lna_mesh_vertex_t),
+            .stride = sizeof(lna_model_vertex_t),
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
         },
     };
