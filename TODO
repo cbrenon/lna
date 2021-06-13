@@ -7,11 +7,10 @@ MUST DO:
     ☐ tree view
     ☐ radio button
   ☐ real file system
+    implement some sort of bigfile struct where to pick informations
   ☐ add shader binary code directly in each dedicated files instead of loading files
   ☐ centralize vulkan version to avoid multiple line change in build file after a vulkan update
   ☐ centralize sdl version to avoid multiple line change in build file after a sdl update
-  ☐ do not call VirtualAlloc and VirtualFree directly in allocator
-    like renderer, window, input, etc. I must use an interface and add implementation in a backends/windows folder
   ☐ fix all TODO in code
 
 SHOULD DO:
@@ -29,6 +28,8 @@ OPTIONAL:
   ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
 
 Archive:
+  ✔ do not call VirtualAlloc and VirtualFree directly in allocator                                             @done(21-06-13 11:46) @project(MUST DO)
+    like renderer, window, input, etc. I must use an interface and add implementation in a backends/windows folder
   ✔ free camera                                                                                                @done(21-06-11 15:16) @project(MUST DO)
   ✔ rename allocator to heap_allocator                                                                         @done(21-06-11 10:57) @project(MUST DO)
   ✔ mesh system                                                                                                @done(21-05-30 13:29) @project(MISC)
