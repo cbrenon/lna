@@ -419,7 +419,7 @@ void lna_tweak_menu_process_input(const lna_input_t* input)
                 //! no break point here => need code below
             case LNA_TWEAK_MENU_NODE_TYPE_VAR_VALUE_UNSIGNED_INT:
                 {
-                    for (int i = 0; i <= 0; ++i)
+                    for (int i = 0; i <= 9; ++i)
                     {
                         if (lna_input_is_key_has_been_pressed(input, LNA_KEY_0 + i))
                         {
@@ -703,7 +703,7 @@ void lna_tweak_menu_update(void)
                 buffer,
                 &(lna_ui_buffer_text_config_t)
                 {
-                    .text = nav->edit_mode && nav->edit_char_index == 0 ? "|" : child_node->edit_buffer,
+                    .text = child_node->edit_buffer,
                     .position = &node_value_pos,
                     .size = graphics->font_size,
                     .color = &LNA_TWEAK_MENU_COLORS[LNA_TWEAK_MENU_ELEMENT_COLOR_VALUE_TEXT],

@@ -20,6 +20,7 @@
 #include "tools/lna_tweak_menu.h"
 #include "tools/lna_free_camera.h"
 #include "maths/lna_mat4.h"
+#include "scene/lna_camera.h"
 #include "backends/lan_platform.h"
 
 #endif
