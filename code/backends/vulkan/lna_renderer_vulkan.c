@@ -1229,7 +1229,7 @@ static void lna_vulkan_renderer_recreate_swap_chain(
 //!                         RENDERER PUBLIC FUNCTIONS
 //! ============================================================================
 
-static const uint32_t LNA_RENDERER_MAX_LISTENERS_COUNT = 5;
+static const uint32_t LNA_RENDERER_MAX_LISTENERS_COUNT = 10; // TODO: remove. listeners count must be passed as argument in renderer config
 
 bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* config)
 {
@@ -1268,7 +1268,7 @@ bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* co
         &renderer->listeners,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_PERSISTENT],
         lna_renderer_listener_t,
-        LNA_RENDERER_MAX_LISTENERS_COUNT
+        LNA_RENDERER_MAX_LISTENERS_COUNT // TODO: change. listeners count must be passed as argument in renderer config
         );
 
     renderer->curr_frame = 0;
