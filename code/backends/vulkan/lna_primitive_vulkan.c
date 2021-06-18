@@ -926,19 +926,19 @@ lna_primitive_t* lna_primitive_system_new_rect_xy(lna_primitive_system_t* primit
     const lna_primitive_vertex_t vertices[] =
     {
         {
-            .position = { config->position->x, config->position->y, 0.0f },
+            .position = { config->position->x, config->position->y, config->position->z },
             .color = *config->color,
         },
         {
-            .position = { config->position->x, config->position->y - config->size->height, 0.0f },
+            .position = { config->position->x, config->position->y - config->size->height, config->position->z },
             .color = *config->color,
         },
         {
-            .position = { config->position->x + config->size->width, config->position->y - config->size->height, 0.0f },
+            .position = { config->position->x + config->size->width, config->position->y - config->size->height, config->position->z },
             .color = *config->color,
         },
         {
-            .position = { config->position->x + config->size->width, config->position->y, 0.0f },
+            .position = { config->position->x + config->size->width, config->position->y, config->position->z },
             .color = *config->color,
         },
     };

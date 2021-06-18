@@ -51,7 +51,7 @@ typedef struct lna_primitive_line_config_s
 
 typedef struct lna_primitive_rect_config_s
 {
-    const lna_vec2_t*                       position;
+    const lna_vec3_t*                       position;
     const lna_vec2_t*                       size;
     const lna_vec4_t*                       color;
     const lna_mat4_t*                       model_matrix;
