@@ -1,6 +1,7 @@
 #include <math.h>
 #include "maths/lna_mat4.h"
 #include "maths/lna_vec3.h"
+#include "core/lna_assert.h"
 
 lna_mat4_t  lna_mat4_identity(void)
 {
@@ -48,8 +49,8 @@ lna_mat4_t lna_mat4_rotation_x(lna_degree_t angle)
     float       c = cosf(lna_degree_to_radian(angle).value);
     float       s = sinf(lna_degree_to_radian(angle).value);
     m.values[1][1] = c;
-    m.values[1][2] = s;
-    m.values[2][1] = -s;
+    m.values[1][2] = -s;
+    m.values[2][1] = s;
     m.values[2][2] = c;
     return m;
 }
@@ -60,8 +61,8 @@ lna_mat4_t lna_mat4_rotation_y(lna_degree_t angle)
     float       c = cosf(lna_degree_to_radian(angle).value);
     float       s = sinf(lna_degree_to_radian(angle).value);
     m.values[0][0] = c;
-    m.values[0][2] = -s;
-    m.values[2][0] = s;
+    m.values[0][2] = s;
+    m.values[2][0] = -s;
     m.values[2][2] = c;
     return m;
 }
@@ -72,8 +73,8 @@ lna_mat4_t lna_mat4_rotation_z(lna_degree_t angle)
     float       c = cosf(lna_degree_to_radian(angle).value);
     float       s = sinf(lna_degree_to_radian(angle).value);
     m.values[0][0] = c;
-    m.values[0][1] = s;
-    m.values[1][0] = -s;
+    m.values[0][1] = -s;
+    m.values[1][0] = s;
     m.values[1][1] = c;
     return m;
 }
@@ -122,4 +123,39 @@ lna_mat4_t lna_mat4_perspective(lna_degree_t fov, float aspect_ratio, float near
     m.values[2][3] = -1.0f;
     m.values[3][2] = -(far_z * near_z) / (far_z - near_z);
     return m;
+}
+
+void lna_mat4_mult(const lna_mat4_t* a, const lna_mat4_t* b, lna_mat4_t* result)
+{
+    lna_assert(a)
+    lna_assert(b)
+    lna_assert(result)
+
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            result->values[i][j] = 0.0f;
+            for (int k = 0; k < 4; ++k)
+            {
+                result->values[i][j] += a->values[i][k] * b->values[k][j];
+            }
+        }
+    }
+    // result->values[0][0] = a->values[0][0] * b->values[0][0] + a->values[0][1] * b->values[1][0] + a->values[0][2] * b->values[2][0] + a->values[0][3] * b->values[3][0]; 
+    // result->values[0][1] = a->values[0][0] * b->values[0][1] + a->values[0][1] * b->values[1][1] + a->values[0][2] * b->values[2][1] + a->values[0][3] * b->values[3][1]; 
+    // result->values[0][2] = a->values[0][0] * b->values[0][2] + a->values[0][1] * b->values[1][2] + a->values[0][2] * b->values[2][2] + a->values[0][3] * b->values[3][2]; 
+    // result->values[0][3] = a->values[0][0] * b->values[0][3] + a->values[0][1] * b->values[1][3] + a->values[0][2] * b->values[2][3] + a->values[0][3] * b->values[3][3]; 
+    // result->values[1][0] = a->values[1][0] * b->values[0][0] + a->values[1][1] * b->values[1][0] + a->values[1][2] * b->values[2][0] + a->values[1][3] * b->values[3][0]; 
+    // result->values[1][1] = a->values[1][0] * b->values[0][1] + a->values[1][1] * b->values[1][1] + a->values[1][2] * b->values[2][1] + a->values[1][3] * b->values[3][1]; 
+    // result->values[1][2] = a->values[1][0] * b->values[0][2] + a->values[1][1] * b->values[1][2] + a->values[1][2] * b->values[2][2] + a->values[1][3] * b->values[3][2]; 
+    // result->values[1][3] = a->values[1][0] * b->values[0][3] + a->values[1][1] * b->values[1][3] + a->values[1][2] * b->values[2][3] + a->values[1][3] * b->values[3][3]; 
+    // result->values[2][0] = a->values[2][0] * b->values[0][0] + a->values[2][1] * b->values[1][0] + a->values[2][2] * b->values[2][0] + a->values[2][3] * b->values[3][0]; 
+    // result->values[2][1] = a->values[2][0] * b->values[0][1] + a->values[2][1] * b->values[1][1] + a->values[2][2] * b->values[2][1] + a->values[2][3] * b->values[3][1]; 
+    // result->values[2][2] = a->values[2][0] * b->values[0][2] + a->values[2][1] * b->values[1][2] + a->values[2][2] * b->values[2][2] + a->values[2][3] * b->values[3][2]; 
+    // result->values[2][3] = a->values[2][0] * b->values[0][3] + a->values[2][1] * b->values[1][3] + a->values[2][2] * b->values[2][3] + a->values[2][3] * b->values[3][3]; 
+    // result->values[3][0] = a->values[3][0] * b->values[0][0] + a->values[3][1] * b->values[1][0] + a->values[3][2] * b->values[2][0] + a->values[3][3] * b->values[3][0]; 
+    // result->values[3][1] = a->values[3][0] * b->values[0][1] + a->values[3][1] * b->values[1][1] + a->values[3][2] * b->values[2][1] + a->values[3][3] * b->values[3][1]; 
+    // result->values[3][2] = a->values[3][0] * b->values[0][2] + a->values[3][1] * b->values[1][2] + a->values[3][2] * b->values[2][2] + a->values[3][3] * b->values[3][2]; 
+    // result->values[3][3] = a->values[3][0] * b->values[0][3] + a->values[3][1] * b->values[1][3] + a->values[3][2] * b->values[2][3] + a->values[3][3] * b->values[3][3];
 }

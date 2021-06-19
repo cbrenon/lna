@@ -930,11 +930,11 @@ lna_primitive_t* lna_primitive_system_new_rect_xy(lna_primitive_system_t* primit
             .color = *config->color,
         },
         {
-            .position = { config->position->x, config->position->y - config->size->height, config->position->z },
+            .position = { config->position->x, config->position->y + config->size->height, config->position->z },
             .color = *config->color,
         },
         {
-            .position = { config->position->x + config->size->width, config->position->y - config->size->height, config->position->z },
+            .position = { config->position->x + config->size->width, config->position->y + config->size->height, config->position->z },
             .color = *config->color,
         },
         {
