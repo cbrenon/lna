@@ -1,6 +1,10 @@
 PRIORITY:
   ☐ remove lna_container.h
     we will not use array and vector macros anymore, we will 
+  ☐ remove all unneeded macro stuff
+    macro must be used only if there is no another way to perform something.
+    for example the reserve_memory macro must be removed, it is not necessary as we can
+    use directly the memory pool function
 
 MUST DO:
   ☐ console system
