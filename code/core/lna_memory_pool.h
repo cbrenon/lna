@@ -16,6 +16,4 @@ extern void     lna_memory_pool_init_with_heap  (lna_memory_pool_t* memory_pool,
 extern void*    lna_memory_pool_reserve         (lna_memory_pool_t* memory_pool, size_t size_in_bytes);
 extern void     lna_memory_pool_empty           (lna_memory_pool_t* memory_pool);
 
-#define lna_memory_reserve(memory_pool, type, count) (type*)lna_memory_pool_reserve(memory_pool, sizeof(type) * (count))
-
 #endif

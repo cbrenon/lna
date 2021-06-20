@@ -1,11 +1,15 @@
 #include <string.h>
 #include <stdio.h>
 #include "core/lna_file.h"
+#include "core/lna_assert.h"
+#include "core/lna_memory_pool.h"
 
 void lna_file_debug_load(lna_file_content_t* file_content, lna_memory_pool_t* memory_pool, const char* filename, bool is_binary)
 {
     lna_assert(memory_pool)
     lna_assert(file_content)
+    lna_assert(file_content->content == NULL)
+    lna_assert(file_content->size == 0)
     lna_assert(strlen(filename) > 0)
 
     FILE* fp = NULL;
@@ -17,13 +21,8 @@ void lna_file_debug_load(lna_file_content_t* file_content, lna_memory_pool_t* me
         long file_length = ftell(fp);
         lna_assert(file_length != -1)
 
-        uint32_t size = is_binary ? (uint32_t)file_length : (uint32_t)file_length + 1;
-        lna_array_init(
-            file_content,
-            memory_pool,
-            char,
-            size
-            );
+        file_content->size      = is_binary ? (size_t)file_length : (size_t)file_length + 1;
+        file_content->content   = lna_memory_pool_reserve(memory_pool, file_content->size * sizeof(char));
 
         if (fseek(fp, 0L, SEEK_SET) != 0)
         {
@@ -31,16 +30,16 @@ void lna_file_debug_load(lna_file_content_t* file_content, lna_memory_pool_t* me
         }
 
         size_t count = fread(
-            lna_array_ptr(file_content),
+            file_content->content,
             sizeof(char),
-            lna_array_size(file_content),
+            file_content->size,
             fp
             );
         lna_assert(ferror(fp) == 0)
 
         if (!is_binary)
         {
-            lna_array_at_ref(file_content, count) = '\0';
+            file_content->content[count] = '\0';
         }
     }
     fclose(fp);
