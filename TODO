@@ -1,4 +1,6 @@
 PRIORITY:
+  ☐ remove lna_container.h
+    we will not use array and vector macros anymore, we will 
 
 MUST DO:
   ☐ console system
