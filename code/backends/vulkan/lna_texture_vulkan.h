@@ -2,7 +2,6 @@
 #define LNA_BACKENDS_VULKAN_LNA_TEXTURE_VULKAN_H
 
 #include <vulkan/vulkan.h>
-#include "core/lna_container.h"
 
 typedef struct lna_renderer_s lna_renderer_t;
 
@@ -18,7 +17,12 @@ typedef struct lna_texture_s
     uint32_t        atlas_row_count;    //! set to 0 if it is not an atlas texture
 } lna_texture_t;
 
-lna_vector_def(lna_texture_t) lna_texture_vec_t;
+typedef struct lna_texture_vec_s
+{
+    lna_texture_t*      elements;
+    uint32_t            cur_element_count;
+    uint32_t            max_element_count;
+} lna_texture_vec_t;
 
 typedef struct lna_texture_system_s
 {

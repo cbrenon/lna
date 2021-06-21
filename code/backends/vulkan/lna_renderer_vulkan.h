@@ -2,7 +2,6 @@
 #define LNA_BACKENDS_VULKAN_LNA_RENDERER_VULKAN_H
 
 #include <vulkan/vulkan.h>
-#include "core/lna_container.h"
 
 #define LNA_VULKAN_MAX_FRAMES_IN_FLIGHT 2
 
@@ -14,15 +13,59 @@ typedef enum lna_vulkan_renderer_memory_pool_s
     LNA_VULKAN_RENDERER_MEMORY_POOL_COUNT
 } lana_renderer_memory_pool_t;
 
-lna_array_def(VkFence)                  lna_vulkan_fence_array_t;
-lna_array_def(VkImage)                  lna_vulkan_image_array_t;
-lna_array_def(VkImageView)              lna_vulkan_image_view_array_t;
-lna_array_def(VkFramebuffer)            lna_vulkan_frame_buffer_array_t;
-lna_array_def(VkCommandBuffer)          lna_vulkan_command_buffer_array_t;
-lna_array_def(VkBuffer)                 lna_vulkan_buffer_array_t;
-lna_array_def(VkDeviceMemory)           lna_vulkan_device_memory_array_t;
-lna_array_def(VkDescriptorSet)          lna_vulkan_descriptor_set_array_t;
-lna_array_def(VkDescriptorSetLayout)    lna_vulkan_descriptor_set_layout_array_t;
+typedef struct lna_vulkan_fence_array_s
+{
+    VkFence*                elements;
+    uint32_t                count;
+} lna_vulkan_fence_array_t;
+
+typedef struct lna_vulkan_image_array_s
+{
+    VkImage*                elements;
+    uint32_t                count;
+} lna_vulkan_image_array_t;
+
+typedef struct lna_vulkan_image_view_array_s
+{
+    VkImageView*            elements;
+    uint32_t                count;
+} lna_vulkan_image_view_array_t;
+
+typedef struct lna_vulkan_frame_buffer_array_s
+{
+    VkFramebuffer*          elements;
+    uint32_t                count;
+} lna_vulkan_frame_buffer_array_t;
+
+typedef struct lna_vulkan_command_buffer_array_s
+{
+    VkCommandBuffer*        elements;
+    uint32_t                count;
+} lna_vulkan_command_buffer_array_t;
+
+typedef struct lna_vulkan_buffer_array_s
+{
+    VkBuffer*               elements;
+    uint32_t                count;
+} lna_vulkan_buffer_array_t;
+
+typedef struct lna_vulkan_device_memory_array_s
+{
+    VkDeviceMemory*         elements;
+    uint32_t                count;
+} lna_vulkan_device_memory_array_t;
+
+typedef struct lna_vulkan_descriptor_set_array_s
+{
+    VkDescriptorSet*        elements;
+    uint32_t                count;
+} lna_vulkan_descriptor_set_array_t;
+
+typedef struct lna_vulkan_descriptor_set_layout_array_s
+{
+    VkDescriptorSetLayout*  elements;
+    uint32_t                count;
+} lna_vulkan_descriptor_set_layout_array_t;
 
 typedef void (*lna_vulkan_on_swap_chain_cleanup_t)(void* graphics_system);
 typedef void (*lna_vulkan_on_swap_chain_recreate_t)(void* graphics_system);
@@ -32,7 +75,12 @@ typedef struct lna_renderer_listener_s
     lna_vulkan_on_swap_chain_recreate_t     on_recreate;
     void*                                   handle;
 } lna_renderer_listener_t;
-lna_vector_def(lna_renderer_listener_t) lna_renderer_listener_vec_t;
+
+typedef struct lna_renderer_listener_vec_s
+{
+    lna_renderer_listener_t*    elements;
+    uint32_t                    count;
+} lna_renderer_listener_vec_t;
 
 typedef struct lna_renderer_s
 {

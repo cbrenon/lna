@@ -20,7 +20,12 @@ typedef struct lna_primitive_s
     const lna_mat4_t*                   projection_matrix;
 } lna_primitive_t;
 
-lna_vector_def(lna_primitive_t)         lna_primitive_vec_t;
+typedef struct lna_primitive_vec_t
+{
+    lna_primitive_t*                    elements;
+    uint32_t                            cur_element_count;
+    uint32_t                            max_element_count;
+} lna_primitive_vec_t;
 
 typedef struct lna_primitive_system_s
 {

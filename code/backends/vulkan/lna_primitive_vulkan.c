@@ -298,22 +298,20 @@ static void lna_primitive_create_uniform_buffer(
     lna_assert(lna_array_size(&primitive->mvp_uniform_buffers) == 0)
     lna_assert(lna_array_size(&primitive->mvp_uniform_buffers_memory) == 0)
 
-    lna_array_init(
-        &primitive->mvp_uniform_buffers,
+    primitive->mvp_uniform_buffers.count    = renderer->swap_chain_images.count;
+    primitive->mvp_uniform_buffers.elements = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
-        VkBuffer,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkBuffer) * renderer->swap_chain_images.count
         );
 
-    lna_array_init(
-        &primitive->mvp_uniform_buffers_memory,
+    primitive->mvp_uniform_buffers_memory.count     = renderer->swap_chain_images.count;
+    primitive->mvp_uniform_buffers_memory.elements  = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
-        VkDeviceMemory,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkDeviceMemory) * renderer->swap_chain_images.count
         );
 
     VkDeviceSize uniform_buffer_size = sizeof(lna_primitive_uniform_t);
-    for (size_t i = 0; i < lna_array_size(&primitive->mvp_uniform_buffers); ++i)
+    for (size_t i = 0; i < primitive->mvp_uniform_buffers.count; ++i)
     {
         lna_vulkan_create_buffer(
             renderer->device,
@@ -321,8 +319,8 @@ static void lna_primitive_create_uniform_buffer(
             uniform_buffer_size,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            lna_array_at_ptr(&primitive->mvp_uniform_buffers, i),
-            lna_array_at_ptr(&primitive->mvp_uniform_buffers_memory, i)
+            &primitive->mvp_uniform_buffers.elements[i],
+            &primitive->mvp_uniform_buffers_memory.elements[i]
             );
     }
 }
@@ -340,60 +338,59 @@ static void lna_primitive_create_descriptor_sets(
     lna_assert(renderer)
 
     lna_vulkan_descriptor_set_layout_array_t layouts = { 0 };
-    lna_array_init(
-        &layouts,
+    layouts.count       = renderer->swap_chain_images.count;
+    layouts.elements    = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
-        VkDescriptorSetLayout,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkDescriptorSetLayout) * renderer->swap_chain_images.count
         );
-    for (uint32_t i = 0; i < lna_array_size(&layouts); ++i)
+
+    for (uint32_t i = 0; i < layouts.count; ++i)
     {
-        lna_array_at_ref(&layouts, i) = primitive_system->descriptor_set_layout;
+        layouts.elements[i] = primitive_system->descriptor_set_layout;
     }
 
     const VkDescriptorSetAllocateInfo allocate_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = primitive_system->descriptor_pool,
+        .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool     = primitive_system->descriptor_pool,
         .descriptorSetCount = lna_array_size(&layouts),
-        .pSetLayouts = lna_array_ptr(&layouts),
+        .pSetLayouts        = lna_array_ptr(&layouts),
     };
 
-    lna_array_init(
-        &primitive->descriptor_sets,
+    primitive->descriptor_sets.count    = renderer->swap_chain_images.count;
+    primitive->descriptor_sets.elements = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
-        VkDescriptorSet,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkDescriptorSet) * renderer->swap_chain_images.count
         );
 
     VULKAN_CHECK_RESULT(
         vkAllocateDescriptorSets(
             renderer->device,
             &allocate_info,
-            lna_array_ptr(&primitive->descriptor_sets)
+            primitive->descriptor_sets.elements
             )
         )
 
-    for (size_t i = 0; i < lna_array_size(&primitive->descriptor_sets); ++i)
+    for (size_t i = 0; i < primitive->descriptor_sets.count; ++i)
     {
         const VkDescriptorBufferInfo buffer_info =
         {
-            .buffer = lna_array_at_ref(&primitive->mvp_uniform_buffers, i),
+            .buffer = primitive->mvp_uniform_buffers.elements[i],
             .offset = 0,
-            .range = sizeof(lna_primitive_uniform_t),
+            .range  = sizeof(lna_primitive_uniform_t),
         };
         const VkWriteDescriptorSet write_descriptors[] =
         {
             {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = lna_array_at_ref(&primitive->descriptor_sets, i),
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1,
-                .pBufferInfo = &buffer_info,
-                .pImageInfo = NULL,
-                .pTexelBufferView = NULL,
+                .sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet             = primitive->descriptor_sets.elements[i],
+                .dstBinding         = 0,
+                .dstArrayElement    = 0,
+                .descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount    = 1,
+                .pBufferInfo        = &buffer_info,
+                .pImageInfo         = NULL,
+                .pTexelBufferView   = NULL,
             },
         };
 
@@ -425,33 +422,36 @@ static void lna_primitive_system_on_swap_chain_cleanup(void* owner)
         NULL
         );
 
-    for (uint32_t i = 0; i < lna_vector_size(&primitive_system->primitives); ++i)
+    for (uint32_t i = 0; i < primitive_system->primitives.cur_element_count; ++i)
     {
-        lna_primitive_t* primitive = lna_vector_at_ptr(&primitive_system->primitives, i);
-        for (size_t j = 0; j < lna_array_size(&primitive->mvp_uniform_buffers); ++j)
+        lna_primitive_t* primitive = &primitive_system->primitives.elements[i];
+        for (size_t j = 0; j < primitive->mvp_uniform_buffers.count; ++j)
         {
             vkDestroyBuffer(
                 renderer->device,
-                lna_array_at_ref(&primitive->mvp_uniform_buffers, j),
+                primitive->mvp_uniform_buffers.elements[j],
                 NULL
                 );
         }
-        for (size_t j = 0; j < lna_array_size(&primitive->mvp_uniform_buffers); ++j)
+        for (size_t j = 0; j < primitive->mvp_uniform_buffers.count; ++j)
         {
             vkFreeMemory(
                 renderer->device,
-                lna_array_at_ref(&primitive->mvp_uniform_buffers_memory, j),
+                primitive->mvp_uniform_buffers_memory.elements[j],
                 NULL
                 );
         }
-        lna_array_release(&primitive->mvp_uniform_buffers);
-        lna_array_release(&primitive->mvp_uniform_buffers_memory);
+        primitive->mvp_uniform_buffers.count            = 0;
+        primitive->mvp_uniform_buffers.elements         = NULL;
+        primitive->mvp_uniform_buffers_memory.count     = 0;
+        primitive->mvp_uniform_buffers_memory.elements  = NULL;
         //! NOTE: no need to explicity clean up vulkan descriptor sets objects
         //! because it is done when the vulkan descriptor pool is destroyed.
         //! we just have to reset the array and wait for filling it again.
         //! the memory pool where we reserved memory for descriptor_sets has already
         //! been reset by the vulkan renderer backend.
-        lna_array_release(&primitive->descriptor_sets);
+        primitive->descriptor_sets.count    = 0;
+        primitive->descriptor_sets.elements = NULL;
     }
     vkDestroyDescriptorPool(
         renderer->device,
@@ -476,14 +476,14 @@ static void lna_primitive_system_on_swap_chain_recreate(void *owner)
         renderer
         );
 
-    for (uint32_t i = 0; i < lna_vector_size(&primitive_system->primitives); ++i)
+    for (uint32_t i = 0; i < primitive_system->primitives.cur_element_count; ++i)
     {
         lna_primitive_create_uniform_buffer(
-            lna_vector_at_ptr(&primitive_system->primitives, i),
+            &primitive_system->primitives.elements[i],
             renderer
             );
         lna_primitive_create_descriptor_sets(
-            lna_vector_at_ptr(&primitive_system->primitives, i),
+            &primitive_system->primitives.elements[i],
             primitive_system
             );
     }

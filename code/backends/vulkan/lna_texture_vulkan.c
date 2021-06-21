@@ -281,13 +281,12 @@ void lna_texture_system_init(lna_texture_system_t* texture_system, const lna_tex
     lna_assert(config->memory_pool)
     lna_assert(config->max_texture_count > 0)
 
-    texture_system->renderer = config->renderer;
-
-    lna_vector_init(
-        &texture_system->textures,
+    texture_system->renderer                    = config->renderer;
+    texture_system->textures.cur_element_count  = 0;
+    texture_system->textures.max_element_count  = config->max_texture_count;
+    texture_system->textures.elements           = lna_memory_pool_reserve(
         config->memory_pool,
-        lna_texture_t,
-        config->max_texture_count
+        config->max_texture_count * sizeof(lna_texture_t)
         );
 }
 
@@ -295,8 +294,7 @@ lna_texture_t* lna_texture_system_new_texture(lna_texture_system_t* texture_syst
 {
     lna_assert(texture_system)
 
-    lna_texture_t* texture;
-    lna_vector_new_element(&texture_system->textures, texture);
+    lna_texture_t* texture = &texture_system->textures.elements[texture_system->textures.cur_element_count++];
 
     lna_texture_init(
         texture,
@@ -315,11 +313,13 @@ void lna_texture_system_release(lna_texture_system_t* texture_system)
     for (uint32_t index = 0; index < lna_vector_size(&texture_system->textures); ++index)
     {
         lna_texture_release(
-            lna_vector_at_ptr(&texture_system->textures, index),
+            &texture_system->textures.elements[index],
             texture_system->renderer->device
             );
     }
-    lna_vector_release(&texture_system->textures);
+    texture_system->textures.cur_element_count  = 0;
+    texture_system->textures.max_element_count  = 0;
+    texture_system->textures.elements           = NULL;
     texture_system->renderer = NULL;
 }
 
