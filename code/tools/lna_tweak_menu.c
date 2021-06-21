@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include "tools/lna_tweak_menu.h"
-#include "core/lna_container.h"
 #include "core/lna_memory_pool.h"
 #include "core/lna_assert.h"
 #include "core/lna_string.h"
@@ -205,17 +204,15 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
     lna_assert(config->viewport_size)
     lna_assert(g_tweak_menu == NULL)
 
-    g_tweak_menu = lna_memory_reserve(
+    g_tweak_menu = lna_memory_pool_reserve(
         config->memory_pool,
-        lna_tweak_menu_t,
-        1
+        sizeof(lna_tweak_menu_t)
         );
 
     g_tweak_menu->node_pool.max_node_count  = config->max_node_count == 0 ? LNA_TWEAK_MENU_MAX_NODE_COUNT : config->max_node_count;
-    g_tweak_menu->node_pool.nodes           = lna_memory_reserve(
+    g_tweak_menu->node_pool.nodes           = lna_memory_pool_reserve(
         config->memory_pool,
-        lna_tweak_menu_node_t,
-        g_tweak_menu->node_pool.max_node_count
+        g_tweak_menu->node_pool.max_node_count * sizeof(lna_tweak_menu_node_t)
         );
     for (uint32_t i = 0; i < g_tweak_menu->node_pool.max_node_count; ++i)
     {
@@ -224,9 +221,8 @@ void lna_tweak_menu_init(const lna_tweak_menu_config_t* config)
         g_tweak_menu->node_pool.nodes[i].edit_buffer[0] = '\0';
     }
 
-    g_tweak_menu->navigation.edit_mode  = false;
-
-    //g_tweak_menu->graphics.buffer                   = config->ui_buffer;
+    g_tweak_menu->navigation.edit_mode              = false;
+    
     g_tweak_menu->graphics.font_size                = config->font_size;
     g_tweak_menu->graphics.leading                  = config->leading;
     g_tweak_menu->graphics.spacing                  = config->spacing;

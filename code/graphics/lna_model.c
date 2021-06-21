@@ -1,5 +1,6 @@
 #include <string.h>
 #include "graphics/lna_model.h"
+#include "core/lna_memory_pool.h"
 #include "core/lna_assert.h"
 #include "core/lna_string.h"
 #include "core/lna_file.h"
@@ -37,7 +38,7 @@ void lna_model_init_dev_mode(lna_model_t* model, const lna_model_config_t* confi
     uint32_t normal_count   = 0;
     uint32_t face_count     = 0;
 
-    char* buffer_ptr = obj_file.elements;
+    char* buffer_ptr = obj_file.content;
     while (buffer_ptr && *buffer_ptr != '\0')
     {
         if (lna_string_begins_with(buffer_ptr, "v "))
@@ -69,17 +70,17 @@ void lna_model_init_dev_mode(lna_model_t* model, const lna_model_config_t* confi
     lna_log_message("3d object index count   : %d", index_count);
 
     // TODO: it will be better to use a custom memory pool and empty it at the beginning of a new frame
-    lna_vec3_t*         positions   = position_count > 0    ? lna_memory_reserve(config->temp_lifetime_mem_pool, lna_vec3_t, position_count)    : 0;
-    lna_vec2_t*         uvs         = uv_count > 0          ? lna_memory_reserve(config->temp_lifetime_mem_pool, lna_vec2_t, uv_count)          : 0;
-    lna_vec3_t*         normals     = normal_count > 0      ? lna_memory_reserve(config->temp_lifetime_mem_pool, lna_vec3_t, normal_count)      : 0;
-    lna_model_face_t*   faces       = face_count > 0        ? lna_memory_reserve(config->temp_lifetime_mem_pool, lna_model_face_t, face_count)  : 0;
-    uint32_t*           indices     = face_count > 0        ? lna_memory_reserve(config->temp_lifetime_mem_pool, uint32_t, index_count)         : 0;
+    lna_vec3_t*         positions   = position_count > 0    ? lna_memory_pool_reserve(config->temp_lifetime_mem_pool, sizeof(lna_vec3_t) * position_count)    : 0;
+    lna_vec2_t*         uvs         = uv_count > 0          ? lna_memory_pool_reserve(config->temp_lifetime_mem_pool, sizeof(lna_vec2_t) * uv_count)          : 0;
+    lna_vec3_t*         normals     = normal_count > 0      ? lna_memory_pool_reserve(config->temp_lifetime_mem_pool, sizeof(lna_vec3_t) * normal_count)      : 0;
+    lna_model_face_t*   faces       = face_count > 0        ? lna_memory_pool_reserve(config->temp_lifetime_mem_pool, sizeof(lna_model_face_t) * face_count)  : 0;
+    uint32_t*           indices     = face_count > 0        ? lna_memory_pool_reserve(config->temp_lifetime_mem_pool, sizeof(uint32_t) * index_count)         : 0;
 
     uint32_t position_index = 0;
     uint32_t uv_index       = 0;
     uint32_t normal_index   = 0;
     uint32_t face_index     = 0;
-    buffer_ptr              = obj_file.elements;
+    buffer_ptr              = obj_file.content;
     while (buffer_ptr && *buffer_ptr != '\0')
     {
         if (lna_string_begins_with(buffer_ptr, "v "))
@@ -160,12 +161,9 @@ void lna_model_init_dev_mode(lna_model_t* model, const lna_model_config_t* confi
     }
 
     lna_assert(vertex_count > 0)
-    lna_array_init(
-        &model->vertices,
-        config->object_lifetime_mem_pool,
-        lna_model_vertex_t,
-        vertex_count
-        );
+    model->vertices.count   = vertex_count;
+    model->vertices.data    = lna_memory_pool_reserve(config->object_lifetime_mem_pool, vertex_count * sizeof(lna_model_vertex_t));
+
     uint32_t cur_index_count = 0;
     uint32_t cur_vertex_count = 0;
     for (face_index = 0; face_index < face_count; ++face_index)
@@ -186,21 +184,17 @@ void lna_model_init_dev_mode(lna_model_t* model, const lna_model_config_t* confi
             vertex.color.b      = 1.0f;
             vertex.color.a      = 1.0f;
 
-            lna_array_at_ref(&model->vertices, cur_vertex_count) = vertex;
-            indices[cur_index_count++] = cur_vertex_count++;
+            model->vertices.data[cur_vertex_count]  = vertex;
+            indices[cur_index_count++]              = cur_vertex_count++;
         }
     }
     lna_assert(cur_index_count == index_count)
 
     lna_assert(index_count > 0)
-    lna_array_init(
-        &model->indices,
-        config->object_lifetime_mem_pool,
-        uint32_t,
-        index_count
-        );
+    model->indices.count    = index_count;
+    model->indices.data     = lna_memory_pool_reserve(config->object_lifetime_mem_pool, index_count * sizeof(uint32_t));
     memcpy(
-        model->indices.elements,
+        model->indices.data,
         indices,
         index_count * sizeof(uint32_t)
         );

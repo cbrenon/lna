@@ -21,18 +21,16 @@ void lna_gamepad_system_init(lna_gamepad_system_t* gamepad_system, const lna_gam
     lna_assert(gamepad_system)
     lna_assert(config)
 
-    lna_array_init(
-        &gamepad_system->gamepads,
+    gamepad_system->gamepads.count  = config->max_gamepad_count;
+    gamepad_system->gamepads.states = lna_memory_pool_reserve(
         config->memory_pool,
-        lna_gamepad_t,
-        config->max_gamepad_count
+        config->max_gamepad_count * sizeof(lna_gamepad_t)
         );
-
-    lna_array_init(
-        &gamepad_system->gamepad_devices,
+    
+    gamepad_system->gamepad_devices.count   = config->max_gamepad_count;
+    gamepad_system->gamepad_devices.devices = lna_memory_pool_reserve(
         config->memory_pool,
-        SDL_GameController*,
-        config->max_gamepad_count
+        config->max_gamepad_count * sizeof(SDL_GameController*)
         );
 }
 
@@ -41,11 +39,11 @@ lna_gamepad_t* lna_gamepad_system_new_gamepad(lna_gamepad_system_t* gamepad_syst
     lna_assert(gamepad_system)
     lna_assert(config)
     lna_assert(config->device_index < lna_gamepad_device_count())
-    lna_assert(config->device_index < lna_array_size(&gamepad_system->gamepads))
-    lna_assert(config->device_index < lna_array_size(&gamepad_system->gamepad_devices))
-    lna_assert(lna_array_at_ref(&gamepad_system->gamepad_devices, config->device_index) == NULL)
+    lna_assert(config->device_index < gamepad_system->gamepads.count)
+    lna_assert(config->device_index < gamepad_system->gamepad_devices.count)
+    lna_assert(gamepad_system->gamepad_devices.devices[config->device_index] == NULL)
     
-    lna_gamepad_t*  gamepad         = lna_array_at_ptr(&gamepad_system->gamepads, config->device_index);
+    lna_gamepad_t*  gamepad         = &gamepad_system->gamepads.states[config->device_index];
     int             joystick_count  = SDL_NumJoysticks();
     uint32_t        gamepad_count   = 0;
     for (int i = 0; i < joystick_count; ++i)
@@ -55,10 +53,10 @@ lna_gamepad_t* lna_gamepad_system_new_gamepad(lna_gamepad_system_t* gamepad_syst
             && gamepad_count == config->device_index
             )
         {
-            gamepad->left_stick_dead_zone = config->left_stick_dead_zone;
-            gamepad->left_stick_max_value = config->left_stick_max_value;
-            lna_array_at_ref(&gamepad_system->gamepad_devices, config->device_index) = SDL_GameControllerOpen(i);
-            gamepad->device_state = lna_array_at_ref(&gamepad_system->gamepad_devices, config->device_index) != NULL ? LNA_GAMEPAD_DEVICE_STATE_OPENED : LNA_GAMEPAD_DEVICE_STATE_CLOSED;
+            gamepad->left_stick_dead_zone                                   = config->left_stick_dead_zone;
+            gamepad->left_stick_max_value                                   = config->left_stick_max_value;
+            gamepad_system->gamepad_devices.devices[config->device_index]   = SDL_GameControllerOpen(i);
+            gamepad->device_state                                           = gamepad_system->gamepad_devices.devices[config->device_index] != NULL ? LNA_GAMEPAD_DEVICE_STATE_OPENED : LNA_GAMEPAD_DEVICE_STATE_CLOSED;
             break;
         }
         ++gamepad_count;
@@ -69,12 +67,12 @@ lna_gamepad_t* lna_gamepad_system_new_gamepad(lna_gamepad_system_t* gamepad_syst
 void lna_gamepad_system_update(lna_gamepad_system_t* gamepad_system)
 {
     lna_assert(gamepad_system)
-    lna_assert(lna_array_size(&gamepad_system->gamepads) == lna_array_size(&gamepad_system->gamepad_devices))
+    lna_assert(gamepad_system->gamepads.count == gamepad_system->gamepad_devices.count)
 
-    for (uint32_t i = 0; i < lna_array_size(&gamepad_system->gamepad_devices); ++i)
+    for (uint32_t i = 0; i < gamepad_system->gamepad_devices.count; ++i)
     {
-        SDL_GameController* device  = lna_array_at_ref(&gamepad_system->gamepad_devices, i);
-        lna_gamepad_t*      gamepad = lna_array_at_ptr(&gamepad_system->gamepads, i);
+        SDL_GameController* device  = gamepad_system->gamepad_devices.devices[i];
+        lna_gamepad_t*      gamepad = &gamepad_system->gamepads.states[i];
         if(gamepad->device_state == LNA_GAMEPAD_DEVICE_STATE_OPENED)
         {
             if (device == NULL)
@@ -126,12 +124,12 @@ void lna_gamepad_system_update(lna_gamepad_system_t* gamepad_system)
 void lna_gamepad_system_release(lna_gamepad_system_t* gamepad_system)
 {
     lna_assert(gamepad_system)
-    lna_assert(lna_array_size(&gamepad_system->gamepads) == lna_array_size(&gamepad_system->gamepad_devices))
+    lna_assert(gamepad_system->gamepads.count == gamepad_system->gamepad_devices.count)
 
-    for (uint32_t i = 0; i < lna_array_size(&gamepad_system->gamepad_devices); ++i)
+    for (uint32_t i = 0; i < gamepad_system->gamepad_devices.count; ++i)
     {
-        SDL_GameController* device = lna_array_at_ref(&gamepad_system->gamepad_devices, i);
-        lna_gamepad_t*      gamepad = lna_array_at_ptr(&gamepad_system->gamepads, i);
+        SDL_GameController* device  = gamepad_system->gamepad_devices.devices[i];
+        lna_gamepad_t*      gamepad = &gamepad_system->gamepads.states[i];
         if (device)
         {
             SDL_GameControllerClose(device);

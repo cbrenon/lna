@@ -5,20 +5,28 @@
 #include "maths/lna_vec2.h"
 #include "maths/lna_vec3.h"
 #include "maths/lna_vec4.h"
-#include "core/lna_container.h"
 
 typedef struct lna_memory_pool_s lna_memory_pool_t;
 
 typedef struct lna_model_vertex_s
 {
-    lna_vec3_t  position;
-    lna_vec4_t  color;
-    lna_vec2_t  uv;
-    lna_vec3_t  normal;
+    lna_vec3_t                      position;
+    lna_vec4_t                      color;
+    lna_vec2_t                      uv;
+    lna_vec3_t                      normal;
 } lna_model_vertex_t;
 
-lna_array_def(lna_model_vertex_t)   lna_model_vertex_array_t;
-lna_array_def(uint32_t)             lna_model_index_array_t;
+typedef struct lna_model_vertex_array_s
+{
+    lna_model_vertex_t*             data;
+    uint32_t                        count;
+} lna_model_vertex_array_t;
+
+typedef struct lna_model_index_array_s
+{
+    uint32_t*                       data;
+    uint32_t                        count;
+} lna_model_index_array_t;
 
 typedef struct lna_model_s
 {

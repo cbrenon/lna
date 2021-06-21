@@ -60,12 +60,8 @@ void lna_binary_file_debug_load_uint32(lna_binary_file_content_uint32_t* file_co
         long file_length = ftell(fp);
         lna_assert(file_length != -1)
 
-        lna_array_init(
-            file_content,
-            memory_pool,
-            uint32_t,
-            (uint32_t)file_length
-            );
+        file_content->size      = (size_t)file_length;
+        file_content->content   = lna_memory_pool_reserve(memory_pool, file_content->size * sizeof(uint32_t));
 
         if (fseek(fp, 0L, SEEK_SET) != 0)
         {
@@ -73,9 +69,9 @@ void lna_binary_file_debug_load_uint32(lna_binary_file_content_uint32_t* file_co
         }
 
         fread(
-            lna_array_ptr(file_content),
+            file_content->content,
             sizeof(uint32_t),
-            lna_array_size(file_content),
+            file_content->size,
             fp
             );
         lna_assert(ferror(fp) == 0)
