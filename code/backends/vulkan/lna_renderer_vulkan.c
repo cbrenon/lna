@@ -1586,3 +1586,23 @@ void lna_renderer_release(lna_renderer_t* renderer)
         NULL
         );
 }
+
+void lna_renderer_register_listener(
+    lna_renderer_t* renderer,
+    lna_vulkan_on_swap_chain_cleanup_t on_cleanup,
+    lna_vulkan_on_swap_chain_recreate_t on_recreate,
+    void* handle
+    )
+{
+    lna_assert(renderer)
+    lna_assert(renderer->listeners.elements)
+    lna_assert(renderer->listeners.cur_element_count < renderer->listeners.max_element_count)
+    lna_assert(on_cleanup)
+    lna_assert(on_recreate)
+    lna_assert(handle)
+
+    lna_renderer_listener_t* listener = &renderer->listeners.elements[renderer->listeners.cur_element_count++];
+    listener->on_cleanup    = on_cleanup;
+    listener->on_recreate   = on_recreate;
+    listener->handle        = handle;
+}

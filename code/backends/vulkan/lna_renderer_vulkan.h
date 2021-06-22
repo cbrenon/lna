@@ -2,6 +2,7 @@
 #define LNA_BACKENDS_VULKAN_LNA_RENDERER_VULKAN_H
 
 #include <vulkan/vulkan.h>
+#include "core/lna_memory_pool.h"
 
 #define LNA_VULKAN_MAX_FRAMES_IN_FLIGHT 2
 
@@ -78,9 +79,17 @@ typedef struct lna_renderer_listener_s
 
 typedef struct lna_renderer_listener_vec_s
 {
-    lna_renderer_listener_t*    elements;
-    uint32_t                    count;
+    uint32_t                                cur_element_count;
+    uint32_t                                max_element_count;
+    lna_renderer_listener_t*                elements;
 } lna_renderer_listener_vec_t;
+
+extern void lna_renderer_register_listener(
+    lna_renderer_t* renderer,
+    lna_vulkan_on_swap_chain_cleanup_t on_cleanup,
+    lna_vulkan_on_swap_chain_recreate_t on_recreate,
+    void* handle
+    );
 
 typedef struct lna_renderer_s
 {

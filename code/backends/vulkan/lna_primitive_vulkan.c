@@ -40,13 +40,13 @@ static void lna_primitive_system_create_graphics_pipeline(
     // -------------------------------------------------------------------------
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         renderer->device,
-        lna_array_ptr(&vertex_shader_file),
-        lna_array_size(&vertex_shader_file)
+        vertex_shader_file.content,
+        vertex_shader_file.size
         );
     VkShaderModule fragment_shader_module = lna_vulkan_create_shader_module(
         renderer->device,
-        lna_array_ptr(&fragment_shader_file),
-        lna_array_size(&fragment_shader_file)
+        fragment_shader_file.content,
+        fragment_shader_file.size
         );
     const VkPipelineShaderStageCreateInfo shader_stage_create_infos[] =
     {
@@ -66,48 +66,48 @@ static void lna_primitive_system_create_graphics_pipeline(
     const VkVertexInputAttributeDescription vertex_input_attribute_descriptions[] =
     {
         {
-            .binding = 0,
-            .location = 0,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(lna_primitive_vertex_t, position),
+            .binding    = 0,
+            .location   = 0,
+            .format     = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset     = offsetof(lna_primitive_vertex_t, position),
         },
         {
-            .binding = 0,
-            .location = 1,
-            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(lna_primitive_vertex_t, color),
+            .binding    = 0,
+            .location   = 1,
+            .format     = VK_FORMAT_R32G32B32A32_SFLOAT,
+            .offset     = offsetof(lna_primitive_vertex_t, color),
         },
     };
     const VkVertexInputBindingDescription vertex_input_binding_description[] =
     {
         {
-            .binding = 0,
-            .stride = sizeof(lna_primitive_vertex_t),
-            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+            .binding    = 0,
+            .stride     = sizeof(lna_primitive_vertex_t),
+            .inputRate  = VK_VERTEX_INPUT_RATE_VERTEX,
         },
     };
     const VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexBindingDescriptionCount = (uint32_t)(sizeof(vertex_input_binding_description) / sizeof(vertex_input_binding_description[0])),
-        .pVertexBindingDescriptions = vertex_input_binding_description,
-        .vertexAttributeDescriptionCount = (uint32_t)(sizeof(vertex_input_attribute_descriptions) / sizeof(vertex_input_attribute_descriptions[0])),
-        .pVertexAttributeDescriptions = vertex_input_attribute_descriptions,
+        .sType                              = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount      = (uint32_t)(sizeof(vertex_input_binding_description) / sizeof(vertex_input_binding_description[0])),
+        .pVertexBindingDescriptions         = vertex_input_binding_description,
+        .vertexAttributeDescriptionCount    = (uint32_t)(sizeof(vertex_input_attribute_descriptions) / sizeof(vertex_input_attribute_descriptions[0])),
+        .pVertexAttributeDescriptions       = vertex_input_attribute_descriptions,
     };
     const VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = primitive_system->fill_shapes ? VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST : VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology               = primitive_system->fill_shapes ? VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST : VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
     const VkViewport viewport =
     {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = (float)(renderer->swap_chain_extent.width),
-        .height = (float)(renderer->swap_chain_extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
+        .x          = 0.0f,
+        .y          = 0.0f,
+        .width      = (float)(renderer->swap_chain_extent.width),
+        .height     = (float)(renderer->swap_chain_extent.height),
+        .minDepth   = 0.0f,
+        .maxDepth   = 1.0f,
     };
     const VkRect2D scissor =
     {
@@ -116,58 +116,58 @@ static void lna_primitive_system_create_graphics_pipeline(
     };
     const VkPipelineViewportStateCreateInfo viewport_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .viewportCount = 1,
-        .pViewports = &viewport,
-        .scissorCount = 1,
-        .pScissors = &scissor,
+        .sType          = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount  = 1,
+        .pViewports     = &viewport,
+        .scissorCount   = 1,
+        .pScissors      = &scissor,
     };
     const VkPipelineRasterizationStateCreateInfo rasterization_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .depthClampEnable = VK_FALSE,
-        .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = primitive_system->fill_shapes ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE,
-        .lineWidth = 2.0f,
-        .cullMode = VK_CULL_MODE_NONE,
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        .depthBiasEnable = VK_FALSE,
-        .depthBiasConstantFactor = 0.0f,
-        .depthBiasClamp = 0.0f,
-        .depthBiasSlopeFactor = 0.0f,
+        .sType                      = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .depthClampEnable           = VK_FALSE,
+        .rasterizerDiscardEnable    = VK_FALSE,
+        .polygonMode                = primitive_system->fill_shapes ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE,
+        .lineWidth                  = 2.0f,
+        .cullMode                   = VK_CULL_MODE_NONE,
+        .frontFace                  = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .depthBiasEnable            = VK_FALSE,
+        .depthBiasConstantFactor    = 0.0f,
+        .depthBiasClamp             = 0.0f,
+        .depthBiasSlopeFactor       = 0.0f,
     };
     const VkPipelineMultisampleStateCreateInfo multisample_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .sampleShadingEnable = VK_FALSE,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        .minSampleShading = 1.0f,
-        .pSampleMask = NULL,
-        .alphaToCoverageEnable = VK_FALSE,
-        .alphaToOneEnable = VK_FALSE,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .sampleShadingEnable    = VK_FALSE,
+        .rasterizationSamples   = VK_SAMPLE_COUNT_1_BIT,
+        .minSampleShading       = 1.0f,
+        .pSampleMask            = NULL,
+        .alphaToCoverageEnable  = VK_FALSE,
+        .alphaToOneEnable       = VK_FALSE,
     };
     const VkPipelineColorBlendAttachmentState color_blend_attachment_state =
     {
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-        .blendEnable = VK_FALSE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
+        .colorWriteMask         = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+        .blendEnable            = VK_FALSE,
+        .srcColorBlendFactor    = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor    = VK_BLEND_FACTOR_ZERO,
+        .colorBlendOp           = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp           = VK_BLEND_OP_ADD,
     };
     const VkPipelineColorBlendStateCreateInfo color_blender_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .logicOpEnable = VK_FALSE,
-        .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = 1,
-        .pAttachments = &color_blend_attachment_state,
-        .blendConstants[0] = 0.0f,
-        .blendConstants[1] = 0.0f,
-        .blendConstants[2] = 0.0f,
-        .blendConstants[3] = 0.0f,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable      = VK_FALSE,
+        .logicOp            = VK_LOGIC_OP_COPY,
+        .attachmentCount    = 1,
+        .pAttachments       = &color_blend_attachment_state,
+        .blendConstants[0]  = 0.0f,
+        .blendConstants[1]  = 0.0f,
+        .blendConstants[2]  = 0.0f,
+        .blendConstants[3]  = 0.0f,
     };
     const VkDynamicState dynamic_states[] =
     {
@@ -176,17 +176,17 @@ static void lna_primitive_system_create_graphics_pipeline(
     };
     const VkPipelineDynamicStateCreateInfo dynamic_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = 2,
-        .pDynamicStates = dynamic_states,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount  = 2,
+        .pDynamicStates     = dynamic_states,
     };
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &primitive_system->descriptor_set_layout,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount         = 1,
+        .pSetLayouts            = &primitive_system->descriptor_set_layout,
         .pushConstantRangeCount = 0,
-        .pPushConstantRanges = NULL,
+        .pPushConstantRanges    = NULL,
     };
     VULKAN_CHECK_RESULT(
         vkCreatePipelineLayout(
@@ -198,36 +198,36 @@ static void lna_primitive_system_create_graphics_pipeline(
         )
     const VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .depthTestEnable = VK_TRUE,
-        .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS,
-        .depthBoundsTestEnable = VK_FALSE,
-        .minDepthBounds = 0.0f,
-        .maxDepthBounds = 1.0f,
-        .stencilTestEnable = VK_FALSE,
-        .front = { 0 },
-        .back = { 0 },
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable        = VK_TRUE,
+        .depthWriteEnable       = VK_TRUE,
+        .depthCompareOp         = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable  = VK_FALSE,
+        .minDepthBounds         = 0.0f,
+        .maxDepthBounds         = 1.0f,
+        .stencilTestEnable      = VK_FALSE,
+        .front                  = { 0 },
+        .back                   = { 0 },
 
     };
     const VkGraphicsPipelineCreateInfo graphics_pipeline_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .stageCount = 2,
-        .pStages = shader_stage_create_infos,
-        .pVertexInputState = &vertex_input_state_create_info,
-        .pInputAssemblyState = &input_assembly_state_create_info,
-        .pViewportState = &viewport_state_create_info,
-        .pRasterizationState = &rasterization_state_create_info,
-        .pMultisampleState = &multisample_state_create_info,
-        .pDepthStencilState = &depth_stencil_state_create_info,
-        .pColorBlendState = &color_blender_state_create_info,
-        .pDynamicState = &dynamic_state_create_info,
-        .layout = primitive_system->pipeline_layout,
-        .renderPass = renderer->render_pass,
-        .subpass = 0,
-        .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = -1,
+        .sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .stageCount             = 2,
+        .pStages                = shader_stage_create_infos,
+        .pVertexInputState      = &vertex_input_state_create_info,
+        .pInputAssemblyState    = &input_assembly_state_create_info,
+        .pViewportState         = &viewport_state_create_info,
+        .pRasterizationState    = &rasterization_state_create_info,
+        .pMultisampleState      = &multisample_state_create_info,
+        .pDepthStencilState     = &depth_stencil_state_create_info,
+        .pColorBlendState       = &color_blender_state_create_info,
+        .pDynamicState          = &dynamic_state_create_info,
+        .layout                 = primitive_system->pipeline_layout,
+        .renderPass             = renderer->render_pass,
+        .subpass                = 0,
+        .basePipelineHandle     = VK_NULL_HANDLE,
+        .basePipelineIndex      = -1,
     };
     VULKAN_CHECK_RESULT(
         vkCreateGraphicsPipelines(
@@ -240,8 +240,16 @@ static void lna_primitive_system_create_graphics_pipeline(
             )
         )
 
-    vkDestroyShaderModule(renderer->device, fragment_shader_module, NULL);
-    vkDestroyShaderModule(renderer->device, vertex_shader_module, NULL);
+    vkDestroyShaderModule(
+        renderer->device,
+        fragment_shader_module,
+        NULL
+        );
+    vkDestroyShaderModule(
+        renderer->device,
+        vertex_shader_module,
+        NULL
+        );
 }
 
 static void lna_primitive_system_create_descriptor_pool(
@@ -250,22 +258,24 @@ static void lna_primitive_system_create_descriptor_pool(
     )
 {
     lna_assert(primitive_system)
-    lna_assert(renderer)
+    lna_assert(primitive_system->primitives.max_element_count > 0);
+    lna_assert(renderer);
+    lna_assert(renderer->swap_chain_images.count > 0);
 
     const VkDescriptorPoolSize pool_sizes[] =
     {
         {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&primitive_system->primitives),
+            .type               = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount    = renderer->swap_chain_images.count * primitive_system->primitives.max_element_count,
         },
     };
 
     const VkDescriptorPoolCreateInfo pool_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = (uint32_t)(sizeof(pool_sizes) / sizeof(pool_sizes[0])),
-        .pPoolSizes = pool_sizes,
-        .maxSets = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&primitive_system->primitives),
+        .sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .poolSizeCount  = (uint32_t)(sizeof(pool_sizes) / sizeof(pool_sizes[0])),
+        .pPoolSizes     = pool_sizes,
+        .maxSets        = renderer->swap_chain_images.count * primitive_system->primitives.max_element_count,
     };
 
     VULKAN_CHECK_RESULT(
@@ -295,8 +305,10 @@ static void lna_primitive_create_uniform_buffer(
     )
 {
     lna_assert(primitive)
-    lna_assert(lna_array_size(&primitive->mvp_uniform_buffers) == 0)
-    lna_assert(lna_array_size(&primitive->mvp_uniform_buffers_memory) == 0)
+    lna_assert(primitive->mvp_uniform_buffers.count == 0)
+    lna_assert(primitive->mvp_uniform_buffers.elements == NULL)
+    lna_assert(primitive->mvp_uniform_buffers_memory.count == 0)
+    lna_assert(primitive->mvp_uniform_buffers_memory.elements == NULL)
 
     primitive->mvp_uniform_buffers.count    = renderer->swap_chain_images.count;
     primitive->mvp_uniform_buffers.elements = lna_memory_pool_reserve(
@@ -332,7 +344,8 @@ static void lna_primitive_create_descriptor_sets(
 {
     lna_assert(primitive)
     lna_assert(primitive_system)
-    lna_assert(lna_array_size(&primitive->descriptor_sets) == 0)
+    lna_assert(primitive->descriptor_sets.count == 0)
+    lna_assert(primitive->descriptor_sets.elements == NULL)
 
     lna_renderer_t* renderer = primitive_system->renderer;
     lna_assert(renderer)
@@ -407,8 +420,10 @@ static void lna_primitive_create_descriptor_sets(
 static void lna_primitive_system_on_swap_chain_cleanup(void* owner)
 {
     lna_assert(owner)
-    lna_primitive_system_t* primitive_system = (lna_primitive_system_t*)owner;
-    lna_renderer_t* renderer = primitive_system->renderer;
+
+    lna_primitive_system_t* primitive_system    = (lna_primitive_system_t*)owner;
+    lna_renderer_t*         renderer            = primitive_system->renderer;
+    lna_assert(primitive_system->primitives.elements)
     lna_assert(renderer)
 
     vkDestroyPipeline(
@@ -463,8 +478,10 @@ static void lna_primitive_system_on_swap_chain_cleanup(void* owner)
 static void lna_primitive_system_on_swap_chain_recreate(void *owner)
 {
     lna_assert(owner)
-    lna_primitive_system_t* primitive_system = (lna_primitive_system_t*)owner;
-    lna_renderer_t* renderer = primitive_system->renderer;
+
+    lna_primitive_system_t* primitive_system    = (lna_primitive_system_t*)owner;
+    lna_renderer_t*         renderer            = primitive_system->renderer;
+    lna_assert(primitive_system->primitives.elements)
     lna_assert(renderer)
 
     lna_primitive_system_create_graphics_pipeline(
@@ -493,7 +510,9 @@ void lna_primitive_system_init(lna_primitive_system_t* primitive_system, const l
 {
     lna_assert(primitive_system)
     lna_assert(primitive_system->renderer == NULL)
-    lna_assert(lna_vector_max_capacity(&primitive_system->primitives) == 0)
+    lna_assert(primitive_system->primitives.cur_element_count == 0)
+    lna_assert(primitive_system->primitives.max_element_count == 0)
+    lna_assert(primitive_system->primitives.elements == NULL)
     lna_assert(primitive_system->descriptor_pool == VK_NULL_HANDLE)
     lna_assert(primitive_system->descriptor_set_layout == VK_NULL_HANDLE)
     lna_assert(primitive_system->pipeline == VK_NULL_HANDLE)
@@ -503,23 +522,20 @@ void lna_primitive_system_init(lna_primitive_system_t* primitive_system, const l
     lna_assert(config->renderer->device)
     lna_assert(config->renderer->render_pass)
 
-    primitive_system->renderer = config->renderer;
-    primitive_system->fill_shapes = config->fill_shapes;
+    primitive_system->renderer      = config->renderer;
+    primitive_system->fill_shapes   = config->fill_shapes;
 
-    lna_renderer_listener_t* listener = NULL;
-    lna_vector_new_element(
-        &config->renderer->listeners,
-        listener
+    lna_renderer_register_listener(
+        config->renderer,
+        lna_primitive_system_on_swap_chain_cleanup,
+        lna_primitive_system_on_swap_chain_recreate,
+        (void*)primitive_system
         );
-    listener->handle        = (void*)primitive_system;
-    listener->on_cleanup    = lna_primitive_system_on_swap_chain_cleanup;
-    listener->on_recreate   = lna_primitive_system_on_swap_chain_recreate;
 
-    lna_vector_init(
-        &primitive_system->primitives,
+    primitive_system->primitives.max_element_count  = 0;
+    primitive_system->primitives.elements           = lna_memory_pool_reserve(
         config->memory_pool,
-        lna_primitive_t,
-        config->max_primitive_count
+        sizeof(lna_primitive_t) * config->max_primitive_count
         );
 
     //! DESCRIPTOR SET LAYOUT
@@ -527,18 +543,18 @@ void lna_primitive_system_init(lna_primitive_system_t* primitive_system, const l
     const VkDescriptorSetLayoutBinding bindings[] =
     {
         {
-            .binding = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .binding            = 0,
+            .descriptorCount    = 1,
+            .descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .stageFlags         = VK_SHADER_STAGE_VERTEX_BIT,
             .pImmutableSamplers = NULL,
         },
     };
     const VkDescriptorSetLayoutCreateInfo layout_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = (uint32_t)(sizeof(bindings) / sizeof(bindings[0])),
-        .pBindings = bindings,
+        .sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount   = (uint32_t)(sizeof(bindings) / sizeof(bindings[0])),
+        .pBindings      = bindings,
     };
     VULKAN_CHECK_RESULT(
         vkCreateDescriptorSetLayout(
@@ -570,8 +586,10 @@ void lna_primitive_system_draw(lna_primitive_system_t* primitive_system)
 
     lna_renderer_t* renderer = primitive_system->renderer;
     lna_assert(renderer)
+    lna_assert(renderer->command_buffers.elements)
+    lna_assert(renderer->command_buffers.count > renderer->image_index)
 
-    VkCommandBuffer command_buffer = lna_array_at_ref(&primitive_system->renderer->command_buffers, primitive_system->renderer->image_index);
+    VkCommandBuffer command_buffer = renderer->command_buffers.elements[renderer->image_index];
 
     vkCmdSetLineWidth(
         command_buffer,
@@ -583,25 +601,29 @@ void lna_primitive_system_draw(lna_primitive_system_t* primitive_system)
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         primitive_system->pipeline
         );
-    for (uint32_t i = 0; i < lna_vector_size(&primitive_system->primitives); ++i)
+    for (uint32_t i = 0; i < primitive_system->primitives.cur_element_count; ++i)
     {
-        lna_primitive_t* primitive = lna_vector_at_ptr(&primitive_system->primitives, i);
+        lna_primitive_t* primitive = &primitive_system->primitives.elements[i];
 
         lna_assert(primitive->model_matrix)
         lna_assert(primitive->view_matrix)
         lna_assert(primitive->projection_matrix)
+        lna_assert(primitive->mvp_uniform_buffers.count > renderer->image_index)
+        lna_assert(primitive->mvp_uniform_buffers.elements)
+        lna_assert(primitive->descriptor_sets.count > renderer->image_index)
+        lna_assert(primitive->descriptor_sets.elements)
 
         const lna_primitive_uniform_t ubo =
         {
-            .model = *primitive->model_matrix,
-            .view = *primitive->view_matrix,
+            .model      = *primitive->model_matrix,
+            .view       = *primitive->view_matrix,
             .projection = *primitive->projection_matrix,
         };
         void *data;
         VULKAN_CHECK_RESULT(
             vkMapMemory(
                 renderer->device,
-                lna_array_at_ref(&primitive->mvp_uniform_buffers_memory, renderer->image_index),
+                primitive->mvp_uniform_buffers_memory.elements[renderer->image_index],
                 0,
                 sizeof(ubo),
                 0,
@@ -614,7 +636,7 @@ void lna_primitive_system_draw(lna_primitive_system_t* primitive_system)
             sizeof(ubo));
         vkUnmapMemory(
             renderer->device,
-            lna_array_at_ref(&primitive->mvp_uniform_buffers_memory, renderer->image_index)
+            primitive->mvp_uniform_buffers_memory.elements[renderer->image_index]
             );
 
         vkCmdBindDescriptorSets(
@@ -623,7 +645,7 @@ void lna_primitive_system_draw(lna_primitive_system_t* primitive_system)
             primitive_system->pipeline_layout,
             0,
             1,
-            lna_array_at_ptr(&primitive->descriptor_sets, renderer->image_index),
+            primitive->descriptor_sets.elements[renderer->image_index],
             0,
             NULL
             );
@@ -660,6 +682,7 @@ void lna_primitive_system_release(lna_primitive_system_t* primitive_system)
 {
     lna_assert(primitive_system)
     lna_assert(primitive_system->renderer)
+    lna_assert(primitive_system->primitives.elements)
     lna_assert(primitive_system->renderer->device)
 
     vkDestroyDescriptorSetLayout(
@@ -667,9 +690,9 @@ void lna_primitive_system_release(lna_primitive_system_t* primitive_system)
         primitive_system->descriptor_set_layout,
         NULL
         );
-    for (uint32_t i = 0; i < lna_vector_size(&primitive_system->primitives); ++i)
+    for (uint32_t i = 0; i < primitive_system->primitives.cur_element_count; ++i)
     {
-        lna_primitive_t* primitive = lna_vector_at_ptr(&primitive_system->primitives, i);
+        lna_primitive_t* primitive = &primitive_system->primitives.elements[i];
 
         vkDestroyBuffer(
             primitive_system->renderer->device,
@@ -697,19 +720,20 @@ void lna_primitive_system_release(lna_primitive_system_t* primitive_system)
 lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_system, const lna_primitive_raw_config_t* config)
 {
     lna_assert(primitive_system)
+    lna_assert(primitive_system->primitives.elements)
+    lna_assert(primitive_system->primitives.cur_element_count < primitive_system->primitives.max_element_count)
     lna_assert(config)
 
-    lna_primitive_t* primitive = NULL;
-    lna_vector_new_element(&primitive_system->primitives, primitive);
+    lna_primitive_t* primitive = &primitive_system->primitives.elements[primitive_system->primitives.cur_element_count++];
 
     lna_assert(primitive)
     lna_assert(primitive->vertex_buffer == VK_NULL_HANDLE)
     lna_assert(primitive->vertex_buffer_memory == VK_NULL_HANDLE)
     lna_assert(primitive->index_buffer == VK_NULL_HANDLE)
     lna_assert(primitive->index_buffer_memory == VK_NULL_HANDLE)
-    lna_assert(lna_array_is_empty(&primitive->mvp_uniform_buffers))
-    lna_assert(lna_array_is_empty(&primitive->mvp_uniform_buffers_memory))
-    lna_assert(lna_array_is_empty(&primitive->descriptor_sets))
+    lna_assert(primitive->mvp_uniform_buffers.elements == NULL)
+    lna_assert(primitive->mvp_uniform_buffers_memory.elements == NULL)
+    lna_assert(primitive->descriptor_sets.elements == NULL)
     lna_assert(primitive->model_matrix == NULL)
     lna_assert(primitive->view_matrix == NULL)
     lna_assert(primitive->projection_matrix == NULL)
@@ -882,7 +906,7 @@ lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_
 lna_primitive_t* lna_primitive_system_new_line(lna_primitive_system_t* primitive_system, const lna_primitive_line_config_t* config)
 {
     lna_assert(primitive_system)
-    lna_assert(!primitive_system->fill_shapes) //! cannot draw arrow in fill shape mode
+    lna_assert(!primitive_system->fill_shapes) // TODO: check if we can draw line in fill shapes mode
     lna_assert(config)
     lna_assert(config->pos_a)
     lna_assert(config->pos_b)
@@ -892,12 +916,12 @@ lna_primitive_t* lna_primitive_system_new_line(lna_primitive_system_t* primitive
     const lna_primitive_vertex_t vertices[] =
     {
         {
-            .position = *config->pos_a,
-            .color = *config->col_a,
+            .position   = *config->pos_a,
+            .color      = *config->col_a,
         },
         {
-            .position = *config->pos_b,
-            .color = *config->col_b,
+            .position   = *config->pos_b,
+            .color      = *config->col_b,
         },
     };
     const uint32_t indices[] = { 0, 1 };
@@ -905,13 +929,13 @@ lna_primitive_t* lna_primitive_system_new_line(lna_primitive_system_t* primitive
         primitive_system,
         &(lna_primitive_raw_config_t)
         {
-            .vertices = vertices,
-            .indices = indices,
-            .vertex_count = 2,
-            .index_count = 2,
-            .model_matrix = config->model_matrix,
-            .view_matrix = config->view_matrix,
-            .projection_matrix = config->projection_matrix,
+            .vertices           = vertices,
+            .indices            = indices,
+            .vertex_count       = 2,
+            .index_count        = 2,
+            .model_matrix       = config->model_matrix,
+            .view_matrix        = config->view_matrix,
+            .projection_matrix  = config->projection_matrix,
         }
         );
 }
@@ -926,20 +950,40 @@ lna_primitive_t* lna_primitive_system_new_rect_xy(lna_primitive_system_t* primit
     const lna_primitive_vertex_t vertices[] =
     {
         {
-            .position = { config->position->x, config->position->y, config->position->z },
-            .color = *config->color,
+            .position   =
+            {
+                config->position->x,
+                config->position->y,
+                config->position->z
+            },
+            .color      = *config->color,
         },
         {
-            .position = { config->position->x, config->position->y + config->size->height, config->position->z },
-            .color = *config->color,
+            .position   =
+            {
+                config->position->x,
+                config->position->y + config->size->height,
+                config->position->z
+            },
+            .color      = *config->color,
         },
         {
-            .position = { config->position->x + config->size->width, config->position->y + config->size->height, config->position->z },
-            .color = *config->color,
+            .position   =
+            {
+                config->position->x + config->size->width,
+                config->position->y + config->size->height,
+                config->position->z
+            },
+            .color      = *config->color,
         },
         {
-            .position = { config->position->x + config->size->width, config->position->y, config->position->z },
-            .color = *config->color,
+            .position   =
+            {
+                config->position->x + config->size->width,
+                config->position->y,
+                config->position->z
+            },
+            .color      = *config->color,
         },
     };
 
@@ -947,13 +991,13 @@ lna_primitive_t* lna_primitive_system_new_rect_xy(lna_primitive_system_t* primit
         primitive_system,
         &(lna_primitive_raw_config_t)
         {
-            .vertices = vertices,
-            .indices = primitive_system->fill_shapes ? (uint32_t[]){ 0, 1, 2, 2, 3, 0 } : (uint32_t[]){ 0, 1, 1, 2, 2, 3, 3, 0 },
-            .vertex_count = 4,
-            .index_count = primitive_system->fill_shapes ? 6 : 8,
-            .model_matrix = config->model_matrix,
-            .view_matrix = config->view_matrix,
-            .projection_matrix = config->projection_matrix,
+            .vertices           = vertices,
+            .indices            = primitive_system->fill_shapes ? (uint32_t[]){ 0, 1, 2, 2, 3, 0 } : (uint32_t[]){ 0, 1, 1, 2, 2, 3, 3, 0 },
+            .vertex_count       = 4,
+            .index_count        = primitive_system->fill_shapes ? 6 : 8,
+            .model_matrix       = config->model_matrix,
+            .view_matrix        = config->view_matrix,
+            .projection_matrix  = config->projection_matrix,
         }
         );
 }
@@ -991,8 +1035,8 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
         uint32_t index = 0;
         for (uint32_t i = 0; i < LNA_PRIMITIVE_CIRCLE_INDEX_COUNT; i += 2)
         {
-            indices[i] = index;
-            indices[i+1] = index + 1;
+            indices[i]      = index;
+            indices[i+1]    = index + 1;
             ++index;
         }
         indices[LNA_PRIMITIVE_CIRCLE_INDEX_COUNT-1] = 0;
@@ -1001,13 +1045,13 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
             primitive_system,
             &(lna_primitive_raw_config_t)
             {
-                .vertices = vertices,
-                .indices = indices,
-                .vertex_count = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT,
-                .index_count = LNA_PRIMITIVE_CIRCLE_INDEX_COUNT,
-                .model_matrix = config->model_matrix,
-                .view_matrix = config->view_matrix,
-                .projection_matrix = config->projection_matrix,
+                .vertices           = vertices,
+                .indices            = indices,
+                .vertex_count       = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT,
+                .index_count        = LNA_PRIMITIVE_CIRCLE_INDEX_COUNT,
+                .model_matrix       = config->model_matrix,
+                .view_matrix        = config->view_matrix,
+                .projection_matrix  = config->projection_matrix,
             }
             );
     }
@@ -1038,9 +1082,9 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
         uint32_t index = 0;
         for (uint32_t i = 0; i < LNA_PRIMITIVE_FILL_CIRCLE_INDEX_COUNT; i += 3)
         {
-            indices[i] = index;
-            indices[i+1] = index + 1;
-            indices[i+2] = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT;
+            indices[i]      = index;
+            indices[i+1]    = index + 1;
+            indices[i+2]    = LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT;
             ++index;
         }
 
@@ -1048,13 +1092,13 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
             primitive_system,
             &(lna_primitive_raw_config_t)
             {
-                .vertices = vertices,
-                .indices = indices,
-                .vertex_count = LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT,
-                .index_count = LNA_PRIMITIVE_FILL_CIRCLE_INDEX_COUNT,
-                .model_matrix = config->model_matrix,
-                .view_matrix = config->view_matrix,
-                .projection_matrix = config->projection_matrix,
+                .vertices           = vertices,
+                .indices            = indices,
+                .vertex_count       = LNA_PRIMITIVE_FILL_CIRCLE_VERTEX_COUNT,
+                .index_count        = LNA_PRIMITIVE_FILL_CIRCLE_INDEX_COUNT,
+                .model_matrix       = config->model_matrix,
+                .view_matrix        = config->view_matrix,
+                .projection_matrix  = config->projection_matrix,
             }
             );
     }
@@ -1063,7 +1107,7 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
 lna_primitive_t* lna_primitive_system_new_arrow_xy(lna_primitive_system_t* primitive_system, const lna_primitive_arrow_config_t* config)
 {
     lna_assert(primitive_system)
-    lna_assert(!primitive_system->fill_shapes) //! cannot draw arrow in fill shape mode
+    lna_assert(!primitive_system->fill_shapes)  // TODO: check if we can draw line in fill shapes mode. Will need some modification for the arrow's head if so.
     lna_assert(config)
     lna_assert(config->head_position)
     lna_assert(config->tail_position)
@@ -1152,13 +1196,13 @@ lna_primitive_t* lna_primitive_system_new_arrow_xy(lna_primitive_system_t* primi
         primitive_system,
         &(lna_primitive_raw_config_t)
         {
-            .vertices = vertices,
-            .indices = indices,
-            .vertex_count = 5,
-            .index_count = 8,
-            .model_matrix = config->model_matrix,
-            .view_matrix = config->view_matrix,
-            .projection_matrix = config->projection_matrix,
+            .vertices           = vertices,
+            .indices            = indices,
+            .vertex_count       = 5,
+            .index_count        = 8,
+            .model_matrix       = config->model_matrix,
+            .view_matrix        = config->view_matrix,
+            .projection_matrix  = config->projection_matrix,
         }
         );
 }
@@ -1166,7 +1210,7 @@ lna_primitive_t* lna_primitive_system_new_arrow_xy(lna_primitive_system_t* primi
 lna_primitive_t* lna_primitive_system_new_cross_xy(lna_primitive_system_t* primitive_system, const lna_primitive_cross_config_t* config)
 {
     lna_assert(primitive_system)
-    lna_assert(!primitive_system->fill_shapes) //! cannot draw arrow in fill shape mode
+    lna_assert(!primitive_system->fill_shapes) // TODO: check if we can draw line in fill shapes mode.
     lna_assert(config)
     lna_assert(config->center_position)
     lna_assert(config->size)
@@ -1216,13 +1260,13 @@ lna_primitive_t* lna_primitive_system_new_cross_xy(lna_primitive_system_t* primi
         primitive_system,
         &(lna_primitive_raw_config_t)
         {
-            .vertices = vertices,
-            .indices = indices,
-            .vertex_count = 4,
-            .index_count = 4,
-            .model_matrix = config->model_matrix,
-            .view_matrix = config->view_matrix,
-            .projection_matrix = config->projection_matrix,
+            .vertices           = vertices,
+            .indices            = indices,
+            .vertex_count       = 4,
+            .index_count        = 4,
+            .model_matrix       = config->model_matrix,
+            .view_matrix        = config->view_matrix,
+            .projection_matrix  = config->projection_matrix,
         }
         );
 }

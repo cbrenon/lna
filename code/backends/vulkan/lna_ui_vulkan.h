@@ -4,7 +4,8 @@
 #include <vulkan/vulkan.h>
 #include "maths/lna_vec2.h"
 #include "maths/lna_vec4.h"
-#include "core/lna_container.h"
+
+typedef struct lna_renderer_s lna_renderer_t;
 
 typedef struct lna_ui_vertex_s
 {
@@ -38,7 +39,12 @@ typedef struct lna_ui_buffer_s
     void*                               index_data_mapped;
 } lna_ui_buffer_t;
 
-lna_vector_def(lna_ui_buffer_t)         lna_ui_buffer_vec_t;
+typedef struct lna_ui_buffer_vec_s
+{
+    uint32_t                            cur_element_count;
+    uint32_t                            max_element_count;
+    lna_ui_buffer_t*                    elements;
+} lna_ui_buffer_vec_t;
 
 typedef struct lna_ui_system_s
 {

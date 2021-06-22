@@ -42,15 +42,15 @@ static void lna_ui_buffer_init(
 
     buffer->max_vertex_count    = config->max_vertex_count;
     buffer->max_index_count     = config->max_index_count;
-    buffer->vertices            = lna_memory_reserve(config->memory_pool, lna_ui_vertex_t, buffer->max_vertex_count);
-    buffer->indices             = lna_memory_reserve(config->memory_pool, uint32_t, buffer->max_index_count);
+    buffer->vertices            = lna_memory_pool_reserve(config->memory_pool, sizeof(lna_ui_vertex_t) * buffer->max_vertex_count);
+    buffer->indices             = lna_memory_pool_reserve(config->memory_pool, sizeof(uint32_t) * buffer->max_index_count);
     buffer->texture             = config->texture;
 
     const VkDescriptorSetAllocateInfo set_allocate_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = descriptor_pool,
-        .pSetLayouts = &descriptor_set_layout,
+        .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool     = descriptor_pool,
+        .pSetLayouts        = &descriptor_set_layout,
         .descriptorSetCount = 1,
     };
     VULKAN_CHECK_RESULT(
@@ -63,19 +63,19 @@ static void lna_ui_buffer_init(
 
     const VkDescriptorImageInfo descriptor_image_info =
     {
-        .sampler = config->texture->image_sampler,
-        .imageView = config->texture->image_view,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .sampler        = config->texture->image_sampler,
+        .imageView      = config->texture->image_view,
+        .imageLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
     const VkWriteDescriptorSet write_descriptor_sets[1] =
     {
         {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = buffer->descriptor_set,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .dstBinding = 0,
-            .pImageInfo = &descriptor_image_info,
-            .descriptorCount = 1,
+            .sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet             = buffer->descriptor_set,
+            .descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .dstBinding         = 0,
+            .pImageInfo         = &descriptor_image_info,
+            .descriptorCount    = 1,
         }
     };
     vkUpdateDescriptorSets(
@@ -89,9 +89,9 @@ static void lna_ui_buffer_init(
     const VkDeviceSize vertex_buffer_size = buffer->max_vertex_count * sizeof(lna_ui_vertex_t);
     const VkBufferCreateInfo vertex_buffer_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        .size = vertex_buffer_size,
+        .sType  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .usage  = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .size   = vertex_buffer_size,
     };
     VULKAN_CHECK_RESULT(
         vkCreateBuffer(
@@ -111,9 +111,9 @@ static void lna_ui_buffer_init(
 
     const VkMemoryAllocateInfo vertex_buffer_memory_allocate_info =
     {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = vertex_buffer_memory_requirements.size,
-        .memoryTypeIndex = lna_vulkan_find_memory_type(physical_device, vertex_buffer_memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
+        .sType              = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize     = vertex_buffer_memory_requirements.size,
+        .memoryTypeIndex    = lna_vulkan_find_memory_type(physical_device, vertex_buffer_memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
     };
     VULKAN_CHECK_RESULT(
         vkAllocateMemory(
@@ -145,9 +145,9 @@ static void lna_ui_buffer_init(
     const VkDeviceSize index_buffer_size = buffer->max_index_count * sizeof (uint32_t);
     const VkBufferCreateInfo index_buffer_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        .size = index_buffer_size,
+        .sType  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .usage  = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        .size   = index_buffer_size,
     };
     VULKAN_CHECK_RESULT(
         vkCreateBuffer(
@@ -165,9 +165,9 @@ static void lna_ui_buffer_init(
         );
     const VkMemoryAllocateInfo index_buffer_memory_allocate_info =
     {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = index_buffer_memory_requirements.size,
-        .memoryTypeIndex = lna_vulkan_find_memory_type(physical_device, index_buffer_memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
+        .sType              = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize     = index_buffer_memory_requirements.size,
+        .memoryTypeIndex    = lna_vulkan_find_memory_type(physical_device, index_buffer_memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
     };
     VULKAN_CHECK_RESULT(
         vkAllocateMemory(
@@ -205,10 +205,10 @@ static void lna_ui_buffer_init(
             );
         const VkMappedMemoryRange mapped_memory_range =
         {
-            .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+            .sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
             .memory = buffer->vertex_buffer_memory,
             .offset = 0,
-            .size  = vertex_buffer_size,
+            .size   = vertex_buffer_size,
         };
         VULKAN_CHECK_RESULT(
             vkFlushMappedMemoryRanges(
@@ -228,10 +228,10 @@ static void lna_ui_buffer_init(
             );
         const VkMappedMemoryRange mapped_memory_range =
         {
-            .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+            .sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
             .memory = buffer->index_buffer_memory,
             .offset = 0,
-            .size  = index_buffer_size,
+            .size   = index_buffer_size,
         };
         VULKAN_CHECK_RESULT(
             vkFlushMappedMemoryRanges(
@@ -265,7 +265,9 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
 {
     lna_assert(ui_system)
     lna_assert(ui_system->renderer == NULL)
-    lna_assert(lna_vector_size(&ui_system->buffers) == 0)
+    lna_assert(ui_system->buffers.cur_element_count == 0)
+    lna_assert(ui_system->buffers.max_element_count == 0)
+    lna_assert(ui_system->buffers.elements == NULL)
     lna_assert(ui_system->pipeline == VK_NULL_HANDLE)
     lna_assert(ui_system->pipeline_cache == VK_NULL_HANDLE)
     lna_assert(ui_system->pipeline_layout == VK_NULL_HANDLE)
@@ -280,11 +282,10 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
 
     ui_system->renderer = config->renderer;
     
-    lna_vector_init(
-        &ui_system->buffers,
+    ui_system->buffers.max_element_count    = 0;
+    ui_system->buffers.elements             = lna_memory_pool_reserve(
         config->memory_pool,
-        lna_ui_buffer_t,
-        config->max_buffer_count
+        sizeof(lna_ui_buffer_t) * config->max_buffer_count
         );
 
     //! DESCRIPTOR POOL
@@ -292,16 +293,16 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
     const VkDescriptorPoolSize descriptor_pool_sizes[] =
     {
         {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = config->max_buffer_count,
+            .type               = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount    = config->max_buffer_count,
         },
     };
     const VkDescriptorPoolCreateInfo pool_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = (uint32_t)(sizeof(descriptor_pool_sizes) / sizeof(descriptor_pool_sizes[0])),
-        .pPoolSizes = descriptor_pool_sizes,
-        .maxSets = config->max_buffer_count,
+        .sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .poolSizeCount  = (uint32_t)(sizeof(descriptor_pool_sizes) / sizeof(descriptor_pool_sizes[0])),
+        .pPoolSizes     = descriptor_pool_sizes,
+        .maxSets        = config->max_buffer_count,
     };
     VULKAN_CHECK_RESULT(
         vkCreateDescriptorPool(
@@ -317,17 +318,17 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
     const VkDescriptorSetLayoutBinding set_layout_bindings[1] =
     {
         {
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .binding = 0,
-            .descriptorCount = 1,
+            .descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .binding            = 0,
+            .descriptorCount    = 1,
         },
     };
     const VkDescriptorSetLayoutCreateInfo set_layout_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .pBindings = set_layout_bindings,
-        .bindingCount = 1,
+        .sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pBindings      = set_layout_bindings,
+        .bindingCount   = 1,
     };
     VULKAN_CHECK_RESULT(
         vkCreateDescriptorSetLayout(
@@ -356,16 +357,16 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
     const VkPushConstantRange push_constance_range =
     {
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .size = sizeof(lna_ui_push_const_block_vulkan_t),
-        .offset = 0,
+        .size       = sizeof(lna_ui_push_const_block_vulkan_t),
+        .offset     = 0,
     };
     const VkPipelineLayoutCreateInfo layout_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &ui_system->descriptor_set_layout,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount         = 1,
+        .pSetLayouts            = &ui_system->descriptor_set_layout,
         .pushConstantRangeCount = 1,
-        .pPushConstantRanges = &push_constance_range,
+        .pPushConstantRanges    = &push_constance_range,
     };
     VULKAN_CHECK_RESULT(
         vkCreatePipelineLayout(
@@ -378,58 +379,58 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
 
     const VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        .flags = 0,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .flags                  = 0,
         .primitiveRestartEnable = VK_FALSE,
     };
     const VkPipelineRasterizationStateCreateInfo rasterization_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_NONE,
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        .flags = 0,
-        .depthClampEnable = VK_FALSE,
-        .lineWidth = 1.0f,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .polygonMode        = VK_POLYGON_MODE_FILL,
+        .cullMode           = VK_CULL_MODE_NONE,
+        .frontFace          = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .flags              = 0,
+        .depthClampEnable   = VK_FALSE,
+        .lineWidth          = 1.0f,
     };
     const VkPipelineColorBlendAttachmentState blend_attachment_state =
     {
-        .blendEnable = VK_TRUE,
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
+        .blendEnable            = VK_TRUE,
+        .colorWriteMask         = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+        .srcColorBlendFactor    = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dstColorBlendFactor    = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .colorBlendOp           = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp           = VK_BLEND_OP_ADD,
     };
     const VkPipelineColorBlendStateCreateInfo color_blend_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .attachmentCount = 1,
-        .pAttachments = &blend_attachment_state,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .attachmentCount    = 1,
+        .pAttachments       = &blend_attachment_state,
     };
     const VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .depthTestEnable = VK_FALSE,
-        .depthWriteEnable = VK_FALSE,
-        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-        .back.compareOp = VK_COMPARE_OP_ALWAYS,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable    = VK_FALSE,
+        .depthWriteEnable   = VK_FALSE,
+        .depthCompareOp     = VK_COMPARE_OP_LESS_OR_EQUAL,
+        .back.compareOp     = VK_COMPARE_OP_ALWAYS,
     };
     const VkPipelineViewportStateCreateInfo viewport_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .viewportCount = 1,
-        .scissorCount = 1,
-        .flags = 0,
+        .sType          = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount  = 1,
+        .scissorCount   = 1,
+        .flags          = 0,
     };
     const VkPipelineMultisampleStateCreateInfo multisample_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        .flags = 0,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .rasterizationSamples   = VK_SAMPLE_COUNT_1_BIT,
+        .flags                  = 0,
     };
     const VkDynamicState dynamic_states[] =
     {
@@ -438,10 +439,10 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
     };
     const VkPipelineDynamicStateCreateInfo dynamic_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .pDynamicStates = dynamic_states,
-        .dynamicStateCount = 2,
-        .flags = 0,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .pDynamicStates     = dynamic_states,
+        .dynamicStateCount  = 2,
+        .flags              = 0,
     };
     // TODO: avoid direct file load --------------------------------------------
     lna_binary_file_content_uint32_t vertex_shader_file = { 0 };
@@ -459,84 +460,84 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
     // -------------------------------------------------------------------------
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         config->renderer->device,
-        lna_array_ptr(&vertex_shader_file),
-        lna_array_size(&vertex_shader_file)
+        vertex_shader_file.content,
+        vertex_shader_file.size
         );
     VkShaderModule fragment_shader_module = lna_vulkan_create_shader_module(
         config->renderer->device,
-        lna_array_ptr(&fragment_shader_file),
-        lna_array_size(&fragment_shader_file)
+        fragment_shader_file.content,
+        fragment_shader_file.size
         );
     const VkPipelineShaderStageCreateInfo shader_stage_create_infos[2] =
     {
         {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
+            .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage  = VK_SHADER_STAGE_VERTEX_BIT,
             .module = vertex_shader_module,
-            .pName = "main",
+            .pName  = "main",
         },
         {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage  = VK_SHADER_STAGE_FRAGMENT_BIT,
             .module = fragment_shader_module,
-            .pName = "main",
+            .pName  = "main",
         },
     };
     const VkVertexInputBindingDescription vertex_input_binding_descriptions[1] =
     {
         {
-            .binding = 0,
-            .stride = sizeof(lna_ui_vertex_t),
-            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+            .binding    = 0,
+            .stride     = sizeof(lna_ui_vertex_t),
+            .inputRate  = VK_VERTEX_INPUT_RATE_VERTEX,
         }
     };
     const VkVertexInputAttributeDescription vertex_input_attribute_descriptions[3] =
     {
         {
-            .binding = 0,
-            .location = 0,
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(lna_ui_vertex_t, position),
+            .binding    = 0,
+            .location   = 0,
+            .format     = VK_FORMAT_R32G32_SFLOAT,
+            .offset     = offsetof(lna_ui_vertex_t, position),
         },
         {
-            .binding = 0,
-            .location = 1,
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(lna_ui_vertex_t, uv),
+            .binding    = 0,
+            .location   = 1,
+            .format     = VK_FORMAT_R32G32_SFLOAT,
+            .offset     = offsetof(lna_ui_vertex_t, uv),
         },
         {
-            .binding = 0,
-            .location = 2,
-            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(lna_ui_vertex_t, color),
+            .binding    = 0,
+            .location   = 2,
+            .format     = VK_FORMAT_R32G32B32A32_SFLOAT,
+            .offset     = offsetof(lna_ui_vertex_t, color),
         },
     };
     const VkPipelineVertexInputStateCreateInfo pipeline_vertex_input_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexBindingDescriptionCount = 1,
-        .pVertexBindingDescriptions = vertex_input_binding_descriptions,
-        .vertexAttributeDescriptionCount = 3,
-        .pVertexAttributeDescriptions = vertex_input_attribute_descriptions,
+        .sType                              = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount      = 1,
+        .pVertexBindingDescriptions         = vertex_input_binding_descriptions,
+        .vertexAttributeDescriptionCount    = 3,
+        .pVertexAttributeDescriptions       = vertex_input_attribute_descriptions,
     };
     const VkGraphicsPipelineCreateInfo pipeline_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .layout = ui_system->pipeline_layout,
-        .renderPass = config->renderer->render_pass,
-        .flags = 0,
-        .basePipelineIndex = -1,
-        .basePipelineHandle = VK_NULL_HANDLE,
-        .pInputAssemblyState = &input_assembly_state_create_info,
-        .pRasterizationState = &rasterization_state_create_info,
-        .pColorBlendState = &color_blend_state_create_info,
-        .pMultisampleState = &multisample_state_create_info,
-        .pViewportState = &viewport_state_create_info,
-        .pDepthStencilState = &depth_stencil_state_create_info,
-        .pDynamicState = &dynamic_state_create_info,
-        .stageCount = 2,
-        .pStages = shader_stage_create_infos,
-        .pVertexInputState = &pipeline_vertex_input_state_create_info,
+        .sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .layout                 = ui_system->pipeline_layout,
+        .renderPass             = config->renderer->render_pass,
+        .flags                  = 0,
+        .basePipelineIndex      = -1,
+        .basePipelineHandle     = VK_NULL_HANDLE,
+        .pInputAssemblyState    = &input_assembly_state_create_info,
+        .pRasterizationState    = &rasterization_state_create_info,
+        .pColorBlendState       = &color_blend_state_create_info,
+        .pMultisampleState      = &multisample_state_create_info,
+        .pViewportState         = &viewport_state_create_info,
+        .pDepthStencilState     = &depth_stencil_state_create_info,
+        .pDynamicState          = &dynamic_state_create_info,
+        .stageCount             = 2,
+        .pStages                = shader_stage_create_infos,
+        .pVertexInputState      = &pipeline_vertex_input_state_create_info,
     };
 
     VULKAN_CHECK_RESULT(
@@ -557,11 +558,11 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
 lna_ui_buffer_t* lna_ui_system_new_buffer(lna_ui_system_t* ui_system, const lna_ui_buffer_config_t* config)
 {
     lna_assert(ui_system)
+    lna_assert(ui_system->buffers.elements)
+    lna_assert(ui_system->buffers.cur_element_count < ui_system->buffers.max_element_count)
     lna_assert(ui_system->renderer)
     
-    lna_ui_buffer_t* buffer;
-    lna_vector_new_element(&ui_system->buffers, buffer);
-
+    lna_ui_buffer_t* buffer = &ui_system->buffers.elements[ui_system->buffers.cur_element_count++];
     lna_ui_buffer_init(
         buffer,
         config,
@@ -570,7 +571,6 @@ lna_ui_buffer_t* lna_ui_system_new_buffer(lna_ui_system_t* ui_system, const lna_
         ui_system->renderer->device,
         ui_system->renderer->physical_device
         );
-
     return buffer;
 }
 
@@ -578,6 +578,8 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
 {
     lna_assert(ui_system)
     lna_assert(ui_system->renderer)
+    lna_assert(ui_system->renderer->command_buffers.elements)
+    lna_assert(ui_system->renderer->command_buffers.count > ui_system->renderer->image_index)
 
     const VkViewport viewport =
     {
@@ -594,11 +596,11 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
         .extent.height  = ui_system->renderer->swap_chain_extent.height,
     };
 
-    VkCommandBuffer command_buffer = lna_array_at_ref(&ui_system->renderer->command_buffers, ui_system->renderer->image_index);
+    VkCommandBuffer command_buffer = ui_system->renderer->command_buffers.elements[ui_system->renderer->image_index];
 
-    for (uint32_t i = 0; i < lna_vector_size(&ui_system->buffers); ++i)
+    for (uint32_t i = 0; i < ui_system->buffers.cur_element_count; ++i)
     {
-        lna_ui_buffer_t* buffer = lna_vector_at_ptr(&ui_system->buffers, i);
+        lna_ui_buffer_t* buffer = &ui_system->buffers.elements[i];
 
         //! 1. UPDATE MAPPED DATA
 
@@ -612,10 +614,10 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
             const VkDeviceSize vertex_buffer_size = buffer->max_vertex_count * sizeof(lna_ui_vertex_t);
             const VkMappedMemoryRange mapped_memory_range =
             {
-                .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+                .sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
                 .memory = buffer->vertex_buffer_memory,
                 .offset = 0,
-                .size  = vertex_buffer_size,
+                .size   = vertex_buffer_size,
             };
             VULKAN_CHECK_RESULT(
                 vkFlushMappedMemoryRanges(
@@ -636,10 +638,10 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
             const VkDeviceSize index_buffer_size = buffer->max_index_count * sizeof (uint32_t);
             const VkMappedMemoryRange mapped_memory_range =
             {
-                .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+                .sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
                 .memory = buffer->index_buffer_memory,
                 .offset = 0,
-                .size  = index_buffer_size,
+                .size   = index_buffer_size,
             };
             VULKAN_CHECK_RESULT(
                 vkFlushMappedMemoryRanges(
@@ -674,10 +676,10 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
             &viewport
             );
         
-        buffer->push_const_block.scale.x = 1.0f;
-        buffer->push_const_block.scale.y = 1.0f;
-        buffer->push_const_block.translate.x = 0.0f;
-        buffer->push_const_block.translate.y = 0.0f;
+        buffer->push_const_block.scale.x        = 1.0f;
+        buffer->push_const_block.scale.y        = 1.0f;
+        buffer->push_const_block.translate.x    = 0.0f;
+        buffer->push_const_block.translate.y    = 0.0f;
         vkCmdPushConstants(
             command_buffer,
             ui_system->pipeline_layout,
@@ -725,6 +727,7 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
 void lna_ui_system_release(lna_ui_system_t* ui_system)
 {
     lna_assert(ui_system)
+    lna_assert(ui_system->buffers.elements)
     lna_assert(ui_system->pipeline_cache)
     lna_assert(ui_system->pipeline)
     lna_assert(ui_system->pipeline_layout)
@@ -733,11 +736,14 @@ void lna_ui_system_release(lna_ui_system_t* ui_system)
     lna_assert(ui_system->renderer)
     lna_assert(ui_system->renderer->device)
 
-    for (uint32_t index = 0; index < lna_vector_size(&ui_system->buffers); ++index)
+    for (uint32_t index = 0; index < ui_system->buffers.cur_element_count; ++index)
     {
-        lna_ui_buffer_t* buffer = lna_vector_at_ptr(&ui_system->buffers, index);
+        lna_ui_buffer_t* buffer = &ui_system->buffers.elements[index];
         lna_ui_buffer_release(buffer, ui_system->renderer->device);
     }
+    ui_system->buffers.cur_element_count    = 0;
+    ui_system->buffers.max_element_count    = 0;
+    ui_system->buffers.elements             = NULL;
 
     vkDestroyPipelineCache(ui_system->renderer->device, ui_system->pipeline_cache, NULL);
     vkDestroyPipeline(ui_system->renderer->device, ui_system->pipeline, NULL);
