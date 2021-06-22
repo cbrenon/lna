@@ -24,7 +24,12 @@ typedef struct lna_mesh_s
     uint32_t                            index_count;
 } lna_mesh_t;
 
-lna_vector_def(lna_mesh_t)              lna_mesh_vec_t;
+typedef struct lna_mesh_vec_s
+{
+    uint32_t                            cur_element_count;
+    uint32_t                            max_element_count;
+    lna_mesh_t*                         elements;
+} lna_mesh_vec_t;
 
 typedef struct lna_mesh_system_s
 {

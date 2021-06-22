@@ -51,13 +51,13 @@ static void lna_mesh_system_create_graphics_pipeline(
     // -------------------------------------------------------------------------
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         renderer->device,
-        lna_array_ptr(&vertex_shader_file),
-        lna_array_size(&vertex_shader_file)
+        vertex_shader_file.content,
+        vertex_shader_file.size
         );
     VkShaderModule fragment_shader_module = lna_vulkan_create_shader_module(
         renderer->device,
-        lna_array_ptr(&fragment_shader_file),
-        lna_array_size(&fragment_shader_file)
+        fragment_shader_file.content,
+        fragment_shader_file.size
         );
     const VkPipelineShaderStageCreateInfo shader_stage_create_infos[] =
     {
@@ -77,60 +77,60 @@ static void lna_mesh_system_create_graphics_pipeline(
     const VkVertexInputAttributeDescription vertex_input_attribute_descriptions[] =
     {
         {
-            .binding = 0,
-            .location = 0,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(lna_model_vertex_t, position),
+            .binding    = 0,
+            .location   = 0,
+            .format     = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset     = offsetof(lna_model_vertex_t, position),
         },
         {
-            .binding = 0,
-            .location = 1,
-            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(lna_model_vertex_t, color),
+            .binding    = 0,
+            .location   = 1,
+            .format     = VK_FORMAT_R32G32B32A32_SFLOAT,
+            .offset     = offsetof(lna_model_vertex_t, color),
         },
         {
-            .binding = 0,
-            .location = 2,
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(lna_model_vertex_t, uv),
+            .binding    = 0,
+            .location   = 2,
+            .format     = VK_FORMAT_R32G32_SFLOAT,
+            .offset     = offsetof(lna_model_vertex_t, uv),
         },
         {
-            .binding = 0,
-            .location = 3,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(lna_model_vertex_t, normal),
+            .binding    = 0,
+            .location   = 3,
+            .format     = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset     = offsetof(lna_model_vertex_t, normal),
         },
     };
     const VkVertexInputBindingDescription vertex_input_binding_description[] =
     {
         {
-            .binding = 0,
-            .stride = sizeof(lna_model_vertex_t),
-            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+            .binding    = 0,
+            .stride     = sizeof(lna_model_vertex_t),
+            .inputRate  = VK_VERTEX_INPUT_RATE_VERTEX,
         },
     };
     const VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexBindingDescriptionCount = (uint32_t)(sizeof(vertex_input_binding_description) / sizeof(vertex_input_binding_description[0])),
-        .pVertexBindingDescriptions = vertex_input_binding_description,
-        .vertexAttributeDescriptionCount = (uint32_t)(sizeof(vertex_input_attribute_descriptions) / sizeof(vertex_input_attribute_descriptions[0])),
-        .pVertexAttributeDescriptions = vertex_input_attribute_descriptions,
+        .sType                              = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount      = (uint32_t)(sizeof(vertex_input_binding_description) / sizeof(vertex_input_binding_description[0])),
+        .pVertexBindingDescriptions         = vertex_input_binding_description,
+        .vertexAttributeDescriptionCount    = (uint32_t)(sizeof(vertex_input_attribute_descriptions) / sizeof(vertex_input_attribute_descriptions[0])),
+        .pVertexAttributeDescriptions       = vertex_input_attribute_descriptions,
     };
     const VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
     const VkViewport viewport =
     {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = (float)(renderer->swap_chain_extent.width),
-        .height = (float)(renderer->swap_chain_extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
+        .x          = 0.0f,
+        .y          = 0.0f,
+        .width      = (float)(renderer->swap_chain_extent.width),
+        .height     = (float)(renderer->swap_chain_extent.height),
+        .minDepth   = 0.0f,
+        .maxDepth   = 1.0f,
     };
     const VkRect2D scissor =
     {
@@ -139,58 +139,58 @@ static void lna_mesh_system_create_graphics_pipeline(
     };
     const VkPipelineViewportStateCreateInfo viewport_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .viewportCount = 1,
-        .pViewports = &viewport,
-        .scissorCount = 1,
-        .pScissors = &scissor,
+        .sType          = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount  = 1,
+        .pViewports     = &viewport,
+        .scissorCount   = 1,
+        .pScissors      = &scissor,
     };
     const VkPipelineRasterizationStateCreateInfo rasterization_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .depthClampEnable = VK_FALSE,
-        .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .lineWidth = 1.0f,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        .depthBiasEnable = VK_FALSE,
-        .depthBiasConstantFactor = 0.0f,
-        .depthBiasClamp = 0.0f,
-        .depthBiasSlopeFactor = 0.0f,
+        .sType                      = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .depthClampEnable           = VK_FALSE,
+        .rasterizerDiscardEnable    = VK_FALSE,
+        .polygonMode                = VK_POLYGON_MODE_FILL,
+        .lineWidth                  = 1.0f,
+        .cullMode                   = VK_CULL_MODE_BACK_BIT,
+        .frontFace                  = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .depthBiasEnable            = VK_FALSE,
+        .depthBiasConstantFactor    = 0.0f,
+        .depthBiasClamp             = 0.0f,
+        .depthBiasSlopeFactor       = 0.0f,
     };
     const VkPipelineMultisampleStateCreateInfo multisample_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .sampleShadingEnable = VK_FALSE,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        .minSampleShading = 1.0f,
-        .pSampleMask = NULL,
-        .alphaToCoverageEnable = VK_FALSE,
-        .alphaToOneEnable = VK_FALSE,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .sampleShadingEnable    = VK_FALSE,
+        .rasterizationSamples   = VK_SAMPLE_COUNT_1_BIT,
+        .minSampleShading       = 1.0f,
+        .pSampleMask            = NULL,
+        .alphaToCoverageEnable  = VK_FALSE,
+        .alphaToOneEnable       = VK_FALSE,
     };
     const VkPipelineColorBlendAttachmentState color_blend_attachment_state =
     {
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-        .blendEnable = VK_FALSE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
+        .colorWriteMask         = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+        .blendEnable            = VK_FALSE,
+        .srcColorBlendFactor    = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor    = VK_BLEND_FACTOR_ZERO,
+        .colorBlendOp           = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp           = VK_BLEND_OP_ADD,
     };
     const VkPipelineColorBlendStateCreateInfo color_blender_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .logicOpEnable = VK_FALSE,
-        .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = 1,
-        .pAttachments = &color_blend_attachment_state,
-        .blendConstants[0] = 0.0f,
-        .blendConstants[1] = 0.0f,
-        .blendConstants[2] = 0.0f,
-        .blendConstants[3] = 0.0f,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable      = VK_FALSE,
+        .logicOp            = VK_LOGIC_OP_COPY,
+        .attachmentCount    = 1,
+        .pAttachments       = &color_blend_attachment_state,
+        .blendConstants[0]  = 0.0f,
+        .blendConstants[1]  = 0.0f,
+        .blendConstants[2]  = 0.0f,
+        .blendConstants[3]  = 0.0f,
     };
     const VkDynamicState dynamic_states[] =
     {
@@ -199,17 +199,17 @@ static void lna_mesh_system_create_graphics_pipeline(
     };
     const VkPipelineDynamicStateCreateInfo dynamic_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = 2,
-        .pDynamicStates = dynamic_states,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount  = 2,
+        .pDynamicStates     = dynamic_states,
     };
     const VkPipelineLayoutCreateInfo pipeline_layout_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &mesh_system->descriptor_set_layout,
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount         = 1,
+        .pSetLayouts            = &mesh_system->descriptor_set_layout,
         .pushConstantRangeCount = 0,
-        .pPushConstantRanges = NULL,
+        .pPushConstantRanges    = NULL,
     };
     VULKAN_CHECK_RESULT(
         vkCreatePipelineLayout(
@@ -221,35 +221,35 @@ static void lna_mesh_system_create_graphics_pipeline(
         )
     const VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .depthTestEnable = VK_TRUE,
-        .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS,
-        .depthBoundsTestEnable = VK_FALSE,
-        .minDepthBounds = 0.0f,
-        .maxDepthBounds = 1.0f,
-        .stencilTestEnable = VK_FALSE,
-        .front = { 0 },
-        .back = { 0 },
+        .sType                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable        = VK_TRUE,
+        .depthWriteEnable       = VK_TRUE,
+        .depthCompareOp         = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable  = VK_FALSE,
+        .minDepthBounds         = 0.0f,
+        .maxDepthBounds         = 1.0f,
+        .stencilTestEnable      = VK_FALSE,
+        .front                  = { 0 },
+        .back                   = { 0 },
     };
     const VkGraphicsPipelineCreateInfo graphics_pipeline_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .stageCount = 2,
-        .pStages = shader_stage_create_infos,
-        .pVertexInputState = &vertex_input_state_create_info,
-        .pInputAssemblyState = &input_assembly_state_create_info,
-        .pViewportState = &viewport_state_create_info,
-        .pRasterizationState = &rasterization_state_create_info,
-        .pMultisampleState = &multisample_state_create_info,
-        .pDepthStencilState = &depth_stencil_state_create_info,
-        .pColorBlendState = &color_blender_state_create_info,
-        .pDynamicState = &dynamic_state_create_info,
-        .layout = mesh_system->pipeline_layout,
-        .renderPass = renderer->render_pass,
-        .subpass = 0,
-        .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = -1,
+        .sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .stageCount             = 2,
+        .pStages                = shader_stage_create_infos,
+        .pVertexInputState      = &vertex_input_state_create_info,
+        .pInputAssemblyState    = &input_assembly_state_create_info,
+        .pViewportState         = &viewport_state_create_info,
+        .pRasterizationState    = &rasterization_state_create_info,
+        .pMultisampleState      = &multisample_state_create_info,
+        .pDepthStencilState     = &depth_stencil_state_create_info,
+        .pColorBlendState       = &color_blender_state_create_info,
+        .pDynamicState          = &dynamic_state_create_info,
+        .layout                 = mesh_system->pipeline_layout,
+        .renderPass             = renderer->render_pass,
+        .subpass                = 0,
+        .basePipelineHandle     = VK_NULL_HANDLE,
+        .basePipelineIndex      = -1,
     };
     VULKAN_CHECK_RESULT(
         vkCreateGraphicsPipelines(
@@ -262,40 +262,50 @@ static void lna_mesh_system_create_graphics_pipeline(
             )
         )
 
-    vkDestroyShaderModule(renderer->device, fragment_shader_module, NULL);
-    vkDestroyShaderModule(renderer->device, vertex_shader_module, NULL);
+    vkDestroyShaderModule(
+        renderer->device,
+        fragment_shader_module,
+        NULL
+        );
+    vkDestroyShaderModule(
+        renderer->device,
+        vertex_shader_module,
+        NULL
+        );
 }
 
 static void lna_mesh_system_create_descriptor_pool(
     lna_mesh_system_t* mesh_system,
-    lna_renderer_t* renderer
+    lna_renderer_t* renderer // TODO: renderer is already in mesh system, we can remove this parameter
     )
 {
     lna_assert(mesh_system)
+    lna_assert(mesh_system->meshes.max_element_count > 0)
     lna_assert(renderer)
+    lna_assert(renderer->swap_chain_images.count > 0)
 
     const VkDescriptorPoolSize pool_sizes[] =
     {
         {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&mesh_system->meshes),
+            .type               = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount    = renderer->swap_chain_images.count * mesh_system->meshes.max_element_count,
         },
         {
             .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&mesh_system->meshes),
+            .descriptorCount    = renderer->swap_chain_images.count * mesh_system->meshes.max_element_count,
         },
         {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&mesh_system->meshes),
+            .type               = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount    = renderer->swap_chain_images.count * mesh_system->meshes.max_element_count,
         },
     };
 
     const VkDescriptorPoolCreateInfo pool_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = (uint32_t)(sizeof(pool_sizes) / sizeof(pool_sizes[0])),
-        .pPoolSizes = pool_sizes,
-        .maxSets = lna_array_size(&renderer->swap_chain_images) * lna_vector_max_capacity(&mesh_system->meshes),
+        .sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .poolSizeCount  = (uint32_t)(sizeof(pool_sizes) / sizeof(pool_sizes[0])),
+        .pPoolSizes     = pool_sizes,
+        .maxSets        = renderer->swap_chain_images.count * mesh_system->meshes.max_element_count,
     };
 
     VULKAN_CHECK_RESULT(
@@ -325,27 +335,29 @@ static void lna_mesh_create_uniform_buffer(
     )
 {
     lna_assert(mesh)
-    lna_assert(lna_array_size(&mesh->mvp_uniform_buffers) == 0)
-    lna_assert(lna_array_size(&mesh->mvp_uniform_buffers_memory) == 0)
-    lna_assert(lna_array_size(&mesh->light_uniform_buffers) == 0)
-    lna_assert(lna_array_size(&mesh->light_uniform_buffers_memory) == 0)
+    lna_assert(mesh->mvp_uniform_buffers.count == 0)
+    lna_assert(mesh->mvp_uniform_buffers.elements == NULL)
+    lna_assert(mesh->mvp_uniform_buffers_memory.count == 0)
+    lna_assert(mesh->mvp_uniform_buffers_memory.elements == NULL)
+    lna_assert(mesh->light_uniform_buffers.count == 0)
+    lna_assert(mesh->light_uniform_buffers.elements == NULL)
+    lna_assert(mesh->light_uniform_buffers_memory.count == 0)
+    lna_assert(mesh->light_uniform_buffers_memory.elements == NULL)
+    lna_assert(renderer)
+    lna_assert(renderer->swap_chain_images.count > 0)
 
-    lna_array_init(
-        &mesh->mvp_uniform_buffers,
+    mesh->mvp_uniform_buffers.count     = renderer->swap_chain_images.count;
+    mesh->mvp_uniform_buffers.elements  = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
-        VkBuffer,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkBuffer) * renderer->swap_chain_images.count
         );
-
-    lna_array_init(
-        &mesh->mvp_uniform_buffers_memory,
+    mesh->mvp_uniform_buffers_memory.count      = renderer->swap_chain_images.count;
+    mesh->mvp_uniform_buffers_memory.elements   = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
-        VkDeviceMemory,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkDeviceMemory) * renderer->swap_chain_images.count
         );
-
     VkDeviceSize mvp_uniform_buffer_size = sizeof(lna_mesh_mvp_uniform_t);
-    for (size_t i = 0; i < lna_array_size(&mesh->mvp_uniform_buffers); ++i)
+    for (size_t i = 0; i < mesh->mvp_uniform_buffers.count; ++i)
     {
         lna_vulkan_create_buffer(
             renderer->device,
@@ -353,27 +365,23 @@ static void lna_mesh_create_uniform_buffer(
             mvp_uniform_buffer_size,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            lna_array_at_ptr(&mesh->mvp_uniform_buffers, i),
-            lna_array_at_ptr(&mesh->mvp_uniform_buffers_memory, i)
+            &mesh->mvp_uniform_buffers.elements[i],
+            &mesh->mvp_uniform_buffers_memory.elements[i]
             );
     }
 
-    lna_array_init(
-        &mesh->light_uniform_buffers,
+    mesh->light_uniform_buffers.count       = renderer->swap_chain_images.count;
+    mesh->light_uniform_buffers.elements    = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
-        VkBuffer,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkBuffer) * renderer->swap_chain_images.count
         );
-
-    lna_array_init(
-        &mesh->light_uniform_buffers_memory,
+    mesh->light_uniform_buffers_memory.count    = 0;
+    mesh->light_uniform_buffers_memory.elements = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
-        VkDeviceMemory,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkDeviceMemory) * renderer->swap_chain_images.count
         );
-
     VkDeviceSize light_uniform_buffer_size = sizeof(lna_mesh_light_uniform_t);
-    for (size_t i = 0; i < lna_array_size(&mesh->light_uniform_buffers); ++i)
+    for (size_t i = 0; i < mesh->light_uniform_buffers.count; ++i)
     {
         lna_vulkan_create_buffer(
             renderer->device,
@@ -381,8 +389,8 @@ static void lna_mesh_create_uniform_buffer(
             light_uniform_buffer_size,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            lna_array_at_ptr(&mesh->light_uniform_buffers, i),
-            lna_array_at_ptr(&mesh->light_uniform_buffers_memory, i)
+            &mesh->light_uniform_buffers.elements[i],
+            &mesh->light_uniform_buffers_memory.elements[i]
             );
     }
 }
@@ -393,8 +401,9 @@ static void lna_mesh_create_descriptor_sets(
     )
 {
     lna_assert(mesh)
+    lna_assert(mesh->descriptor_sets.count == 0)
+    lna_assert(mesh->descriptor_sets.elements == NULL)
     lna_assert(mesh_system)
-    lna_assert(lna_array_size(&mesh->descriptor_sets) == 0)
 
     const lna_material_t* material = mesh->material;
     lna_assert(material)
@@ -406,97 +415,95 @@ static void lna_mesh_create_descriptor_sets(
 
     lna_renderer_t* renderer = mesh_system->renderer;
     lna_assert(renderer)
+    lna_assert(renderer->swap_chain_images.count)
 
     lna_vulkan_descriptor_set_layout_array_t layouts = { 0 };
-    lna_array_init(
-        &layouts,
+    layouts.elements = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
-        VkDescriptorSetLayout,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkDescriptorSetLayout) * renderer->swap_chain_images.count
         );
-    for (uint32_t i = 0; i < lna_array_size(&layouts); ++i)
+    for (uint32_t i = 0; i < layouts.count; ++i)
     {
-        lna_array_at_ref(&layouts, i) = mesh_system->descriptor_set_layout;
+        layouts.elements[i] = mesh_system->descriptor_set_layout;
     }
 
     const VkDescriptorSetAllocateInfo allocate_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = mesh_system->descriptor_pool,
-        .descriptorSetCount = lna_array_size(&layouts),
-        .pSetLayouts = lna_array_ptr(&layouts),
+        .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool     = mesh_system->descriptor_pool,
+        .descriptorSetCount = layouts.count,
+        .pSetLayouts        = layouts.elements,
     };
 
-    lna_array_init(
-        &mesh->descriptor_sets,
+    mesh->descriptor_sets.count     = 0;
+    mesh->descriptor_sets.elements  = lna_memory_pool_reserve(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
-        VkDescriptorSet,
-        lna_array_size(&renderer->swap_chain_images)
+        sizeof(VkDescriptorSet) * renderer->swap_chain_images.count
         );
 
     VULKAN_CHECK_RESULT(
         vkAllocateDescriptorSets(
             renderer->device,
             &allocate_info,
-            lna_array_ptr(&mesh->descriptor_sets)
+            mesh->descriptor_sets.elements
             )
         )
 
-    for (size_t i = 0; i < lna_array_size(&mesh->descriptor_sets); ++i)
+    for (size_t i = 0; i < mesh->descriptor_sets.count; ++i)
     {
         const VkDescriptorBufferInfo mvp_buffer_info =
         {
-            .buffer = lna_array_at_ref(&mesh->mvp_uniform_buffers, i),
+            .buffer = mesh->mvp_uniform_buffers.elements[i],
             .offset = 0,
-            .range = sizeof(lna_mesh_mvp_uniform_t),
+            .range  = sizeof(lna_mesh_mvp_uniform_t),
         };
         const VkDescriptorImageInfo image_info =
         {
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .imageView = texture->image_view,
-            .sampler = texture->image_sampler,
+            .imageLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            .imageView      = texture->image_view,
+            .sampler        = texture->image_sampler,
         };
         const VkDescriptorBufferInfo light_buffer_info =
         {
-            .buffer = lna_array_at_ref(&mesh->light_uniform_buffers, i),
+            .buffer = mesh->light_uniform_buffers.elements[i],
             .offset = 0,
-            .range = sizeof(lna_mesh_light_uniform_t),
+            .range  = sizeof(lna_mesh_light_uniform_t),
         };
 
         const VkWriteDescriptorSet write_descriptors[] =
         {
             {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = lna_array_at_ref(&mesh->descriptor_sets, i),
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1,
-                .pBufferInfo = &mvp_buffer_info,
-                .pImageInfo = NULL,
-                .pTexelBufferView = NULL,
+                .sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet             = mesh->descriptor_sets.elements[i],
+                .dstBinding         = 0,
+                .dstArrayElement    = 0,
+                .descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount    = 1,
+                .pBufferInfo        = &mvp_buffer_info,
+                .pImageInfo         = NULL,
+                .pTexelBufferView   = NULL,
             },
             {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = lna_array_at_ref(&mesh->descriptor_sets, i),
-                .dstBinding = 1,
-                .dstArrayElement = 0,
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .descriptorCount = 1,
-                .pBufferInfo = NULL,
-                .pImageInfo = &image_info,
-                .pTexelBufferView = NULL,
+                .sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet             = mesh->descriptor_sets.elements[i],
+                .dstBinding         = 1,
+                .dstArrayElement    = 0,
+                .descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .descriptorCount    = 1,
+                .pBufferInfo        = NULL,
+                .pImageInfo         = &image_info,
+                .pTexelBufferView   = NULL,
             },
             {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = lna_array_at_ref(&mesh->descriptor_sets, i),
-                .dstBinding = 2,
-                .dstArrayElement = 0,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1,
-                .pBufferInfo = &light_buffer_info,
-                .pImageInfo = NULL,
-                .pTexelBufferView = NULL,
+                .sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet             = mesh->descriptor_sets.elements[i],
+                .dstBinding         = 2,
+                .dstArrayElement    = 0,
+                .descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount    = 1,
+                .pBufferInfo        = &light_buffer_info,
+                .pImageInfo         = NULL,
+                .pTexelBufferView   = NULL,
             },
         };
 
@@ -528,54 +535,61 @@ static void lna_mesh_system_on_swap_chain_cleanup(void* owner)
         NULL
         );
 
-    for (uint32_t i = 0; i < lna_vector_size(&mesh_system->meshes); ++i)
+    for (uint32_t i = 0; i < mesh_system->meshes.cur_element_count; ++i)
     {
-        lna_mesh_t* mesh = lna_vector_at_ptr(&mesh_system->meshes, i);
+        lna_mesh_t* mesh = &mesh_system->meshes.elements[i];
+        lna_assert(mesh->mvp_uniform_buffers.elements)
+        lna_assert(mesh->mvp_uniform_buffers_memory.elements)
 
-        for (size_t j = 0; j < lna_array_size(&mesh->mvp_uniform_buffers); ++j)
+        for (size_t j = 0; j < mesh->mvp_uniform_buffers.count; ++j)
         {
             vkDestroyBuffer(
                 renderer->device,
-                lna_array_at_ref(&mesh->mvp_uniform_buffers, j),
+                mesh->mvp_uniform_buffers.elements[j],
                 NULL
                 );
         }
-        for (size_t j = 0; j < lna_array_size(&mesh->mvp_uniform_buffers); ++j)
+        for (size_t j = 0; j < mesh->mvp_uniform_buffers.count; ++j)
         {
             vkFreeMemory(
                 renderer->device,
-                lna_array_at_ref(&mesh->mvp_uniform_buffers_memory, j),
+                mesh->mvp_uniform_buffers_memory.elements[j],
                 NULL
                 );
         }
-        lna_array_release(&mesh->mvp_uniform_buffers);
-        lna_array_release(&mesh->mvp_uniform_buffers_memory);
+        mesh->mvp_uniform_buffers.count             = 0;
+        mesh->mvp_uniform_buffers.elements          = NULL;
+        mesh->mvp_uniform_buffers_memory.count      = 0;
+        mesh->mvp_uniform_buffers_memory.elements   = NULL;
 
-        for (size_t j = 0; j < lna_array_size(&mesh->light_uniform_buffers); ++j)
+        for (size_t j = 0; j < mesh->light_uniform_buffers.count; ++j)
         {
             vkDestroyBuffer(
                 renderer->device,
-                lna_array_at_ref(&mesh->light_uniform_buffers, j),
+                mesh->light_uniform_buffers.elements[j],
                 NULL
                 );
         }
-        for (size_t j = 0; j < lna_array_size(&mesh->light_uniform_buffers); ++j)
+        for (size_t j = 0; j < mesh->light_uniform_buffers.count; ++j)
         {
             vkFreeMemory(
                 renderer->device,
-                lna_array_at_ref(&mesh->light_uniform_buffers_memory, j),
+                mesh->light_uniform_buffers_memory.elements[j],
                 NULL
                 );
         }
-        lna_array_release(&mesh->light_uniform_buffers);
-        lna_array_release(&mesh->light_uniform_buffers_memory);
+        mesh->light_uniform_buffers.count           = 0;
+        mesh->light_uniform_buffers.elements        = NULL;
+        mesh->light_uniform_buffers_memory.count    = 0;
+        mesh->light_uniform_buffers_memory.elements = NULL;
 
         //! NOTE: no need to explicity clean up vulkan descriptor sets objects
         //! because it is done when the vulkan descriptor pool is destroyed.
         //! we just have to reset the array and wait for filling it again.
         //! the memory pool where we reserved memory for descriptor_sets has already
         //! been reset by the vulkan renderer backend.
-        lna_array_release(&mesh->descriptor_sets);
+        mesh->descriptor_sets.count     = 0;
+        mesh->descriptor_sets.elements  = NULL;
     }
     vkDestroyDescriptorPool(
         renderer->device,
@@ -600,14 +614,14 @@ static void lna_mesh_system_on_swap_chain_recreate(void *owner)
         renderer
         );
 
-    for (uint32_t i = 0; i < lna_vector_size(&mesh_system->meshes); ++i)
+    for (uint32_t i = 0; i < mesh_system->meshes.cur_element_count; ++i)
     {
         lna_mesh_create_uniform_buffer(
-            lna_vector_at_ptr(&mesh_system->meshes, i),
+            &mesh_system->meshes.elements[i],
             renderer
             );
         lna_mesh_create_descriptor_sets(
-            lna_vector_at_ptr(&mesh_system->meshes, i),
+            &mesh_system->meshes.elements[i],
             mesh_system
             );
     }
@@ -617,7 +631,9 @@ void lna_mesh_system_init(lna_mesh_system_t* mesh_system, const lna_mesh_system_
 {
     lna_assert(mesh_system)
     lna_assert(mesh_system->renderer == NULL)
-    lna_assert(lna_vector_max_capacity(&mesh_system->meshes) == 0)
+    lna_assert(mesh_system->meshes.cur_element_count == 0)
+    lna_assert(mesh_system->meshes.max_element_count == 0)
+    lna_assert(mesh_system->meshes.elements == NULL)
     lna_assert(mesh_system->descriptor_pool == VK_NULL_HANDLE)
     lna_assert(mesh_system->descriptor_set_layout == VK_NULL_HANDLE)
     lna_assert(mesh_system->pipeline == VK_NULL_HANDLE)
@@ -626,23 +642,21 @@ void lna_mesh_system_init(lna_mesh_system_t* mesh_system, const lna_mesh_system_
     lna_assert(config->renderer)
     lna_assert(config->renderer->device)
     lna_assert(config->renderer->render_pass)
+    lna_assert(config->max_mesh_count > 0)
 
     mesh_system->renderer = config->renderer;
 
-    lna_renderer_listener_t* listener = NULL;
-    lna_vector_new_element(
-        &config->renderer->listeners,
-        listener
+    lna_renderer_register_listener(
+        config->renderer,
+        lna_mesh_system_on_swap_chain_cleanup,
+        lna_mesh_system_on_swap_chain_recreate,
+        (void*)mesh_system
         );
-    listener->handle        = (void*)mesh_system;
-    listener->on_cleanup    = lna_mesh_system_on_swap_chain_cleanup;
-    listener->on_recreate   = lna_mesh_system_on_swap_chain_recreate;
 
-    lna_vector_init(
-        &mesh_system->meshes,
+    mesh_system->meshes.max_element_count   = config->max_mesh_count;
+    mesh_system->meshes.elements            = lna_memory_pool_reserve(
         config->memory_pool,
-        lna_mesh_t,
-        config->max_mesh_count
+        sizeof(lna_mesh_t) * config->max_mesh_count
         );
 
     //! DESCRIPTOR SET LAYOUT
@@ -650,32 +664,32 @@ void lna_mesh_system_init(lna_mesh_system_t* mesh_system, const lna_mesh_system_
     const VkDescriptorSetLayoutBinding bindings[] =
     {
         {
-            .binding = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .binding            = 0,
+            .descriptorCount    = 1,
+            .descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .stageFlags         = VK_SHADER_STAGE_VERTEX_BIT,
             .pImmutableSamplers = NULL,
         },
         {
-            .binding = 1,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .binding            = 1,
+            .descriptorCount    = 1,
+            .descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = NULL,
         },
         {
-            .binding = 2,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .binding            = 2,
+            .descriptorCount    = 1,
+            .descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = NULL,
         },
     };
     const VkDescriptorSetLayoutCreateInfo layout_create_info =
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = (uint32_t)(sizeof(bindings) / sizeof(bindings[0])),
-        .pBindings = bindings,
+        .sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount   = (uint32_t)(sizeof(bindings) / sizeof(bindings[0])),
+        .pBindings      = bindings,
     };
     VULKAN_CHECK_RESULT(
         vkCreateDescriptorSetLayout(
@@ -704,20 +718,23 @@ void lna_mesh_system_init(lna_mesh_system_t* mesh_system, const lna_mesh_system_
 lna_mesh_t* lna_mesh_system_new_mesh(lna_mesh_system_t* mesh_system, const lna_mesh_config_t* config)
 {
     lna_assert(mesh_system)
+    lna_assert(mesh_system->meshes.elements)
+    lna_assert(mesh_system->meshes.cur_element_count < mesh_system->meshes.max_element_count)
     lna_assert(config)
 
-    lna_mesh_t* mesh = NULL;
-    lna_vector_new_element(&mesh_system->meshes, mesh);
+    lna_mesh_t* mesh = &mesh_system->meshes.elements[mesh_system->meshes.cur_element_count++];
 
-    lna_assert(mesh)
     lna_assert(mesh->material == NULL)
     lna_assert(mesh->vertex_buffer == VK_NULL_HANDLE)
     lna_assert(mesh->vertex_buffer_memory == VK_NULL_HANDLE)
     lna_assert(mesh->index_buffer == VK_NULL_HANDLE)
     lna_assert(mesh->index_buffer_memory == VK_NULL_HANDLE)
-    lna_assert(lna_array_is_empty(&mesh->mvp_uniform_buffers))
-    lna_assert(lna_array_is_empty(&mesh->mvp_uniform_buffers_memory))
-    lna_assert(lna_array_is_empty(&mesh->descriptor_sets))
+    lna_assert(mesh->mvp_uniform_buffers.count == 0)
+    lna_assert(mesh->mvp_uniform_buffers.elements == NULL)
+    lna_assert(mesh->mvp_uniform_buffers_memory.count == 0)
+    lna_assert(mesh->mvp_uniform_buffers_memory.elements == NULL)
+    lna_assert(mesh->descriptor_sets.count == 0)
+    lna_assert(mesh->descriptor_sets.elements == NULL)
     lna_assert(mesh->model_matrix == NULL)
     lna_assert(mesh->view_matrix == NULL)
     lna_assert(mesh->projection_matrix == NULL)
@@ -893,33 +910,40 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
 
     lna_renderer_t* renderer = mesh_system->renderer;
     lna_assert(renderer)
+    lna_assert(renderer->command_buffers.elements)
+    lna_assert(renderer->command_buffers.count > mesh_system->renderer->image_index)
 
-    VkCommandBuffer command_buffer = lna_array_at_ref(&mesh_system->renderer->command_buffers, mesh_system->renderer->image_index);
+    VkCommandBuffer command_buffer = mesh_system->renderer->command_buffers.elements[mesh_system->renderer->image_index];
 
     vkCmdBindPipeline(
         command_buffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         mesh_system->pipeline
         );
-    for (uint32_t i = 0; i < lna_vector_size(&mesh_system->meshes); ++i)
+    for (uint32_t i = 0; i < mesh_system->meshes.cur_element_count; ++i)
     {
-        lna_mesh_t* mesh = lna_vector_at_ptr(&mesh_system->meshes, i);
-
+        lna_mesh_t* mesh = &mesh_system->meshes.elements[i];
         lna_assert(mesh->model_matrix)
         lna_assert(mesh->view_matrix)
         lna_assert(mesh->projection_matrix)
+        lna_assert(mesh->mvp_uniform_buffers_memory.elements)
+        lna_assert(mesh->mvp_uniform_buffers_memory.count > renderer->image_index)
+        lna_assert(mesh->light_uniform_buffers_memory.count > renderer->image_index)
+        lna_assert(mesh->light_uniform_buffers_memory.elements)
+        lna_assert(mesh->descriptor_sets.count > renderer->image_index)
+        lna_assert(mesh->descriptor_sets.elements)
 
         const lna_mesh_mvp_uniform_t mvp_ubo =
         {
-            .model = *mesh->model_matrix,
-            .view = *mesh->view_matrix,
+            .model      = *mesh->model_matrix,
+            .view       = *mesh->view_matrix,
             .projection = *mesh->projection_matrix,
         };
         void *mvp_data;
         VULKAN_CHECK_RESULT(
             vkMapMemory(
                 renderer->device,
-                lna_array_at_ref(&mesh->mvp_uniform_buffers_memory, renderer->image_index),
+                mesh->mvp_uniform_buffers_memory.elements[renderer->image_index],
                 0,
                 sizeof(mvp_ubo),
                 0,
@@ -932,7 +956,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
             sizeof(mvp_ubo));
         vkUnmapMemory(
             renderer->device,
-            lna_array_at_ref(&mesh->mvp_uniform_buffers_memory, renderer->image_index)
+            mesh->mvp_uniform_buffers_memory.elements[renderer->image_index]
             );
 
         const lna_mesh_light_uniform_t light_ubo =
@@ -945,7 +969,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
         VULKAN_CHECK_RESULT(
             vkMapMemory(
                 renderer->device,
-                lna_array_at_ref(&mesh->light_uniform_buffers_memory, renderer->image_index),
+                mesh->light_uniform_buffers_memory.elements[renderer->image_index],
                 0,
                 sizeof(light_ubo),
                 0,
@@ -958,7 +982,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
             sizeof(light_ubo));
         vkUnmapMemory(
             renderer->device,
-            lna_array_at_ref(&mesh->light_uniform_buffers_memory, renderer->image_index)
+            mesh->light_uniform_buffers_memory.elements[renderer->image_index]
             );
 
         vkCmdBindDescriptorSets(
@@ -967,7 +991,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
             mesh_system->pipeline_layout,
             0,
             1,
-            lna_array_at_ptr(&mesh->descriptor_sets, renderer->image_index),
+            &mesh->descriptor_sets.elements[renderer->image_index],
             0,
             NULL
             );
@@ -1003,6 +1027,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
 void lna_mesh_system_release(lna_mesh_system_t* mesh_system)
 {
     lna_assert(mesh_system)
+    lna_assert(mesh_system->meshes.elements)
     lna_assert(mesh_system->renderer)
     lna_assert(mesh_system->renderer->device)
 
@@ -1011,9 +1036,9 @@ void lna_mesh_system_release(lna_mesh_system_t* mesh_system)
         mesh_system->descriptor_set_layout,
         NULL
         );
-    for (uint32_t i = 0; i < lna_vector_size(&mesh_system->meshes); ++i)
+    for (uint32_t i = 0; i < mesh_system->meshes.cur_element_count; ++i)
     {
-        lna_mesh_t* mesh = lna_vector_at_ptr(&mesh_system->meshes, i);
+        lna_mesh_t* mesh = &mesh_system->meshes.elements[i];
 
         vkDestroyBuffer(
             mesh_system->renderer->device,

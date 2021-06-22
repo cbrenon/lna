@@ -1,3 +1,9 @@
+CONSTANT:
+  ☐ one old file code review per weekend
+    Add flag on file to show that the file has been reviewed and add the date.
+    The goal is to review code and see that old code match last guidelines.
+    it is possible review a file multiple time
+
 PRIORITY:
   ☐ remove lna_container.h
     we will not use array and vector macros anymore, we will 

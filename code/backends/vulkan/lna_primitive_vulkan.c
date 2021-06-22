@@ -258,9 +258,9 @@ static void lna_primitive_system_create_descriptor_pool(
     )
 {
     lna_assert(primitive_system)
-    lna_assert(primitive_system->primitives.max_element_count > 0);
-    lna_assert(renderer);
-    lna_assert(renderer->swap_chain_images.count > 0);
+    lna_assert(primitive_system->primitives.max_element_count > 0)
+    lna_assert(renderer)
+    lna_assert(renderer->swap_chain_images.count > 0)
 
     const VkDescriptorPoolSize pool_sizes[] =
     {
@@ -366,8 +366,8 @@ static void lna_primitive_create_descriptor_sets(
     {
         .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool     = primitive_system->descriptor_pool,
-        .descriptorSetCount = lna_array_size(&layouts),
-        .pSetLayouts        = lna_array_ptr(&layouts),
+        .descriptorSetCount = layouts.count,
+        .pSetLayouts        = layouts.elements,
     };
 
     primitive->descriptor_sets.count    = renderer->swap_chain_images.count;
@@ -645,7 +645,7 @@ void lna_primitive_system_draw(lna_primitive_system_t* primitive_system)
             primitive_system->pipeline_layout,
             0,
             1,
-            primitive->descriptor_sets.elements[renderer->image_index],
+            &primitive->descriptor_sets.elements[renderer->image_index],
             0,
             NULL
             );
