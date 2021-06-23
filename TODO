@@ -3,14 +3,7 @@ CONSTANT:
     Add flag on file to show that the file has been reviewed and add the date.
     The goal is to review code and see that old code match last guidelines.
     it is possible review a file multiple time
-
-PRIORITY:
-  ☐ remove lna_container.h
-    we will not use array and vector macros anymore, we will 
-  ☐ remove all unneeded macro stuff
-    macro must be used only if there is no another way to perform something.
-    for example the reserve_memory macro must be removed, it is not necessary as we can
-    use directly the memory pool function
+  ☐ fix all TODO in code
 
 MUST DO:
   ☐ console system
@@ -26,7 +19,6 @@ MUST DO:
   ☐ add shader binary code directly in each dedicated files instead of loading files
   ☐ centralize vulkan version to avoid multiple line change in build file after a vulkan update
   ☐ centralize sdl version to avoid multiple line change in build file after a sdl update
-  ☐ fix all TODO in code
 
 SHOULD DO:
   ☐ use vec3 parameters for mat4 look at create function instead of floats
@@ -37,12 +29,18 @@ SHOULD DO:
   ☐ use config struct instead of long parameter list in vulkan helpers function
 
 OPTIONAL:
-  ☐ load obj function (dev only function)
   ☐ add stack allocator
   ☐ allow memory pool to use stack or heap allocator
   ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
 
 Archive:
+  ✔ load obj function (dev only function)                                                                      @done(21-06-22 23:05) @project(OPTIONAL)
+  ✔ remove lna_container.h                                                                                     @done(21-06-22 23:04) @project(PRIORITY)
+    we will not use array and vector macros anymore, we will 
+  ✔ remove all unneeded macro stuff                                                                            @done(21-06-22 23:04) @project(PRIORITY)
+    macro must be used only if there is no another way to perform something.
+    for example the reserve_memory macro must be removed, it is not necessary as we can
+    use directly the memory pool function
   ✔ do not call VirtualAlloc and VirtualFree directly in allocator                                             @done(21-06-13 11:46) @project(MUST DO)
     like renderer, window, input, etc. I must use an interface and add implementation in a backends/windows folder
   ✔ free camera                                                                                                @done(21-06-11 15:16) @project(MUST DO)
