@@ -1,9 +1,10 @@
 #ifndef LNA_CORE_LNA_MEMORY_H
 #define LNA_CORE_LNA_MEMORY_H
 
-// TODO: use function instead of macro
-#define LNA_KILOBYTES(value)    ((value) * 1024LL)
-#define LNA_MEGABYTES(value)    (LNA_KILOBYTES(value) * 1024LL)
-#define LNA_GIGABYTES(value)    (LNA_MEGABYTES(value) * 1024LL)
+#include <stddef.h>
+
+extern size_t lna_kilobytes(size_t value);
+extern size_t lna_megabytes(size_t value);
+extern size_t lna_gigabytes(size_t value);
 
 #endif

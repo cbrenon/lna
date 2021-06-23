@@ -13,7 +13,7 @@ typedef struct lna_renderer_s       lna_renderer_t;
 
 typedef struct lna_ui_system_config_s
 {
-    uint32_t            max_buffer_count; // TODO: find a better name
+    uint32_t            max_buffer_count;
     lna_renderer_t*     renderer;
     lna_memory_pool_t*  memory_pool;
 } lna_ui_system_config_t;

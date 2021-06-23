@@ -35,20 +35,21 @@ static void lna_mesh_system_create_graphics_pipeline(
     lna_assert(mesh_system)
     lna_assert(renderer)
 
-    // TODO: avoid direct file load --------------------------------------------
+    // TODO: avoid direct file load: add binary code directly in code as a static const uint32_t* 
     lna_binary_file_content_uint32_t vertex_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &vertex_shader_file,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         "shaders/default_vert.spv"
         );
+    // TODO: avoid direct file load: add binary code directly in code as a static const uint32_t* 
     lna_binary_file_content_uint32_t fragment_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &fragment_shader_file,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         "shaders/default_frag.spv"
         );
-    // -------------------------------------------------------------------------
+    
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         renderer->device,
         vertex_shader_file.content,
@@ -211,14 +212,14 @@ static void lna_mesh_system_create_graphics_pipeline(
         .pushConstantRangeCount = 0,
         .pPushConstantRanges    = NULL,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreatePipelineLayout(
             renderer->device,
             &pipeline_layout_create_info,
             NULL,
             &mesh_system->pipeline_layout
             )
-        )
+        );
     const VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info =
     {
         .sType                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -251,7 +252,7 @@ static void lna_mesh_system_create_graphics_pipeline(
         .basePipelineHandle     = VK_NULL_HANDLE,
         .basePipelineIndex      = -1,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateGraphicsPipelines(
             renderer->device,
             VK_NULL_HANDLE,
@@ -260,7 +261,7 @@ static void lna_mesh_system_create_graphics_pipeline(
             NULL,
             &mesh_system->pipeline
             )
-        )
+        );
 
     vkDestroyShaderModule(
         renderer->device,
@@ -275,12 +276,13 @@ static void lna_mesh_system_create_graphics_pipeline(
 }
 
 static void lna_mesh_system_create_descriptor_pool(
-    lna_mesh_system_t* mesh_system,
-    lna_renderer_t* renderer // TODO: renderer is already in mesh system, we can remove this parameter
+    lna_mesh_system_t* mesh_system
     )
 {
     lna_assert(mesh_system)
     lna_assert(mesh_system->meshes.max_element_count > 0)
+
+    lna_renderer_t* renderer = mesh_system->renderer;
     lna_assert(renderer)
     lna_assert(renderer->swap_chain_images.count > 0)
 
@@ -308,14 +310,14 @@ static void lna_mesh_system_create_descriptor_pool(
         .maxSets        = renderer->swap_chain_images.count * mesh_system->meshes.max_element_count,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDescriptorPool(
             renderer->device,
             &pool_create_info,
             NULL,
             &mesh_system->descriptor_pool
             )
-        )
+        );
 
     lna_log_message("--------------------------");
     lna_log_message("mesh descriptor pool info:");
@@ -441,13 +443,13 @@ static void lna_mesh_create_descriptor_sets(
         sizeof(VkDescriptorSet) * renderer->swap_chain_images.count
         );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateDescriptorSets(
             renderer->device,
             &allocate_info,
             mesh->descriptor_sets.elements
             )
-        )
+        );
 
     for (size_t i = 0; i < mesh->descriptor_sets.count; ++i)
     {
@@ -610,8 +612,7 @@ static void lna_mesh_system_on_swap_chain_recreate(void *owner)
         renderer
         );
     lna_mesh_system_create_descriptor_pool(
-        mesh_system,
-        renderer
+        mesh_system
         );
 
     for (uint32_t i = 0; i < mesh_system->meshes.cur_element_count; ++i)
@@ -691,14 +692,14 @@ void lna_mesh_system_init(lna_mesh_system_t* mesh_system, const lna_mesh_system_
         .bindingCount   = (uint32_t)(sizeof(bindings) / sizeof(bindings[0])),
         .pBindings      = bindings,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDescriptorSetLayout(
             config->renderer->device,
             &layout_create_info,
             NULL,
             &mesh_system->descriptor_set_layout
             )
-        )
+        );
 
     //! GRAPHICS PIPELINE
 
@@ -710,8 +711,7 @@ void lna_mesh_system_init(lna_mesh_system_t* mesh_system, const lna_mesh_system_
     //! DESCRIPTOR POOL
 
     lna_mesh_system_create_descriptor_pool(
-        mesh_system,
-        config->renderer
+        mesh_system
         );
 }
 
@@ -774,7 +774,7 @@ lna_mesh_t* lna_mesh_system_new_mesh(lna_mesh_system_t* mesh_system, const lna_m
             &staging_buffer_memory
             );
         void *vertices_data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 staging_buffer_memory,
@@ -783,7 +783,7 @@ lna_mesh_t* lna_mesh_system_new_mesh(lna_mesh_system_t* mesh_system, const lna_m
                 0,
                 &vertices_data
                 )
-            )
+            );
         memcpy(
             vertices_data,
             config->vertices,
@@ -839,7 +839,7 @@ lna_mesh_t* lna_mesh_system_new_mesh(lna_mesh_system_t* mesh_system, const lna_m
             &staging_buffer_memory
             );
         void *indices_data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 staging_buffer_memory,
@@ -848,7 +848,7 @@ lna_mesh_t* lna_mesh_system_new_mesh(lna_mesh_system_t* mesh_system, const lna_m
                 0,
                 &indices_data
                 )
-            )
+            );
         memcpy(
             indices_data,
             config->indices,
@@ -940,7 +940,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
             .projection = *mesh->projection_matrix,
         };
         void *mvp_data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 mesh->mvp_uniform_buffers_memory.elements[renderer->image_index],
@@ -949,7 +949,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
                 0,
                 &mvp_data
                 )
-            )
+            );
         memcpy(
             mvp_data,
             &mvp_ubo,
@@ -966,7 +966,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
             .light_color      = { 1.0f, 1.0f, 1.0f, 0.0f }, // TODO: remove hard coded value!
         };
         void *light_data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 mesh->light_uniform_buffers_memory.elements[renderer->image_index],
@@ -975,7 +975,7 @@ void lna_mesh_system_draw(lna_mesh_system_t* mesh_system)
                 0,
                 &light_data
                 )
-            )
+            );
         memcpy(
             light_data,
             &light_ubo,
@@ -1065,6 +1065,6 @@ void lna_mesh_system_release(lna_mesh_system_t* mesh_system)
     mesh_system->meshes.cur_element_count = 0;
     mesh_system->meshes.max_element_count = 0;
     mesh_system->meshes.elements = NULL;
-    
+
     mesh_system->renderer = NULL;
 }

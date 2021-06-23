@@ -53,13 +53,13 @@ static void lna_ui_buffer_init(
         .pSetLayouts        = &descriptor_set_layout,
         .descriptorSetCount = 1,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateDescriptorSets(
             device,
             &set_allocate_info,
             &buffer->descriptor_set
             )
-        )
+        );
 
     const VkDescriptorImageInfo descriptor_image_info =
     {
@@ -93,14 +93,14 @@ static void lna_ui_buffer_init(
         .usage  = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .size   = vertex_buffer_size,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateBuffer(
             device,
             &vertex_buffer_create_info,
             NULL,
             &buffer->vertex_buffer
             )
-        )
+        );
 
     VkMemoryRequirements vertex_buffer_memory_requirements;
     vkGetBufferMemoryRequirements(
@@ -115,23 +115,23 @@ static void lna_ui_buffer_init(
         .allocationSize     = vertex_buffer_memory_requirements.size,
         .memoryTypeIndex    = lna_vulkan_find_memory_type(physical_device, vertex_buffer_memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateMemory(
             device,
             &vertex_buffer_memory_allocate_info,
             NULL,
             &buffer->vertex_buffer_memory
             )
-        )
-    VULKAN_CHECK_RESULT(
+        );
+    lna_vulkan_check(
         vkBindBufferMemory(
             device,
             buffer->vertex_buffer,
             buffer->vertex_buffer_memory,
             0
             )
-        )
-    VULKAN_CHECK_RESULT(
+        );
+    lna_vulkan_check(
         vkMapMemory(
             device,
             buffer->vertex_buffer_memory,
@@ -140,7 +140,7 @@ static void lna_ui_buffer_init(
             0,
             &buffer->vertex_data_mapped
             )
-        )
+        );
 
     const VkDeviceSize index_buffer_size = buffer->max_index_count * sizeof (uint32_t);
     const VkBufferCreateInfo index_buffer_create_info =
@@ -149,14 +149,14 @@ static void lna_ui_buffer_init(
         .usage  = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         .size   = index_buffer_size,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateBuffer(
             device,
             &index_buffer_create_info,
             NULL,
             &buffer->index_buffer
             )
-        )
+        );
     VkMemoryRequirements index_buffer_memory_requirements;
     vkGetBufferMemoryRequirements(
         device,
@@ -169,23 +169,23 @@ static void lna_ui_buffer_init(
         .allocationSize     = index_buffer_memory_requirements.size,
         .memoryTypeIndex    = lna_vulkan_find_memory_type(physical_device, index_buffer_memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateMemory(
             device,
             &index_buffer_memory_allocate_info,
             NULL,
             &buffer->index_buffer_memory
             )
-        )
-    VULKAN_CHECK_RESULT(
+        );
+    lna_vulkan_check(
         vkBindBufferMemory(
             device,
             buffer->index_buffer,
             buffer->index_buffer_memory,
             0
             )
-        )
-    VULKAN_CHECK_RESULT(
+        );
+    lna_vulkan_check(
         vkMapMemory(
             device,
             buffer->index_buffer_memory,
@@ -194,7 +194,7 @@ static void lna_ui_buffer_init(
             0,
             &buffer->index_data_mapped
             )
-        )
+        );
 
     {
         lna_ui_vertex_t* vertex_dst = (lna_ui_vertex_t*)buffer->vertex_data_mapped;
@@ -210,13 +210,13 @@ static void lna_ui_buffer_init(
             .offset = 0,
             .size   = vertex_buffer_size,
         };
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkFlushMappedMemoryRanges(
                 device,
                 1,
                 &mapped_memory_range
             )   
-        )
+        );
     }
 
     {
@@ -233,13 +233,13 @@ static void lna_ui_buffer_init(
             .offset = 0,
             .size   = index_buffer_size,
         };
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkFlushMappedMemoryRanges(
                 device,
                 1,
                 &mapped_memory_range
             )   
-        )
+        );
     }
 }
 
@@ -304,14 +304,14 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
         .pPoolSizes     = descriptor_pool_sizes,
         .maxSets        = config->max_buffer_count,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDescriptorPool(
             config->renderer->device,
             &pool_create_info,
             NULL,
             &ui_system->descriptor_pool
             )
-        )
+        );
 
     //! DESCRIPTOR SET LAYOUT
 
@@ -330,14 +330,14 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
         .pBindings      = set_layout_bindings,
         .bindingCount   = 1,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDescriptorSetLayout(
             config->renderer->device,
             &set_layout_create_info,
             NULL,
             &ui_system->descriptor_set_layout
             )
-        )
+        );
 
     //! PIPELINE
 
@@ -345,14 +345,14 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreatePipelineCache(
             config->renderer->device,
             &pipeline_cache_create_info,
             NULL,
             &ui_system->pipeline_cache
             )
-        )
+        );
 
     const VkPushConstantRange push_constance_range =
     {
@@ -368,14 +368,14 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
         .pushConstantRangeCount = 1,
         .pPushConstantRanges    = &push_constance_range,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreatePipelineLayout(
             config->renderer->device,
             &layout_create_info,
             NULL,
             &ui_system->pipeline_layout
             )
-        )
+        );
 
     const VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info =
     {
@@ -444,20 +444,21 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
         .dynamicStateCount  = 2,
         .flags              = 0,
     };
-    // TODO: avoid direct file load --------------------------------------------
+    // TODO: avoid direct file load: add binary code directly in code as a static const uint32_t* 
     lna_binary_file_content_uint32_t vertex_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &vertex_shader_file,
         &config->renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         "shaders/ui_vert.spv"
         );
+    // TODO: avoid direct file load: add binary code directly in code as a static const uint32_t* 
     lna_binary_file_content_uint32_t fragment_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &fragment_shader_file,
         &config->renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         "shaders/ui_frag.spv"
         );
-    // -------------------------------------------------------------------------
+    
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         config->renderer->device,
         vertex_shader_file.content,
@@ -540,7 +541,7 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
         .pVertexInputState      = &pipeline_vertex_input_state_create_info,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateGraphicsPipelines(
             config->renderer->device,
             ui_system->pipeline_cache,
@@ -549,7 +550,7 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
             NULL,
             &ui_system->pipeline
             )
-        )
+        );
 
     vkDestroyShaderModule(config->renderer->device, fragment_shader_module, NULL);
     vkDestroyShaderModule(config->renderer->device, vertex_shader_module, NULL);
@@ -619,13 +620,13 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
                 .offset = 0,
                 .size   = vertex_buffer_size,
             };
-            VULKAN_CHECK_RESULT(
+            lna_vulkan_check(
                 vkFlushMappedMemoryRanges(
                     ui_system->renderer->device,
                     1,
                     &mapped_memory_range
-                )   
-            )
+                    )   
+                );
         }
 
         {
@@ -643,13 +644,13 @@ void lna_ui_system_draw(lna_ui_system_t* ui_system)
                 .offset = 0,
                 .size   = index_buffer_size,
             };
-            VULKAN_CHECK_RESULT(
+            lna_vulkan_check(
                 vkFlushMappedMemoryRanges(
                     ui_system->renderer->device,
                     1,
                     &mapped_memory_range
-                )   
-            )
+                    )   
+                );
         }
 
         //! 2. UPDATE CURRENT COMMAND BUFFER

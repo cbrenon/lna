@@ -23,11 +23,11 @@ static const char* LNA_VULKAN_DEVICE_EXTENSIONS[] =
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };  
 
-static const size_t LNA_VULKAN_RENDERER_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_COUNT] =
+static const size_t LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_COUNT] =
 {
-    LNA_MEGABYTES(256),
-    LNA_MEGABYTES(256),
-    LNA_MEGABYTES(256),
+    256LL * 1024LL * 1024LL,
+    256LL * 1024LL * 1024LL,
+    256LL * 1024LL * 1024LL,
 };
 
 //! ============================================================================
@@ -136,23 +136,23 @@ static bool lna_vulkan_queue_family_indices_is_complete(const lna_vulkan_queue_f
 static bool lna_vulkan_check_validation_layer_support(lna_memory_pool_t* memory_pool)
 {
     uint32_t layer_count;
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkEnumerateInstanceLayerProperties(
             &layer_count,
             NULL
             )
-        )
+        );
     VkLayerProperties* available_layers = lna_memory_pool_reserve(
         memory_pool,
         sizeof(VkLayerProperties) * layer_count
         );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkEnumerateInstanceLayerProperties(
             &layer_count,
             available_layers
             )
-        )
+        );
 
     size_t validation_layer_count = sizeof(LNA_VULKAN_VALIDATION_LAYERS) / sizeof(LNA_VULKAN_VALIDATION_LAYERS[0]);
     for (size_t i = 0; i < validation_layer_count; ++i)
@@ -214,14 +214,14 @@ static lna_vulkan_queue_family_indices_t lna_vulkan_find_queue_families(
         }
 
         VkBool32 present_support = false;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkGetPhysicalDeviceSurfaceSupportKHR(
                 physical_device,
                 i,
                 surface,
                 &present_support
                 )
-            )
+            );
         if (present_support)
         {
             indices.present_family = i;
@@ -244,28 +244,28 @@ static bool lna_vulkan_check_device_extension_support(
     lna_assert(physical_device)
 
     uint32_t extension_count;
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkEnumerateDeviceExtensionProperties(
             physical_device,
             NULL,
             &extension_count,
             NULL
             )
-        )
+        );
 
     VkExtensionProperties *available_extensions = lna_memory_pool_reserve(
         memory_pool,
         sizeof(VkExtensionProperties) *  extension_count
         );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkEnumerateDeviceExtensionProperties(
             physical_device,
             NULL,
             &extension_count,
             available_extensions
             )
-        )
+        );
 
     size_t required_extension_count = sizeof(LNA_VULKAN_DEVICE_EXTENSIONS) / sizeof(LNA_VULKAN_DEVICE_EXTENSIONS[0]);
     for (size_t i = 0; i < required_extension_count; ++i)
@@ -299,22 +299,22 @@ static lna_vulkan_swap_chain_support_details_t lna_vulkan_query_swap_chain_suppo
     lna_assert(surface)
 
     lna_vulkan_swap_chain_support_details_t details;
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
             physical_device,
             surface,
             &details.capabilities
             )
-        )
+        );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkGetPhysicalDeviceSurfaceFormatsKHR(
             physical_device,
             surface,
             &details.format_count,
             NULL
             )
-        )
+        );
     if (details.format_count > 0)
     {
         details.formats = lna_memory_pool_reserve(
@@ -322,24 +322,24 @@ static lna_vulkan_swap_chain_support_details_t lna_vulkan_query_swap_chain_suppo
             sizeof(VkSurfaceFormatKHR) * details.format_count
             );
 
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkGetPhysicalDeviceSurfaceFormatsKHR(
                 physical_device,
                 surface,
                 &details.format_count,
                 details.formats
                 )
-            )
+            );
     }
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkGetPhysicalDeviceSurfacePresentModesKHR(
             physical_device,
             surface,
             &details.present_mode_count,
             NULL
             )
-        )
+        );
     if (details.present_mode_count > 0)
     {
         details.present_modes = lna_memory_pool_reserve(
@@ -347,14 +347,14 @@ static lna_vulkan_swap_chain_support_details_t lna_vulkan_query_swap_chain_suppo
             sizeof(VkPresentModeKHR) * details.present_mode_count
             );
 
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkGetPhysicalDeviceSurfacePresentModesKHR(
                 physical_device,
                 surface,
                 &details.present_mode_count,
                 details.present_modes
                 )
-            )
+            );
     }
     return details;
 }
@@ -543,12 +543,12 @@ static bool lna_vulkan_renderer_create_instance(
         .pNext                      = enable_validation_layers ? &debug_messenger_create_info : NULL,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateInstance(
             &instance_create_info,
             NULL,
             &renderer->instance)
-            )
+            );
 
     return true;
 }
@@ -569,14 +569,14 @@ static void lna_vulkan_renderer_setup_debug_messenger(
         .pfnUserCallback    = lna_vulkan_debug_callback,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         lna_vulkan_create_debug_utils_messenger_EXT(
             renderer->instance,
             &debug_messenger_create_info,
             NULL,
             &renderer->debug_messenger
             )
-        )
+        );
 }
 
 static void lna_vulkan_renderer_create_surface(
@@ -606,13 +606,13 @@ static void lna_vulkan_renderer_pick_physical_device(
     lna_assert(renderer->physical_device == NULL)
 
     uint32_t device_count;
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkEnumeratePhysicalDevices(
             renderer->instance,
             &device_count,
             NULL
             )
-        )
+        );
     lna_assert(device_count > 0)
 
     VkPhysicalDevice* devices = lna_memory_pool_reserve(
@@ -620,13 +620,13 @@ static void lna_vulkan_renderer_pick_physical_device(
         sizeof(VkPhysicalDevice) * device_count
         );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkEnumeratePhysicalDevices(
             renderer->instance,
             &device_count,
             devices
             )
-        )
+        );
 
     for (uint32_t i = 0; i < device_count; ++i)
     {
@@ -703,14 +703,14 @@ static void lna_vulkan_renderer_create_logical_device(
         .ppEnabledLayerNames        = enable_validation_layers ? LNA_VULKAN_VALIDATION_LAYERS : NULL,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDevice(
             renderer->physical_device,
             &device_create_info,
             NULL,
             &renderer->device
             )
-        )
+        );
 
     renderer->graphics_family = indices.graphics_family;
     vkGetDeviceQueue(
@@ -787,22 +787,22 @@ static void lna_vulkan_renderer_create_swap_chain(
         .clipped                = VK_TRUE,
         .oldSwapchain           = VK_NULL_HANDLE,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateSwapchainKHR(
             renderer->device,
             &swap_chain_create_info,
             NULL,
             &renderer->swap_chain
             )
-        )
-    VULKAN_CHECK_RESULT(
+        );
+    lna_vulkan_check(
         vkGetSwapchainImagesKHR(
             renderer->device,
             renderer->swap_chain,
             &image_count,
             NULL
             )
-        )
+        );
     lna_assert(image_count > 0)
 
     renderer->swap_chain_images.count       = image_count;
@@ -811,14 +811,14 @@ static void lna_vulkan_renderer_create_swap_chain(
         sizeof(VkImage) * image_count
         );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkGetSwapchainImagesKHR(
             renderer->device,
             renderer->swap_chain,
             &renderer->swap_chain_images.count,
             renderer->swap_chain_images.elements
             )
-        )
+        );
     renderer->swap_chain_image_format   = surface_format.format;
     renderer->swap_chain_extent         = extent;
 
@@ -934,14 +934,14 @@ static void lna_vulkan_renderer_create_render_pass(
         .pDependencies      = &subpass_dependancy,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateRenderPass(
             renderer->device,
             &render_pass_create_info,
             NULL,
             &renderer->render_pass
             )
-        )
+        );
 }
 
 static void lna_vulkan_renderer_create_command_pool(
@@ -964,14 +964,14 @@ static void lna_vulkan_renderer_create_command_pool(
         .flags              = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateCommandPool(
             renderer->device,
             &command_pool_create_info,
             NULL,
             &renderer->command_pool
             )
-        )
+        );
 }
 
 static void lna_vulkan_renderer_create_depth_resources(
@@ -1039,14 +1039,14 @@ static void lna_vulkan_renderer_create_framebuffers(
             .layers             = 1,
         };
 
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkCreateFramebuffer(
                 renderer->device,
                 &framebuffer_create_info,
                 NULL,
                 &renderer->swap_chain_framebuffers.elements[i]
                 )
-            )
+            );
     }
 }
 
@@ -1074,13 +1074,13 @@ static void lna_vulkan_renderer_create_command_buffers(
         .commandBufferCount = renderer->command_buffers.count,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateCommandBuffers(
             renderer->device,
             &command_buffer_allocate_info,
             renderer->command_buffers.elements
             )
-        )
+        );
 }
 
 static void lna_vulkan_renderer_create_sync_objects(
@@ -1103,30 +1103,30 @@ static void lna_vulkan_renderer_create_sync_objects(
 
     for (uint32_t i = 0; i < LNA_VULKAN_MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkCreateSemaphore(
                 renderer->device,
                 &semaphore_create_info,
                 NULL,
                 &renderer->image_available_semaphores[i]
                 )
-            )
-        VULKAN_CHECK_RESULT(
+            );
+        lna_vulkan_check(
             vkCreateSemaphore(
                 renderer->device,
                 &semaphore_create_info,
                 NULL,
                 &renderer->render_finished_semaphores[i]
                 )
-            )
-        VULKAN_CHECK_RESULT(
+            );
+        lna_vulkan_check(
             vkCreateFence(
                 renderer->device,
                 &fence_create_info,
                 NULL,
                 &renderer->in_flight_fences[i]
                 )
-            )
+            );
     }
 }
 
@@ -1221,11 +1221,11 @@ static void lna_vulkan_renderer_recreate_swap_chain(
     lna_assert(renderer)
     lna_assert(renderer->device)
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkDeviceWaitIdle(
             renderer->device
             )
-        )
+        );
 
     lna_vulkan_renderer_cleanup_swap_chain(renderer);
     lna_vulkan_renderer_create_swap_chain(renderer, framebuffer_width, framebuffer_height);
@@ -1245,8 +1245,6 @@ static void lna_vulkan_renderer_recreate_swap_chain(
 //! ============================================================================
 //!                         RENDERER PUBLIC FUNCTIONS
 //! ============================================================================
-
-static const uint32_t LNA_RENDERER_MAX_LISTENERS_COUNT = 10; // TODO: remove. listeners count must be passed as argument in renderer config
 
 bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* config)
 {
@@ -1280,20 +1278,30 @@ bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* co
     lna_assert(config)
     lna_assert(config->window)
 
-    for (uint32_t i = 0; i < LNA_VULKAN_RENDERER_MEMORY_POOL_COUNT; ++i)
+    lna_memory_pool_init_with_heap(
+        &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
+        config->allocator,
+        config->frame_mem_pool_size > 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->frame_mem_pool_size
+        );
+    lna_memory_pool_init_with_heap(
+        &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_PERSISTENT],
+        config->allocator,
+        config->persistent_mem_pool_size > 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->persistent_mem_pool_size
+        );
+    lna_memory_pool_init_with_heap(
+        &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
+        config->allocator,
+        config->swap_chain_mem_pool_size > 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->swap_chain_mem_pool_size
+        );
+
+    if (config->max_listener_count > 0)
     {
-        lna_memory_pool_init_with_heap(
-            &renderer->memory_pools[i],
-            config->allocator,
-            LNA_VULKAN_RENDERER_MEMORY_POOL_SIZES[i]
+        renderer->listeners.max_element_count   = config->max_listener_count;
+        renderer->listeners.elements            = lna_memory_pool_reserve(
+            &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_PERSISTENT],
+            sizeof(lna_renderer_listener_t) * renderer->listeners.max_element_count
             );
     }
-
-    renderer->listeners.max_element_count   = LNA_RENDERER_MAX_LISTENERS_COUNT; // TODO: change. listeners count must be passed as argument in renderer config
-    renderer->listeners.elements            = lna_memory_pool_reserve(
-        &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_PERSISTENT],
-        sizeof(lna_renderer_listener_t) * renderer->listeners.max_element_count
-        );
 
     renderer->curr_frame = 0;
     renderer->graphics_family = (uint32_t)-1;
@@ -1325,7 +1333,7 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
     lna_assert(renderer)
     lna_assert(renderer->device)
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkWaitForFences(
             renderer->device,
             1,
@@ -1333,7 +1341,7 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
             VK_TRUE,
             UINT64_MAX
             )
-        )
+        );
 
     VkResult result = vkAcquireNextImageKHR(
         renderer->device,
@@ -1360,7 +1368,7 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
     lna_assert(renderer->images_in_flight_fences.count > renderer->image_index)
     if (renderer->images_in_flight_fences.elements[renderer->image_index] != VK_NULL_HANDLE)
     {
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkWaitForFences(
                 renderer->device,
                 1,
@@ -1368,17 +1376,17 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
                 VK_TRUE,
                 UINT64_MAX
                 )
-            )
+            );
     }
     renderer->images_in_flight_fences.elements[renderer->image_index] = renderer->in_flight_fences[renderer->curr_frame];
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkResetFences(
             renderer->device,
             1,
             &renderer->in_flight_fences[renderer->curr_frame]
             )
-        )
+        );
 
     const VkClearValue clear_values[] =
     {
@@ -1417,19 +1425,19 @@ void lna_renderer_begin_draw_frame(lna_renderer_t* renderer, uint32_t window_wid
     lna_assert(renderer->command_buffers.count > renderer->image_index)
     VkCommandBuffer command_buffer = renderer->command_buffers.elements[renderer->image_index];
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkResetCommandBuffer(
             command_buffer,
             VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
             )
-        )
+        );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkBeginCommandBuffer(
             command_buffer,
             &command_buffer_begin_info
             )
-        )
+        );
 
     VkRenderPassBeginInfo render_pass_begin_info =
     {
@@ -1484,11 +1492,11 @@ void lna_renderer_end_draw_frame(lna_renderer_t* renderer, bool window_resized, 
     vkCmdEndRenderPass(
         command_buffer
         );
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkEndCommandBuffer(
             command_buffer
             )
-        )
+        );
 
     const VkSubmitInfo submit_info =
     {
@@ -1502,14 +1510,14 @@ void lna_renderer_end_draw_frame(lna_renderer_t* renderer, bool window_resized, 
         .pSignalSemaphores      = signal_semaphores,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkQueueSubmit(
             renderer->graphics_queue,
             1,
             &submit_info,
             renderer->in_flight_fences[renderer->curr_frame]
             )
-        )
+        );
 
     const VkSwapchainKHR swap_chains[] =
     {
@@ -1555,11 +1563,11 @@ void lna_renderer_wait_idle(lna_renderer_t* renderer)
     lna_assert(renderer)
     lna_assert(renderer->device)
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkDeviceWaitIdle(
             renderer->device
             )
-        )
+        );
 }
 
 void lna_renderer_release(lna_renderer_t* renderer)

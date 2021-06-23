@@ -34,6 +34,15 @@ const char* lna_vulkan_error_string(VkResult error_code)
 	//}
 }
 
+void lna_vulkan_check(VkResult result)
+{
+    if (result != VK_SUCCESS)
+    {
+        lna_log_error("vulkan %s", lna_vulkan_error_string(result));
+        lna_assert(0)
+    }
+}
+
 uint32_t lna_vulkan_find_memory_type(VkPhysicalDevice physical_device, uint32_t type_filter, VkMemoryPropertyFlags properties)
 {
     lna_assert(physical_device)
@@ -68,14 +77,14 @@ void lna_vulkan_create_buffer(VkDevice device, VkPhysicalDevice physical_device,
         .sharingMode    = VK_SHARING_MODE_EXCLUSIVE,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateBuffer(
             device,
             &buffer_create_info,
             NULL,
             buffer
             )
-        )
+        );
 
     VkMemoryRequirements memory_requirements;
     vkGetBufferMemoryRequirements(
@@ -95,23 +104,23 @@ void lna_vulkan_create_buffer(VkDevice device, VkPhysicalDevice physical_device,
             ),
     };
         
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateMemory(
             device,
             &memory_allocate_info,
             NULL,
             buffer_memory
             )
-        )
+        );
         
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkBindBufferMemory(
             device,
             *buffer,
             *buffer_memory,
             0
             )
-        )
+        );
 }
 
 void lna_vulkan_create_image(VkDevice device, VkPhysicalDevice physical_device, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* image_memory)
@@ -137,14 +146,14 @@ void lna_vulkan_create_image(VkDevice device, VkPhysicalDevice physical_device, 
         .flags          = 0,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateImage(
             device,
             &image_create_info,
             NULL,
             image
             )
-        )
+        );
 
     VkMemoryRequirements memory_requirements;
     vkGetImageMemoryRequirements(
@@ -164,23 +173,23 @@ void lna_vulkan_create_image(VkDevice device, VkPhysicalDevice physical_device, 
             ),
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateMemory(
             device,
             &allocate_info,
             NULL,
             image_memory
             )
-        )
+        );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkBindImageMemory(
             device,
             *image,
             *image_memory,
             0
             )
-        )
+        );
 }
 
 VkImageView lna_vulkan_create_image_view(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspect_flags)
@@ -202,14 +211,14 @@ VkImageView lna_vulkan_create_image_view(VkDevice device, VkImage image, VkForma
     };
 
     VkImageView image_view;
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateImageView(
             device,
             &view_create_info,
             NULL,
             &image_view
             )
-        )
+        );
 
     return image_view;
 }
@@ -227,24 +236,24 @@ VkCommandBuffer lna_vulkan_begin_single_time_commands(VkDevice device, VkCommand
         .commandBufferCount = 1,
     };
     VkCommandBuffer command_buffer;
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateCommandBuffers(
             device,
             &allocate_info,
             &command_buffer
             )
-        )
+        );
     const VkCommandBufferBeginInfo begin_info =
     {
         .sType  = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags  = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkBeginCommandBuffer(
             command_buffer,
             &begin_info
             )
-        )
+        );
 
     return command_buffer;
 }
@@ -256,11 +265,11 @@ void lna_vulkan_end_single_time_commands(VkDevice device, VkCommandPool command_
     lna_assert(command_buffer)
     lna_assert(graphics_queue)
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkEndCommandBuffer(
             command_buffer
             )
-        )
+        );
 
     const VkSubmitInfo submit_info =
     {
@@ -269,19 +278,19 @@ void lna_vulkan_end_single_time_commands(VkDevice device, VkCommandPool command_
         .pCommandBuffers    = &command_buffer,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkQueueSubmit(
             graphics_queue,
             1,
             &submit_info,
             VK_NULL_HANDLE
             )
-        )
-    VULKAN_CHECK_RESULT(
+        );
+    lna_vulkan_check(
         vkQueueWaitIdle(
             graphics_queue
             )
-        )
+        );
     vkFreeCommandBuffers(
         device,
         command_pool,
@@ -446,14 +455,14 @@ VkShaderModule lna_vulkan_create_shader_module(VkDevice device, const uint32_t* 
     };
 
     VkShaderModule shader_module = NULL;
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateShaderModule(
             device,
             &shader_module_create_info,
             NULL,
             &shader_module
             )
-        )
+        );
 
     return shader_module;
 }

@@ -13,6 +13,10 @@ typedef struct lna_renderer_config_s
     const lna_window_t*     window;
     bool                    enable_api_diagnostic;
     lna_heap_allocator_t*   allocator;
+    uint32_t                max_listener_count;
+    size_t                  frame_mem_pool_size;        //! set to 0 to use default value
+    size_t                  swap_chain_mem_pool_size;   //! set to 0 to use default value
+    size_t                  persistent_mem_pool_size;   //! set to 0 to use default value
 } lna_renderer_config_t;
 
 extern bool     lna_renderer_init               (lna_renderer_t* renderer, const lna_renderer_config_t* config);

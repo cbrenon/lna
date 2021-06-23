@@ -24,20 +24,21 @@ static void lna_primitive_system_create_graphics_pipeline(
     lna_assert(primitive_system)
     lna_assert(renderer)
 
-    // TODO: avoid direct file load --------------------------------------------
+    // TODO: avoid direct file load: add binary code directly in code as a static const uint32_t* 
     lna_binary_file_content_uint32_t vertex_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &vertex_shader_file,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         "shaders/debug_primitive_vert.spv"
         );
+    // TODO: avoid direct file load: add binary code directly in code as a static const uint32_t* 
     lna_binary_file_content_uint32_t fragment_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &fragment_shader_file,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         "shaders/debug_primitive_frag.spv"
         );
-    // -------------------------------------------------------------------------
+
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         renderer->device,
         vertex_shader_file.content,
@@ -188,14 +189,14 @@ static void lna_primitive_system_create_graphics_pipeline(
         .pushConstantRangeCount = 0,
         .pPushConstantRanges    = NULL,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreatePipelineLayout(
             renderer->device,
             &pipeline_layout_create_info,
             NULL,
             &primitive_system->pipeline_layout
             )
-        )
+        );
     const VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info =
     {
         .sType                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -229,7 +230,7 @@ static void lna_primitive_system_create_graphics_pipeline(
         .basePipelineHandle     = VK_NULL_HANDLE,
         .basePipelineIndex      = -1,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateGraphicsPipelines(
             renderer->device,
             VK_NULL_HANDLE,
@@ -238,7 +239,7 @@ static void lna_primitive_system_create_graphics_pipeline(
             NULL,
             &primitive_system->pipeline
             )
-        )
+        );
 
     vkDestroyShaderModule(
         renderer->device,
@@ -253,12 +254,13 @@ static void lna_primitive_system_create_graphics_pipeline(
 }
 
 static void lna_primitive_system_create_descriptor_pool(
-    lna_primitive_system_t* primitive_system,
-    lna_renderer_t* renderer
+    lna_primitive_system_t* primitive_system
     )
 {
     lna_assert(primitive_system)
     lna_assert(primitive_system->primitives.max_element_count > 0)
+
+    lna_renderer_t* renderer = primitive_system->renderer;
     lna_assert(renderer)
     lna_assert(renderer->swap_chain_images.count > 0)
 
@@ -278,14 +280,14 @@ static void lna_primitive_system_create_descriptor_pool(
         .maxSets        = renderer->swap_chain_images.count * primitive_system->primitives.max_element_count,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDescriptorPool(
             renderer->device,
             &pool_create_info,
             NULL,
             &primitive_system->descriptor_pool
             )
-        )
+        );
 
     lna_log_message("-------------------------------");
     lna_log_message("primitive descriptor pool info:");
@@ -376,13 +378,13 @@ static void lna_primitive_create_descriptor_sets(
         sizeof(VkDescriptorSet) * renderer->swap_chain_images.count
         );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateDescriptorSets(
             renderer->device,
             &allocate_info,
             primitive->descriptor_sets.elements
             )
-        )
+        );
 
     for (size_t i = 0; i < primitive->descriptor_sets.count; ++i)
     {
@@ -489,8 +491,7 @@ static void lna_primitive_system_on_swap_chain_recreate(void *owner)
         renderer
         );
     lna_primitive_system_create_descriptor_pool(
-        primitive_system,
-        renderer
+        primitive_system
         );
 
     for (uint32_t i = 0; i < primitive_system->primitives.cur_element_count; ++i)
@@ -556,14 +557,14 @@ void lna_primitive_system_init(lna_primitive_system_t* primitive_system, const l
         .bindingCount   = (uint32_t)(sizeof(bindings) / sizeof(bindings[0])),
         .pBindings      = bindings,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDescriptorSetLayout(
             config->renderer->device,
             &layout_create_info,
             NULL,
             &primitive_system->descriptor_set_layout
             )
-        )
+        );
 
     //! GRAPHICS PIPELINE
 
@@ -575,8 +576,7 @@ void lna_primitive_system_init(lna_primitive_system_t* primitive_system, const l
     //! DESCRIPTOR POOL
 
     lna_primitive_system_create_descriptor_pool(
-        primitive_system,
-        config->renderer
+        primitive_system
         );
 }
 
@@ -620,7 +620,7 @@ void lna_primitive_system_draw(lna_primitive_system_t* primitive_system)
             .projection = *primitive->projection_matrix,
         };
         void *data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 primitive->mvp_uniform_buffers_memory.elements[renderer->image_index],
@@ -629,7 +629,7 @@ void lna_primitive_system_draw(lna_primitive_system_t* primitive_system)
                 0,
                 &data
                 )
-            )
+            );
         memcpy(
             data,
             &ubo,
@@ -771,7 +771,7 @@ lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_
             &staging_buffer_memory
             );
         void *vertices_data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 staging_buffer_memory,
@@ -780,7 +780,7 @@ lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_
                 0,
                 &vertices_data
                 )
-            )
+            );
         memcpy(
             vertices_data,
             config->vertices,
@@ -838,7 +838,7 @@ lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_
             &staging_buffer_memory
             );
         void *indices_data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 staging_buffer_memory,
@@ -847,7 +847,7 @@ lna_primitive_t* lna_primitive_system_new_raw(lna_primitive_system_t* primitive_
                 0,
                 &indices_data
                 )
-            )
+            );
         memcpy(
             indices_data,
             config->indices,

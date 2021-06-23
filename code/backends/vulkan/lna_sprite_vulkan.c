@@ -33,20 +33,21 @@ static void lna_sprite_system_create_graphics_pipeline(
     lna_assert(sprite_system)
     lna_assert(renderer)
 
-    // TODO: avoid direct file load --------------------------------------------
+    // TODO: avoid direct file load: add binary code directly in code as a static const uint32_t* 
     lna_binary_file_content_uint32_t vertex_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &vertex_shader_file,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         "shaders/sprite_vert.spv"
         );
+    // TODO: avoid direct file load: add binary code directly in code as a static const uint32_t* 
     lna_binary_file_content_uint32_t fragment_shader_file = { 0 };
     lna_binary_file_debug_load_uint32(
         &fragment_shader_file,
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         "shaders/sprite_frag.spv"
         );
-    // -------------------------------------------------------------------------
+    
     VkShaderModule vertex_shader_module = lna_vulkan_create_shader_module(
         renderer->device,
         vertex_shader_file.content,
@@ -203,14 +204,14 @@ static void lna_sprite_system_create_graphics_pipeline(
         .pushConstantRangeCount = 0,
         .pPushConstantRanges    = NULL,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreatePipelineLayout(
             renderer->device,
             &pipeline_layout_create_info,
             NULL,
             &sprite_system->pipeline_layout
             )
-        )
+        );
     const VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info =
     {
         .sType              = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -238,7 +239,7 @@ static void lna_sprite_system_create_graphics_pipeline(
         .basePipelineHandle     = VK_NULL_HANDLE,
         .basePipelineIndex      = -1,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateGraphicsPipelines(
             renderer->device,
             VK_NULL_HANDLE,
@@ -247,7 +248,7 @@ static void lna_sprite_system_create_graphics_pipeline(
             NULL,
             &sprite_system->pipeline
             )
-        )
+        );
 
     vkDestroyShaderModule(
         renderer->device,
@@ -262,12 +263,13 @@ static void lna_sprite_system_create_graphics_pipeline(
 }
 
 static void lna_sprite_system_create_descriptor_pool(
-    lna_sprite_system_t* sprite_system,
-    lna_renderer_t* renderer  // TODO: renderer is already in sprite system, we can remove this parameter
+    lna_sprite_system_t* sprite_system
     )
 {
     lna_assert(sprite_system)
     lna_assert(sprite_system->sprites.max_element_count > 0)
+
+    lna_renderer_t* renderer = sprite_system->renderer;
     lna_assert(renderer)
     lna_assert(renderer->swap_chain_images.count > 0)
 
@@ -291,14 +293,14 @@ static void lna_sprite_system_create_descriptor_pool(
         .maxSets        = renderer->swap_chain_images.count * sprite_system->sprites.max_element_count,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDescriptorPool(
             renderer->device,
             &pool_create_info,
             NULL,
             &sprite_system->descriptor_pool
             )
-        )
+        );
 
     lna_log_message("----------------------------");
     lna_log_message("sprite descriptor pool info:");
@@ -395,13 +397,13 @@ static void lna_sprite_create_descriptor_sets(
         sizeof(VkDescriptorSet) * renderer->swap_chain_images.count
         );
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkAllocateDescriptorSets(
             renderer->device,
             &allocate_info,
             sprite->descriptor_sets.elements
             )
-        )
+        );
 
     for (size_t i = 0; i < sprite->descriptor_sets.count; ++i)
     {
@@ -526,8 +528,7 @@ static void lna_sprite_system_on_swap_chain_recreate(void *owner)
         renderer
         );
     lna_sprite_system_create_descriptor_pool(
-        sprite_system,
-        renderer
+        sprite_system
         );
 
     for (uint32_t i = 0; i < sprite_system->sprites.cur_element_count; ++i)
@@ -599,14 +600,14 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
         .bindingCount   = (uint32_t)(sizeof(bindings) / sizeof(bindings[0])),
         .pBindings      = bindings,
     };
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateDescriptorSetLayout(
             config->renderer->device,
             &layout_create_info,
             NULL,
             &sprite_system->descriptor_set_layout
             )
-        )
+        );
 
     //! GRAPHICS PIPELINE
 
@@ -618,8 +619,7 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
     //! DESCRIPTOR POOL
 
     lna_sprite_system_create_descriptor_pool(
-        sprite_system,
-        config->renderer
+        sprite_system
         );
 }
 
@@ -773,7 +773,7 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
             &staging_buffer_memory
             );
         void *vertices_data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 staging_buffer_memory,
@@ -782,7 +782,7 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
                 0,
                 &vertices_data
                 )
-            )
+            );
         memcpy(
             vertices_data,
             vertices,
@@ -841,7 +841,7 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
             &staging_buffer_memory
             );
         void *indices_data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 staging_buffer_memory,
@@ -850,7 +850,7 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
                 0,
                 &indices_data
                 )
-            )
+            );
         memcpy(
             indices_data,
             indices,
@@ -938,7 +938,7 @@ void lna_sprite_system_draw(lna_sprite_system_t* sprite_system)
             .projection = *sprite->projection_matrix,
         };
         void *data;
-        VULKAN_CHECK_RESULT(
+        lna_vulkan_check(
             vkMapMemory(
                 renderer->device,
                 sprite->mvp_uniform_buffers_memory.elements[renderer->image_index],
@@ -947,7 +947,7 @@ void lna_sprite_system_draw(lna_sprite_system_t* sprite_system)
                 0,
                 &data
                 )
-            )
+            );
         memcpy(
             data,
             &ubo,

@@ -111,7 +111,7 @@ static void lna_texture_init(lna_texture_t* texture, const lna_texture_config_t*
         );
 
     void* data;
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkMapMemory(
             renderer->device,
             staging_buffer_memory,
@@ -120,7 +120,7 @@ static void lna_texture_init(lna_texture_t* texture, const lna_texture_config_t*
             0,
             &data
             )
-        )
+        );
     memcpy(
         data,
         texture_pixels,
@@ -221,14 +221,14 @@ static void lna_texture_init(lna_texture_t* texture, const lna_texture_config_t*
         .maxLod                  = 0.0f,
     };
 
-    VULKAN_CHECK_RESULT(
+    lna_vulkan_check(
         vkCreateSampler(
             renderer->device,
             &sampler_create_info,
             NULL,
             &texture->image_sampler
             )
-        )
+        );
 
     texture->width              = (uint32_t)texture_width;
     texture->height             = (uint32_t)texture_height;

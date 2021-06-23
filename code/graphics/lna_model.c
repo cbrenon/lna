@@ -69,7 +69,6 @@ void lna_model_init_dev_mode(lna_model_t* model, const lna_model_config_t* confi
     lna_log_message("3d object vertex count  : %d", vertex_count);
     lna_log_message("3d object index count   : %d", index_count);
 
-    // TODO: it will be better to use a custom memory pool and empty it at the beginning of a new frame
     lna_vec3_t*         positions   = position_count > 0    ? lna_memory_pool_reserve(config->temp_lifetime_mem_pool, sizeof(lna_vec3_t) * position_count)    : 0;
     lna_vec2_t*         uvs         = uv_count > 0          ? lna_memory_pool_reserve(config->temp_lifetime_mem_pool, sizeof(lna_vec2_t) * uv_count)          : 0;
     lna_vec3_t*         normals     = normal_count > 0      ? lna_memory_pool_reserve(config->temp_lifetime_mem_pool, sizeof(lna_vec3_t) * normal_count)      : 0;

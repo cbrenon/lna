@@ -6,18 +6,8 @@
 #include "core/lna_log.h"
 #include "core/lna_assert.h"
 
-// TODO: replace this macro by a function
-#define VULKAN_CHECK_RESULT(func)                                           \
-    {                                                                       \
-        VkResult _result = (func);                                          \
-        if (_result != VK_SUCCESS)                                          \
-        {                                                                   \
-            lna_log_error("vulkan %s", lna_vulkan_error_string(_result));   \
-            lna_assert(0)                                                   \
-        }                                                                   \
-    }
-
 extern const char*      lna_vulkan_error_string                 (VkResult error_code);
+extern void             lna_vulkan_check                        (VkResult result);
 extern uint32_t         lna_vulkan_find_memory_type             (VkPhysicalDevice physical_device, uint32_t type_filter, VkMemoryPropertyFlags properties);
 extern void             lna_vulkan_create_buffer                (VkDevice device, VkPhysicalDevice physical_device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* buffer_memory);
 extern void             lna_vulkan_create_image                 (VkDevice device, VkPhysicalDevice physical_device, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* image_memory);
