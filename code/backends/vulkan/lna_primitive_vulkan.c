@@ -532,7 +532,7 @@ void lna_primitive_system_init(lna_primitive_system_t* primitive_system, const l
         (void*)primitive_system
         );
 
-    primitive_system->primitives.max_element_count  = 0;
+    primitive_system->primitives.max_element_count  = config->max_primitive_count;
     primitive_system->primitives.elements           = lna_memory_pool_reserve(
         config->memory_pool,
         sizeof(lna_primitive_t) * config->max_primitive_count

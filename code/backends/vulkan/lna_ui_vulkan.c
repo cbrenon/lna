@@ -282,7 +282,7 @@ void lna_ui_system_init(lna_ui_system_t* ui_system, const lna_ui_system_config_t
 
     ui_system->renderer = config->renderer;
     
-    ui_system->buffers.max_element_count    = 0;
+    ui_system->buffers.max_element_count    = config->max_buffer_count;
     ui_system->buffers.elements             = lna_memory_pool_reserve(
         config->memory_pool,
         sizeof(lna_ui_buffer_t) * config->max_buffer_count
@@ -756,6 +756,8 @@ void lna_ui_system_release(lna_ui_system_t* ui_system)
     ui_system->pipeline_layout          = VK_NULL_HANDLE;
     ui_system->descriptor_pool          = VK_NULL_HANDLE;
     ui_system->descriptor_set_layout    = VK_NULL_HANDLE;
+
+    ui_system->renderer                 = NULL;
 }
 
 static const uint32_t LNA_UI_VERTEX_COUNT_PER_RECT   = 4;

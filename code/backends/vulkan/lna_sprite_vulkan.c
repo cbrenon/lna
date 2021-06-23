@@ -568,7 +568,7 @@ void lna_sprite_system_init(lna_sprite_system_t* sprite_system, const lna_sprite
         (void*)sprite_system
         );
 
-    sprite_system->sprites.max_element_count    = 0;
+    sprite_system->sprites.max_element_count    = config->max_sprite_count;
     sprite_system->sprites.elements             = lna_memory_pool_reserve(
         config->memory_pool,
         sizeof(lna_sprite_t) * config->max_sprite_count
@@ -1033,4 +1033,10 @@ void lna_sprite_system_release(lna_sprite_system_t* sprite_system)
             NULL
             );
     }
+
+    sprite_system->sprites.cur_element_count    = 0;
+    sprite_system->sprites.max_element_count    = 0;
+    sprite_system->sprites.elements             = NULL;
+
+    sprite_system->renderer = NULL;
 }

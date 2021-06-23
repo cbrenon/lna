@@ -6,6 +6,7 @@
 #include "core/lna_log.h"
 #include "core/lna_assert.h"
 
+// TODO: replace this macro by a function
 #define VULKAN_CHECK_RESULT(func)                                           \
     {                                                                       \
         VkResult _result = (func);                                          \

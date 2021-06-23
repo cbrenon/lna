@@ -275,7 +275,9 @@ static void lna_texture_release(lna_texture_t* texture, VkDevice device)
 void lna_texture_system_init(lna_texture_system_t* texture_system, const lna_texture_system_config_t* config)
 {
     lna_assert(texture_system)
-    lna_assert(lna_vector_max_capacity(&texture_system->textures) == 0)
+    lna_assert(texture_system->textures.cur_element_count == 0)
+    lna_assert(texture_system->textures.max_element_count == 0)
+    lna_assert(texture_system->textures.elements == NULL)
     lna_assert(config)
     lna_assert(config->renderer)
     lna_assert(config->memory_pool)
@@ -310,7 +312,7 @@ void lna_texture_system_release(lna_texture_system_t* texture_system)
     lna_assert(texture_system)
     lna_assert(texture_system->renderer)
 
-    for (uint32_t index = 0; index < lna_vector_size(&texture_system->textures); ++index)
+    for (uint32_t index = 0; index < texture_system->textures.cur_element_count; ++index)
     {
         lna_texture_release(
             &texture_system->textures.elements[index],
