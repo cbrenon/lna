@@ -1281,17 +1281,17 @@ bool lna_renderer_init(lna_renderer_t* renderer, const lna_renderer_config_t* co
     lna_memory_pool_init_with_heap(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME],
         config->allocator,
-        config->frame_mem_pool_size > 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->frame_mem_pool_size
+        config->frame_mem_pool_size == 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->frame_mem_pool_size
         );
     lna_memory_pool_init_with_heap(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_PERSISTENT],
         config->allocator,
-        config->persistent_mem_pool_size > 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->persistent_mem_pool_size
+        config->persistent_mem_pool_size == 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->persistent_mem_pool_size
         );
     lna_memory_pool_init_with_heap(
         &renderer->memory_pools[LNA_VULKAN_RENDERER_MEMORY_POOL_SWAP_CHAIN],
         config->allocator,
-        config->swap_chain_mem_pool_size > 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->swap_chain_mem_pool_size
+        config->swap_chain_mem_pool_size == 0 ? LNA_VULKAN_RENDERER_DEFAULT_MEMORY_POOL_SIZES[LNA_VULKAN_RENDERER_MEMORY_POOL_FRAME] : config->swap_chain_mem_pool_size
         );
 
     if (config->max_listener_count > 0)
