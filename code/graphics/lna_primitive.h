@@ -61,7 +61,7 @@ typedef struct lna_primitive_rect_config_s
 
 typedef struct lna_primitive_circle_config_s
 {
-    const lna_vec2_t*                       center_position;
+    const lna_vec3_t*                       center_position;
     float                                   radius;
     const lna_vec4_t*                       color;
     const lna_mat4_t*                       model_matrix;

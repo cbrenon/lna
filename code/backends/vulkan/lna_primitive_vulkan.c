@@ -1025,7 +1025,7 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
                 {
                     config->center_position->x + config->radius * cosf(theta),
                     config->center_position->y + config->radius * sinf(theta),
-                    0.0f
+                    config->center_position->z,
                 },
                 .color = *config->color,
             };
@@ -1067,14 +1067,14 @@ lna_primitive_t* lna_primitive_system_new_circle_xy(lna_primitive_system_t* prim
                 {
                     config->center_position->x + config->radius * cosf(theta),
                     config->center_position->y + config->radius * sinf(theta),
-                    0.0f
+                    config->center_position->z,
                 },
                 .color = *config->color,
             };
         }
         vertices[LNA_PRIMITIVE_CIRCLE_VERTEX_COUNT] = (lna_primitive_vertex_t)
         {
-            .position = { config->center_position->x, config->center_position->y , 0.0f },
+            .position = *config->center_position,
             .color = *config->color,
         };
 
