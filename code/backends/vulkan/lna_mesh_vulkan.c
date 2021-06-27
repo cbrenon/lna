@@ -1061,10 +1061,4 @@ void lna_mesh_system_release(lna_mesh_system_t* mesh_system)
             NULL
             );
     }
-
-    mesh_system->meshes.cur_element_count = 0;
-    mesh_system->meshes.max_element_count = 0;
-    mesh_system->meshes.elements = NULL;
-
-    mesh_system->renderer = NULL;
 }

@@ -319,10 +319,6 @@ void lna_texture_system_release(lna_texture_system_t* texture_system)
             texture_system->renderer->device
             );
     }
-    texture_system->textures.cur_element_count  = 0;
-    texture_system->textures.max_element_count  = 0;
-    texture_system->textures.elements           = NULL;
-    texture_system->renderer = NULL;
 }
 
 uint32_t lna_texture_width(lna_texture_t* texture)

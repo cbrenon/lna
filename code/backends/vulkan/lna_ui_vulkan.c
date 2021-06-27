@@ -742,23 +742,12 @@ void lna_ui_system_release(lna_ui_system_t* ui_system)
         lna_ui_buffer_t* buffer = &ui_system->buffers.elements[index];
         lna_ui_buffer_release(buffer, ui_system->renderer->device);
     }
-    ui_system->buffers.cur_element_count    = 0;
-    ui_system->buffers.max_element_count    = 0;
-    ui_system->buffers.elements             = NULL;
 
     vkDestroyPipelineCache(ui_system->renderer->device, ui_system->pipeline_cache, NULL);
     vkDestroyPipeline(ui_system->renderer->device, ui_system->pipeline, NULL);
     vkDestroyPipelineLayout(ui_system->renderer->device, ui_system->pipeline_layout, NULL);
     vkDestroyDescriptorPool(ui_system->renderer->device, ui_system->descriptor_pool, NULL);
     vkDestroyDescriptorSetLayout(ui_system->renderer->device, ui_system->descriptor_set_layout, NULL);
-
-    ui_system->pipeline_cache           = VK_NULL_HANDLE;
-    ui_system->pipeline                 = VK_NULL_HANDLE;
-    ui_system->pipeline_layout          = VK_NULL_HANDLE;
-    ui_system->descriptor_pool          = VK_NULL_HANDLE;
-    ui_system->descriptor_set_layout    = VK_NULL_HANDLE;
-
-    ui_system->renderer                 = NULL;
 }
 
 static const uint32_t LNA_UI_VERTEX_COUNT_PER_RECT   = 4;

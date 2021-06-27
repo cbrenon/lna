@@ -140,17 +140,13 @@ static void lna_sprite_system_create_graphics_pipeline(
     };
     const VkPipelineRasterizationStateCreateInfo rasterization_state_create_info =
     {
-        .sType                      = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .depthClampEnable           = VK_FALSE,
-        .rasterizerDiscardEnable    = VK_FALSE,
-        .polygonMode                = VK_POLYGON_MODE_FILL,
-        .lineWidth                  = 1.0f,
-        .cullMode                   = VK_CULL_MODE_BACK_BIT,
-        .frontFace                  = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        .depthBiasEnable            = VK_FALSE,
-        .depthBiasConstantFactor    = 0.0f,
-        .depthBiasClamp             = 0.0f,
-        .depthBiasSlopeFactor       = 0.0f,
+        .sType              = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .polygonMode        = VK_POLYGON_MODE_FILL,
+        .cullMode           = VK_CULL_MODE_NONE,
+        .frontFace          = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .flags              = 0,
+        .depthClampEnable   = VK_FALSE,
+        .lineWidth          = 1.0f,
     };
     const VkPipelineMultisampleStateCreateInfo multisample_state_create_info =
     {
@@ -458,9 +454,8 @@ static void lna_sprite_create_descriptor_sets(
 static void lna_sprite_system_on_swap_chain_cleanup(void* owner)
 {
     lna_assert(owner)
-    lna_sprite_system_t* sprite_system = (lna_sprite_system_t*)owner;
-    lna_assert(sprite_system->sprites.elements)
-    lna_renderer_t* renderer = sprite_system->renderer;
+    lna_sprite_system_t*    sprite_system   = (lna_sprite_system_t*)owner;
+    lna_renderer_t*         renderer        = sprite_system->renderer;
     lna_assert(renderer)
 
     vkDestroyPipeline(
@@ -701,7 +696,7 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
                 .position =
                 {
                     position->x,
-                    position->y - size->height,
+                    position->y + size->height,
                     position->z
                 },
                 .uv =
@@ -721,7 +716,7 @@ lna_sprite_t* lna_sprite_system_new_sprite(lna_sprite_system_t* sprite_system, c
                 .position =
                 {
                     position->x + size->width,
-                    position->y - size->height,
+                    position->y + size->height,
                     position->z
                 },
                 .uv =
@@ -1033,10 +1028,4 @@ void lna_sprite_system_release(lna_sprite_system_t* sprite_system)
             NULL
             );
     }
-
-    sprite_system->sprites.cur_element_count    = 0;
-    sprite_system->sprites.max_element_count    = 0;
-    sprite_system->sprites.elements             = NULL;
-
-    sprite_system->renderer = NULL;
 }
