@@ -1,14 +1,14 @@
-CONSTANT:
+Permanent:
   ☐ one old file code review per weekend
     Add flag on file to show that the file has been reviewed and add the date.
     The goal is to review code and see that old code match last guidelines.
     it is possible review a file multiple time
   ☐ fix all TODO in code
 
-PRIORITY:
+Priority:
   ✔ add ortho matrix creation function @done(21-06-27 11:25)
 
-MUST DO:
+Must do:
   ☐ console system
   ☐ UI elements:
     ☐ button
@@ -23,7 +23,7 @@ MUST DO:
   ☐ centralize vulkan version to avoid multiple line change in build file after a vulkan update
   ☐ centralize sdl version to avoid multiple line change in build file after a sdl update
 
-SHOULD DO:
+Should do:
   ☐ use vec3 parameters for mat4 look at create function instead of floats
   ☐ be able to manage mesh without texture (default texture or check with empty texture)
   ☐ regroup VkBuffer and VkDeviceMemory in one struct
@@ -31,7 +31,7 @@ SHOULD DO:
     and help to realize the next task on config struct for vulkan function
   ☐ use config struct instead of long parameter list in vulkan helpers function
 
-OPTIONAL:
+Optional:
   ☐ add stack allocator
   ☐ allow memory pool to use stack or heap allocator
   ☐ test cimgui integration in my code to use imgui in C => https://github.com/cimgui/cimgui
